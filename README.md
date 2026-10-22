@@ -37,6 +37,7 @@
 | 자동 재연결 | 연결이 끊기면 다시 붙고, 열어 둔 터미널 탭도 그대로 |
 | 테마 | 다크·라이트·모노·파스텔 4종, JSON 파일로 나만의 테마 추가 |
 | 자동 업데이트 | 새 버전이 나오면 알려 주고, 한 번 눌러 설치 |
+| Claude 연결 (MCP) | Claude Desktop·Claude Code가 젯슨에서 명령 실행·파일 편집·상태 확인 (위험한 명령은 승인 후 실행) |
 
 ## 설치
 
@@ -58,6 +59,27 @@
 
 처음 실행하면 사용 가이드가 함께 열려요. 나중에 다시 보려면 **도움말** 버튼.
 
+## Claude에 연결하기 (MCP)
+
+1.0.1부터 Claude가 JetDeck을 통해 젯슨을 다룰 수 있어요.
+
+1. JetDeck 연결 관리 화면 위쪽 **Claude 연결** 버튼을 눌러요
+2. **Claude Desktop**: 보여 주는 JSON을 `claude_desktop_config.json`(설정 → 개발자 → 구성 편집)에 붙여 넣고 Claude를 다시 켜요
+   **Claude Code**: 보여 주는 `claude mcp add ...` 명령을 PowerShell에서 한 번 실행해요
+3. Claude에게 "orin에 연결해서 GPU 온도 알려 줘"처럼 말하면 돼요
+
+| 도구 | 하는 일 |
+|---|---|
+| `list_hosts` | 저장된 젯슨과 연결 상태 |
+| `connect` | 저장된 호스트에 연결 (JetDeck에 작업 공간 탭이 열림) |
+| `run_command` | 명령 실행 후 출력·종료 코드 반환 |
+| `read_file` / `write_file` / `list_dir` | 파일 읽기·쓰기, 폴더 목록 |
+| `get_status` | CPU·GPU·메모리·온도·전력·전원 모드·ROS 버전 |
+
+**안전장치**: `rm`, `sudo`, `reboot`, `kill`, `dd`, `apt`, `systemctl`처럼 되돌릴 수 없는 명령과 `>`로 파일을 덮어쓰는 명령은
+JetDeck 화면에 확인 창이 떠서 **허용**을 눌러야 실행돼요. 나머지는 확인 없이 실행돼요.
+JetDeck은 이 PC 안(127.0.0.1)에서 비밀 토큰을 가진 요청만 받아요.
+
 ## 단축키
 
 | 키 | 동작 |
@@ -76,6 +98,7 @@
 - **호스트 키**는 처음 접속 때 확인을 받고, 키가 바뀌면 경고해요. 사용자 `~/.ssh/known_hosts`도 함께 읽어요(쓰지는 않음).
 - 저장 위치: `%APPDATA%\nanoterm\` (호스트 목록, 앱 전용 known_hosts, 포워딩 규칙, 사용자 테마)
 - 앱이 외부로 보내는 것은 **젯슨과의 SSH 연결**과 **업데이트 확인(GitHub Releases)** 뿐이에요.
+  Claude 연결(MCP)은 이 PC 안에서만 오가며, Claude에게 넘어간 명령 결과는 Claude 쪽 대화에 남아요.
 
 ## 나만의 테마
 
