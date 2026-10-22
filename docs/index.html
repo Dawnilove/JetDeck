@@ -65,7 +65,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
 <body>
 <nav><div class="wrap">
   <a href="#features">기능</a><a href="#screens">화면</a><a href="#install">설치</a><a href="#start">시작하기</a>
-  <a href="#themes">테마</a><a href="#mcp">Claude 연결</a><a href="#keys">단축키</a><a href="#help">문제 해결</a>
+  <a href="#themes">테마</a><a href="#mcp">MCP 연결</a><a href="#keys">단축키</a><a href="#help">문제 해결</a>
   <a href="#versions">이전 버전</a><a href="#roadmap">앞으로</a>
 </div></nav>
 
@@ -103,7 +103,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
       <div class="card"><h3>🔧 시리얼 콘솔</h3><p>SSH가 안 될 때의 비상구. 포트와 속도만 고르면 끝.</p></div>
       <div class="card"><h3>📁 파일 전송</h3><p>내 PC ↔ 젯슨 양쪽 목록, 끌어다 놓기, 진행률·속도, 전송 취소.</p></div>
       <div class="card"><h3>🔀 포트 포워딩</h3><p>로컬·원격·동적(SOCKS5). Jupyter·TensorBoard 프리셋, 접속하면 자동 시작.</p></div>
-      <div class="card"><h3>✳️ Claude 연결 (MCP)</h3><p>Claude가 젯슨에서 명령 실행·파일 편집. 위험한 명령은 내가 허용해야 실행.</p></div>
+      <div class="card"><h3>✳️ MCP 연결</h3><p>Claude·Cursor·Codex 등 AI가 젯슨에서 명령 실행·파일 편집. 위험한 명령은 내가 허용해야 실행. 연결되면 버튼에 불이 켜져요.</p></div>
     </div>
   </section>
 
@@ -201,11 +201,11 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
   </section>
 
   <section id="mcp">
-    <h2>Claude에 연결하기 (MCP)</h2>
-    <p>Claude에게 "젯슨 온도 확인해 줘", "~/ros2_ws 빌드하고 오류 고쳐 줘"처럼 말하면 JetDeck을 통해 젯슨에서 바로 실행해요.</p>
+    <h2>AI에 연결하기 (MCP)</h2>
+    <p>MCP를 지원하는 AI(Claude·Cursor·VS Code·Codex CLI·Gemini CLI 등)에게 "젯슨 온도 확인해 줘", "~/ros2_ws 빌드하고 오류 고쳐 줘"처럼 말하면 JetDeck을 통해 젯슨에서 바로 실행해요.</p>
     <ol>
-      <li>연결 관리 화면 위쪽 <b>Claude 연결</b> 버튼</li>
-      <li><b>Claude Desktop</b>: 보여 주는 JSON을 <code>claude_desktop_config.json</code>에 붙여 넣고 다시 켜기 · <b>Claude Code</b>: 보여 주는 <code>claude mcp add …</code> 명령을 한 번 실행</li>
+      <li>연결 관리 화면 위쪽 <b>MCP 연결</b> 버튼 — 연결된 AI가 있으면 버튼 옆에 <b>초록 불</b>이 켜져요</li>
+      <li>위쪽 탭에서 쓰는 AI를 고르면 그 AI에 맞는 설정이 나와요. 복사해서 붙여 넣고(또는 명령을 한 번 실행하고) 그 프로그램을 다시 켜기 — Claude Desktop·Claude Code·Cursor·VS Code·Codex CLI·Gemini CLI, 그 밖의 MCP 프로그램은 실행 명령만 알려 줘요</li>
       <li>"orin에 연결해서 GPU 온도 알려 줘"</li>
     </ol>
     <table>
@@ -268,9 +268,9 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
     <h2>앞으로</h2>
     <table>
       <tr><th>버전</th><th>계획</th></tr>
-      <tr><td>2.1</td><td>라즈베리파이·우분투 등 일반 리눅스 모니터 · JetPack/CUDA 버전 표시 · SSH 키 마법사 · 젯슨용 arm64판</td></tr>
-      <tr><td>2.2 – 2.4</td><td>폴더 전송·스니펫 · ROS2 bag·파라미터·서비스 · VNC·RDP 바로 열기</td></tr>
-      <tr><td>2.5 – 2.8</td><td>Docker 패널 · 모니터 기록·프로세스 관리 · 여러 기기 대시보드 · 카메라 미리보기</td></tr>
+      <tr><td>2.2</td><td>라즈베리파이·우분투 등 일반 리눅스 모니터 · JetPack/CUDA 버전 표시 · SSH 키 마법사 · 젯슨용 arm64판</td></tr>
+      <tr><td>2.3 – 2.5</td><td>폴더 전송·스니펫 · ROS2 bag·파라미터·서비스 · VNC·RDP 바로 열기</td></tr>
+      <tr><td>2.6 – 2.9</td><td>Docker 패널 · 모니터 기록·프로세스 관리 · 여러 기기 대시보드 · 카메라 미리보기</td></tr>
       <tr><td>3.0</td><td>X11 화면 전달 (rviz·rqt)</td></tr>
     </table>
   </section>
