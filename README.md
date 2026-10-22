@@ -68,6 +68,8 @@
    **Claude Code**: 보여 주는 `claude mcp add ...` 명령을 PowerShell에서 한 번 실행해요
 3. Claude에게 "orin에 연결해서 GPU 온도 알려 줘"처럼 말하면 돼요
 
+> Claude 연결은 **설치판**을 추천해요. 포터블판도 되지만 Claude가 부를 때마다 압축을 풀어 시작이 몇 초 느려요.
+
 | 도구 | 하는 일 |
 |---|---|
 | `list_hosts` | 저장된 젯슨과 연결 상태 |
