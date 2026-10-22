@@ -15,12 +15,26 @@
   <img src="https://img.shields.io/badge/Linux-AppImage-2A303C?labelColor=1B1F29&style=for-the-badge" alt="Linux AppImage">
 </p>
 
+## ✨ 주요 기능
+
+- ⌨️ **터미널** — 탭·분할, 끊기면 자동 재연결
+- 📝 **원격 편집** — VS Code와 같은 Monaco 편집기, 젯슨에 서버 설치 없음
+- 📊 **시스템 모니터** — CPU 코어·GPU·메모리·온도·전력 그래프, 전원 모드 전환
+- 🤖 **ROS2 도구** — 토픽 echo·hz 실시간, launch 파일 실행
+- 🔧 **시리얼 콘솔** — SSH가 안 될 때의 비상구
+- 📁 **파일 전송** · 🔀 **포트 포워딩** — 끌어다 놓기, Jupyter 포트 버튼 한 번
+- ✳️ **Claude 연결 (MCP)** — Claude가 젯슨에서 명령 실행·파일 편집 (위험한 명령은 내가 허용해야 실행)
+- 🎨 **테마 17종**
+
+화면과 자세한 사용법은 **[사이트](https://dawnilove.github.io/JetDeck/)** 에서 볼 수 있어요.
+
 ## ⬇ 다운로드
 
 **<https://dawnilove.github.io/JetDeck/>** 에서 받으세요. 설치 방법, 사용법, 화면, 이전 버전도 모두 그곳에 있어요.
 
 - **Windows 10 / 11** — 설치 파일 또는 포터블. "PC 보호" 창이 뜨면 **추가 정보 → 실행**
 - **Linux (x64)** — AppImage, `chmod +x` 후 실행
+- **젯슨 쪽 준비물** — SSH 서버만 켜져 있으면 돼요 (JetPack 기본 상태 그대로 OK)
 
 ## 🐞 문제가 있나요?
 
