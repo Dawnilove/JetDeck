@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/Dawnilove/JetDeck/releases/latest"><img src="docs/banner.png" alt="JetDeck — Jetson에 특화된 SSH 작업 공간. 탐색기·편집기·터미널·시스템 모니터가 한 창에 모인 화면"></a>
+  <a href="https://dawnilove.github.io/JetDeck/"><img src="docs/banner.png" alt="JetDeck — Jetson에 특화된 SSH 작업 공간. 탐색기·편집기·터미널·시스템 모니터가 한 창에 모인 화면"></a>
 </p>
 
 <h3 align="center">젯슨 하나 다루는데 창 다섯 개 띄우지 마세요.</h3>
@@ -10,13 +10,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Dawnilove/JetDeck/releases/latest"><img src="https://img.shields.io/github/v/release/Dawnilove/JetDeck?label=%EC%B5%9C%EC%8B%A0%20%EB%B2%84%EC%A0%84&color=A3E06B&labelColor=1B1F29&style=for-the-badge" alt="최신 버전"></a>
+  <a href="https://dawnilove.github.io/JetDeck/"><img src="https://img.shields.io/github/v/release/Dawnilove/JetDeck?label=%EC%B5%9C%EC%8B%A0%20%EB%B2%84%EC%A0%84&color=A3E06B&labelColor=1B1F29&style=for-the-badge" alt="최신 버전"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-2A303C?labelColor=1B1F29&style=for-the-badge" alt="Windows 10, 11">
   <img src="https://img.shields.io/badge/Linux-AppImage-2A303C?labelColor=1B1F29&style=for-the-badge" alt="Linux AppImage">
 </p>
 
 <p align="center">
-  <a href="https://github.com/Dawnilove/JetDeck/releases/latest"><b>⬇ 내려받기</b></a> &nbsp;·&nbsp;
+  <a href="https://dawnilove.github.io/JetDeck/"><b>⬇ 내려받기</b></a> &nbsp;·&nbsp;
   <a href="#-3분-시작">3분 시작</a> &nbsp;·&nbsp;
   <a href="#-테마">테마</a> &nbsp;·&nbsp;
   <a href="docs/releases/v2.0.0.md">2.0 새 기능</a> &nbsp;·&nbsp;
@@ -108,7 +108,7 @@
 
 ### Windows 10 / 11
 
-1. [최신 릴리스](https://github.com/Dawnilove/JetDeck/releases/latest)에서 **`JetDeck-Setup-x.y.z.exe`** 를 받아 실행 (설치 없이 쓰려면 `-portable.exe`)
+1. [다운로드 사이트](https://dawnilove.github.io/JetDeck/)에서 **`JetDeck-Setup-x.y.z.exe`** 를 받아 실행 (설치 없이 쓰려면 `-portable.exe`)
 2. **"Windows의 PC 보호"** 창이 뜨면 **추가 정보 → 실행** — 아직 코드 서명 인증서가 없어서 생기는 안내예요
 3. 끝. 새 버전이 나오면 앱이 알아서 받아 두고 알려 줘요
 
