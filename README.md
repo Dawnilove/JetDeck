@@ -26,7 +26,22 @@
 - ✳️ **Claude 연결 (MCP)** — Claude가 젯슨에서 명령 실행·파일 편집 (위험한 명령은 내가 허용해야 실행)
 - 🎨 **테마 17종**
 
-화면과 자세한 사용법은 **[사이트](https://dawnilove.github.io/JetDeck/)** 에서 볼 수 있어요.
+<p align="center">
+  <img src="docs/images/workspace.png" alt="JetDeck 작업 공간: 왼쪽 탐색기, 가운데 편집기와 터미널, 오른쪽 시스템 모니터" width="900">
+</p>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/hosts.png" alt="연결 관리 화면"><br><sub><b>연결 관리</b> · 호스트 저장, 주변 Jetson 자동 찾기</sub></td>
+    <td width="50%"><img src="docs/images/files.png" alt="파일 전송 화면"><br><sub><b>파일 전송</b> · 양쪽 목록, 끌어다 놓기</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/forward.png" alt="포트 포워딩 화면"><br><sub><b>포트 포워딩</b> · 자주 쓰는 포트 한 번에</sub></td>
+    <td width="50%"><img src="docs/images/serial.png" alt="시리얼 연결 설정"><br><sub><b>시리얼 콘솔</b> · 포트와 속도만 고르면 끝</sub></td>
+  </tr>
+</table>
+
+더 많은 화면(테마 17종 등)과 자세한 사용법은 **[사이트](https://dawnilove.github.io/JetDeck/)** 에서 볼 수 있어요.
 
 ## ⬇ 다운로드
 
