@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JetDeck — Jetson SSH 작업 공간</title>
+<meta name="description" content="터미널·원격 편집·시스템 모니터·ROS2·파일 전송·시리얼이 한 창에. 젯슨에는 SSH 서버 말고 아무것도 설치하지 않아요.">
+<meta property="og:title" content="JetDeck — Jetson SSH 작업 공간">
+<meta property="og:description" content="젯슨 하나 다루는데 창 다섯 개 띄우지 마세요.">
+<meta property="og:image" content="banner.png">
+<link rel="icon" href="icon.png">
+<style>
+:root{--bg:#1b1f29;--panel:#242a37;--line:#2e3545;--text:#e8ecf3;--sub:#9aa5b8;--accent:#a3e06b;--accent-ink:#17210c}
+@media (prefers-color-scheme:light){:root{--bg:#f6f7f2;--panel:#fff;--line:#dfe3d6;--text:#1c2230;--sub:#58627a;--accent:#4f8a10;--accent-ink:#fff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 "Pretendard","Segoe UI","Malgun Gothic",system-ui,sans-serif}
+a{color:var(--accent)}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+header.hero{text-align:center;padding:64px 0 40px}
+header.hero img.logo{width:84px;height:84px}
+h1{font-size:clamp(30px,6vw,48px);margin:12px 0 8px;line-height:1.2}
+.lead{color:var(--sub);max-width:620px;margin:0 auto 28px}
+.dl{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.btn{display:inline-block;padding:12px 22px;border-radius:10px;font-weight:700;text-decoration:none;border:1px solid var(--line);color:var(--text);background:var(--panel)}
+.btn.main{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:hover{filter:brightness(1.1)}
+.ver{color:var(--sub);font-size:14px;margin-top:14px}
+.shot{display:block;width:100%;border-radius:12px;border:1px solid var(--line);margin:36px 0 8px}
+section{padding:36px 0}
+h2{font-size:26px;margin:0 0 18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+.card h3{margin:0 0 6px;font-size:17px}
+.card p{margin:0;color:var(--sub);font-size:15px}
+ol{padding-left:22px}
+li{margin:6px 0}
+code,pre{font-family:"JetBrains Mono",Consolas,monospace;font-size:14px}
+pre{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto}
+.themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.themes img{width:100%;border-radius:10px;border:1px solid var(--line);display:block}
+.note{color:var(--sub);font-size:14px}
+footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);font-size:14px;text-align:center}
+</style>
+</head>
+<body>
+<header class="hero wrap">
+  <img class="logo" src="icon.png" alt="JetDeck 아이콘">
+  <h1>젯슨 하나 다루는데<br>창 다섯 개 띄우지 마세요.</h1>
+  <p class="lead">터미널 · 원격 편집 · 시스템 모니터 · ROS2 · 파일 전송 · 포트 포워딩 · 시리얼 콘솔.<br>NVIDIA Jetson을 위한 SSH 작업 공간. 젯슨에는 아무것도 설치하지 않아요.</p>
+  <div class="dl">
+    <a class="btn main" id="dl-win" href="https://github.com/Dawnilove/JetDeck/releases/latest">⬇ Windows 설치 파일</a>
+    <a class="btn" id="dl-portable" href="https://github.com/Dawnilove/JetDeck/releases/latest">Windows 포터블</a>
+    <a class="btn" id="dl-linux" href="https://github.com/Dawnilove/JetDeck/releases/latest">Linux AppImage</a>
+  </div>
+  <p class="ver" id="ver">최신 버전은 GitHub Releases에서 확인하세요.</p>
+  <img class="shot" src="images/workspace.png" alt="JetDeck 작업 공간: 왼쪽 탐색기, 가운데 편집기와 터미널, 오른쪽 시스템 모니터">
+</header>
+
+<main class="wrap">
+  <section>
+    <h2>한 창에서, SSH만으로</h2>
+    <div class="grid">
+      <div class="card"><h3>⌨️ 터미널</h3><p>탭·분할·자동 재연결. 끊겨도 탭은 그대로.</p></div>
+      <div class="card"><h3>📝 원격 편집</h3><p>VS Code와 같은 Monaco 편집기. 젯슨에 서버 설치 없음.</p></div>
+      <div class="card"><h3>📊 시스템 모니터</h3><p>코어별 CPU·GPU·메모리·온도·전력, 전원 모드 전환.</p></div>
+      <div class="card"><h3>🤖 ROS2 도구</h3><p>토픽 echo·hz 실시간, launch 파일 바로 실행.</p></div>
+      <div class="card"><h3>🔧 시리얼 콘솔</h3><p>SSH가 안 될 때의 비상구. 포트와 속도만 고르면 끝.</p></div>
+      <div class="card"><h3>📁 파일 전송 · 🔀 포워딩</h3><p>끌어다 놓기 전송, Jupyter 포트 포워딩 버튼 한 번.</p></div>
+      <div class="card"><h3>✳️ Claude 연결 (MCP)</h3><p>위험한 명령은 내가 허용해야 실행돼요.</p></div>
+      <div class="card"><h3>🎨 테마 17종</h3><p>모든 글자 대비 4.5:1 이상. 다시 시작 없이 바로 변경.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>설치</h2>
+    <h3>Windows 10 / 11</h3>
+    <ol>
+      <li>위 <b>Windows 설치 파일</b>을 받아 실행 (설치 없이 쓰려면 포터블)</li>
+      <li><b>"Windows의 PC 보호"</b> 창이 뜨면 <b>추가 정보 → 실행</b>. 아직 코드 서명 인증서가 없어서 나오는 안내예요.</li>
+      <li>새 버전이 나오면 앱이 알아서 받아 두고 알려 줘요.</li>
+    </ol>
+    <h3>Linux (x64)</h3>
+    <pre>chmod +x JetDeck-*-x86_64.AppImage &amp;&amp; ./JetDeck-*-x86_64.AppImage</pre>
+    <p class="note">안 열리면 <code>sudo apt install libfuse2</code> (Ubuntu 24.04는 <code>libfuse2t64</code>).</p>
+    <p class="note">젯슨 쪽 준비물: SSH 서버만 켜져 있으면 돼요 (JetPack 기본 상태 그대로 OK).</p>
+  </section>
+
+  <section>
+    <h2>테마</h2>
+    <div class="themes">
+      <img loading="lazy" src="images/theme-limited-bloom.jpg" alt="모모의 꽃잎 공방">
+      <img loading="lazy" src="images/theme-cyber-neon.jpg" alt="네온 시안">
+      <img loading="lazy" src="images/theme-sunset.jpg" alt="노을">
+      <img loading="lazy" src="images/theme-retro-crt.jpg" alt="레트로 터미널">
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="https://github.com/Dawnilove/JetDeck">GitHub</a> ·
+    <a href="https://github.com/Dawnilove/JetDeck/releases">릴리스 노트</a> ·
+    <a href="https://github.com/Dawnilove/JetDeck/issues">버그 신고</a><br>
+    Copyright © 2026 Dawnilove. 개인·교육 목적 무료. 설치 파일의 수정·재배포·역설계는 허용하지 않습니다.
+  </div>
+</footer>
+
+<script>
+// 설치 파일 이름에 버전이 붙어서 고정 링크를 쓸 수 없으니 최신 릴리스에서 찾아 연결한다. 실패하면 기본 링크(Releases 페이지)가 남는다.
+fetch("https://api.github.com/repos/Dawnilove/JetDeck/releases/latest")
+  .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+  .then(function (rel) {
+    var find = function (re) { return rel.assets.find(function (a) { return re.test(a.name); }); };
+    [["dl-win", /Setup-.*\.exe$/], ["dl-portable", /portable\.exe$/], ["dl-linux", /\.AppImage$/]].forEach(function (p) {
+      var a = find(p[1]);
+      if (a) document.getElementById(p[0]).href = a.browser_download_url;
+    });
+    document.getElementById("ver").textContent = "최신 버전 " + rel.tag_name;
+  })
+  .catch(function () {});
+</script>
+</body>
+</html>
