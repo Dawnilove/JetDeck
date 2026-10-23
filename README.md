@@ -39,6 +39,10 @@
     <td width="50%"><img src="docs/images/forward.png" alt="포트 포워딩 화면"><br><sub><b>포트 포워딩</b> · 자주 쓰는 포트 한 번에</sub></td>
     <td width="50%"><img src="docs/images/serial.png" alt="시리얼 연결 설정"><br><sub><b>시리얼 콘솔</b> · 포트와 속도만 고르면 끝</sub></td>
   </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/ros.png" alt="ROS2 화면"><br><sub><b>ROS2 도구</b> · 토픽·노드, echo·hz 실시간, launch 실행</sub></td>
+    <td width="50%"></td>
+  </tr>
 </table>
 
 더 많은 화면(테마 17종 등)과 자세한 사용법은 **[사이트](https://dawnilove.github.io/JetDeck/)** 에서 볼 수 있어요.
