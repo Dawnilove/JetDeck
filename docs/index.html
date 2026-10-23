@@ -9,310 +9,530 @@
 <meta property="og:description" content="젯슨 하나 다루는데 창 다섯 개 띄우지 마세요.">
 <meta property="og:image" content="banner.png">
 <link rel="icon" href="icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
-:root{--bg:#1b1f29;--panel:#242a37;--line:#2e3545;--text:#e8ecf3;--sub:#9aa5b8;--accent:#a3e06b;--accent-ink:#17210c}
-@media (prefers-color-scheme:light){:root{--bg:#f6f7f2;--panel:#fff;--line:#dfe3d6;--text:#1c2230;--sub:#58627a;--accent:#4f8a10;--accent-ink:#fff}}
+:root{--bg:#161a22;--bg2:#1b2029;--panel:#232a36;--line:#2f3747;--text:#e9edf4;--sub:#9ba6b9;--accent:#a3e06b;--accent-ink:#17210c;--soft:color-mix(in srgb,var(--accent) 13%,transparent)}
+@media (prefers-color-scheme:light){:root{--bg:#f7f8f3;--bg2:#eef1e6;--panel:#fff;--line:#dde2d3;--text:#1c2230;--sub:#58627a;--accent:#4f8a10;--accent-ink:#fff}}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:60px}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 "Pretendard","Segoe UI","Malgun Gothic",system-ui,sans-serif}
+html{scroll-behavior:smooth;scroll-padding-top:68px}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.7 "Pretendard Variable","Pretendard","Segoe UI","Malgun Gothic",system-ui,sans-serif;word-break:keep-all;-webkit-font-smoothing:antialiased}
 a{color:var(--accent)}
-.wrap{max-width:960px;margin:0 auto;padding:0 20px}
-nav{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
-nav .wrap{display:flex;gap:18px;overflow-x:auto;white-space:nowrap;padding-top:12px;padding-bottom:12px;font-size:14px}
-nav a{color:var(--sub);text-decoration:none}
-nav a:hover{color:var(--accent)}
-header.hero{text-align:center;padding:48px 0 24px;background:radial-gradient(ellipse 42% 38% at 50% 12%,color-mix(in srgb,var(--accent) 14%,transparent),transparent)}
-header.hero img.logo{display:block;width:72px;height:72px;border-radius:16px;margin:18px auto 0}
-header.hero{word-break:keep-all}
-h1{font-size:clamp(30px,6vw,52px);margin:16px 0 12px;line-height:1.2}
-.lead{color:var(--text);opacity:.8;font-size:18px;max-width:560px;margin:0 auto 28px}
-.btn.main{font-size:18px;padding:15px 34px}
-.others{margin:16px 0 0;font-size:14px;color:var(--sub)}
+img{max-width:100%}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+
+/* 상단 메뉴 */
+nav{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;gap:20px;height:56px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--text);text-decoration:none;flex:none}
+.brand img{width:26px;height:26px;border-radius:7px}
+.links{display:flex;gap:18px;overflow-x:auto;white-space:nowrap;font-size:14px;flex:1;scrollbar-width:none}
+.links a{color:var(--sub);text-decoration:none}
+.links a:hover{color:var(--accent)}
+nav .btn{padding:7px 14px;font-size:14px;flex:none}
+
+/* 버튼 */
+.btn{display:inline-block;padding:12px 22px;border-radius:10px;font-weight:700;text-decoration:none;border:1px solid var(--line);color:var(--text);background:var(--panel);transition:transform .15s,filter .15s}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn.main{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* 히어로 */
+.hero{text-align:center;padding:56px 0 8px;background:radial-gradient(ellipse 50% 40% at 50% 0,var(--soft),transparent 70%)}
+.ver{display:inline-block;color:var(--accent);font-size:13px;font-weight:700;padding:3px 12px;border:1px solid var(--accent);border-radius:999px}
+h1{font-size:clamp(32px,6.2vw,58px);margin:18px 0 14px;line-height:1.2;letter-spacing:-.02em}
+h1 em{font-style:normal;color:var(--accent)}
+.lead{color:var(--sub);font-size:clamp(16px,2.2vw,19px);max-width:620px;margin:0 auto 28px}
+.lead b{color:var(--text)}
+.cta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.cta .btn.main{font-size:18px;padding:15px 32px}
+.cta .btn{font-size:17px;padding:15px 24px}
+.others{margin:14px 0 0;font-size:14px;color:var(--sub)}
 .others a{color:var(--sub)}
 .others a:hover{color:var(--accent)}
-.dl{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
-.btn{display:inline-block;padding:12px 22px;border-radius:10px;font-weight:700;text-decoration:none;border:1px solid var(--line);color:var(--text);background:var(--panel)}
-.btn.main{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.btn:hover{filter:brightness(1.1)}
-.ver{display:inline-block;color:var(--accent);font-size:13px;font-weight:700;padding:3px 12px;border:1px solid var(--accent);border-radius:999px}
-img.shot{display:block;width:100%;border-radius:12px;border:1px solid var(--line)}
-header.hero img.shot{margin-top:40px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
-section{padding:32px 0}
-h2{font-size:26px;margin:0 0 18px}
-h3{font-size:18px;margin:22px 0 8px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+.facts{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:10px 28px;padding:0;margin:30px 0 0;color:var(--sub);font-size:14px}
+.facts li{margin:0}
+.facts b{display:block;color:var(--text);font-size:20px;line-height:1.3}
+.hero .shot{margin-top:40px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+img.shot{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line)}
+
+/* 공통 섹션 */
+section{padding:64px 0 0}
+.band{background:var(--bg2);padding:56px 0;margin-top:64px}
+.band section{padding-top:0}
+.eyebrow{display:block;color:var(--accent);font-size:13px;font-weight:700;letter-spacing:.06em;margin-bottom:6px}
+h2{font-size:clamp(24px,3.6vw,32px);margin:0 0 10px;line-height:1.3;letter-spacing:-.01em}
+.sec-lead{color:var(--sub);margin:0 0 26px;max-width:640px}
+h3{font-size:18px;margin:24px 0 8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
 .card h3{margin:0 0 6px;font-size:17px}
 .card p{margin:0;color:var(--sub);font-size:15px}
+.ico{font-size:22px;line-height:1;display:block;margin-bottom:10px}
+
+/* 왜 JetDeck */
+.why .card{padding:24px}
+.why .ico{font-size:28px}
+.why h3{font-size:19px}
+
+/* 보통은 → JetDeck */
+.vs{display:grid;gap:8px;margin-top:8px}
+.vs-row{display:grid;grid-template-columns:150px 1fr 24px 1fr;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:15px}
+.vs-row .task{font-weight:700}
+.vs-row .old{color:var(--sub)}
+.vs-row .arrow{color:var(--accent);text-align:center}
+.vs-row .new{font-weight:600}
+.vs-head{background:none;border:0;padding:0 16px;font-size:13px;color:var(--sub)}
+.vs-head .new{color:var(--accent);font-weight:700}
+
+/* 화면 소개 */
+.spot{display:grid;grid-template-columns:1.35fr 1fr;gap:36px;align-items:center;margin-top:44px}
+.spot:nth-child(even) figure{order:2}
+.spot figure{margin:0}
+.spot h3{font-size:22px;margin:0 0 10px}
+.spot ul{padding:0;margin:0;list-style:none;color:var(--sub)}
+.spot li{padding-left:22px;position:relative;margin:7px 0}
+.spot li::before{content:"✓";position:absolute;left:0;color:var(--accent);font-weight:700}
+
+/* 전체 기능 */
+.group{margin-top:34px}
+.group > h3{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:19px;margin:0 0 12px}
+.group > h3 span{font-size:14px;font-weight:400;color:var(--sub)}
+
+/* AI 예시 대화 */
+.chat{display:grid;gap:10px;margin:0 0 22px}
+.bubble{justify-self:start;max-width:90%;background:var(--soft);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:16px 16px 16px 4px;padding:10px 16px;font-weight:600}
+
+/* 설치 */
+.os{display:flex;flex-direction:column}
+.os p{flex:1}
+.os pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
+.os .btn{margin-top:14px;text-align:center}
+.steps{list-style:none;counter-reset:s;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:0}
+.steps > li{counter-increment:s;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin:0;color:var(--sub);font-size:15px}
+.steps > li::before{content:counter(s);display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:800;margin-bottom:10px}
+.steps b{color:var(--text)}
+.steps ul{padding-left:18px;margin:6px 0 0}
+
+/* 기타 */
 figure{margin:0}
 figcaption{color:var(--sub);font-size:14px;margin-top:6px}
-.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
 ol,ul{padding-left:22px}
 li{margin:6px 0}
 code,pre,kbd{font-family:"JetBrains Mono",Consolas,monospace;font-size:14px}
-kbd{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
-pre{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto}
+code{overflow-wrap:anywhere}
+kbd{background:var(--panel);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;margin:10px 0}
+.table{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:15px}
-th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
 th{color:var(--sub);font-weight:600}
-.themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
 .themes img{width:100%;border-radius:10px;border:1px solid var(--line);display:block}
-.themes figcaption{margin-top:4px}
-details{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:12px 0}
+details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:12px 0}
 summary{cursor:pointer;font-weight:700}
+details > :last-child{margin-bottom:0}
 .note{color:var(--sub);font-size:14px}
+.callout{background:var(--soft);border-left:3px solid var(--accent);border-radius:8px;padding:12px 16px;margin:16px 0;font-size:15px}
 #versions li{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;border-bottom:1px solid var(--line);padding:8px 0;margin:0}
 #versions ul{list-style:none;padding:0;margin:0}
 #versions b{min-width:64px}
+.final{text-align:center;padding:64px 0}
+.final h2{margin-bottom:8px}
+.final p{color:var(--sub);margin:0 0 24px}
 footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);font-size:14px;text-align:center}
+
+@media (max-width:760px){
+  nav .wrap{gap:14px}
+  .brand span{display:none}
+  .vs-row{grid-template-columns:1fr;gap:2px}
+  .vs-row .arrow{display:none}
+  .vs-row .old::before{content:"보통은 · ";font-size:13px}
+  .vs-row .new::before{content:"JetDeck · ";color:var(--accent);font-size:13px}
+  .vs-head{display:none}
+  .spot{grid-template-columns:1fr;gap:16px}
+  .spot:nth-child(even) figure{order:0}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn{transition:none}}
 </style>
 </head>
 <body>
 <nav><div class="wrap">
-  <a href="#features">기능</a><a href="#screens">화면</a><a href="#install">설치</a><a href="#start">시작하기</a>
-  <a href="#themes">테마</a><a href="#mcp">MCP 연결</a><a href="#keys">단축키</a><a href="#help">문제 해결</a>
-  <a href="#versions">이전 버전</a><a href="#roadmap">앞으로</a>
+  <a class="brand" href="#top"><img src="icon.png" alt=""><span>JetDeck</span></a>
+  <div class="links">
+    <a href="#features">기능</a><a href="#screens">화면</a><a href="#mcp">AI 연결</a><a href="#install">설치</a>
+    <a href="#start">시작하기</a><a href="#help">문제 해결</a><a href="#versions">이전 버전</a>
+  </div>
+  <a class="btn main" data-dl="win" href="https://github.com/Dawnilove/JetDeck/releases/latest">다운로드</a>
 </div></nav>
 
-<header class="hero wrap">
-  <span class="ver" id="ver">최신 버전</span>
-  <img class="logo" src="icon.png" alt="JetDeck 아이콘">
-  <h1>젯슨 하나 다루는데<br>창 다섯 개 띄우지 마세요.</h1>
-  <p class="lead">터미널·편집기·모니터·ROS2·파일 전송을 한 창에. 젯슨에는 SSH 서버 말고 아무것도 설치하지 않아요.</p>
-  <div class="dl">
-    <a class="btn main" id="dl-win" href="https://github.com/Dawnilove/JetDeck/releases/latest">⬇ Windows 설치 파일</a>
+<header class="hero" id="top">
+  <div class="wrap">
+    <span class="ver" id="ver">최신 버전</span>
+    <h1>젯슨 하나 다루는데<br><em>창 다섯 개</em> 띄우지 마세요.</h1>
+    <p class="lead">터미널·코드 편집·시스템 모니터·ROS2·파일 전송을 <b>한 창</b>에 모았어요.<br>젯슨에는 <b>SSH 서버 말고 아무것도 설치하지 않아요.</b></p>
+    <div class="cta">
+      <a class="btn main" data-dl="win" href="https://github.com/Dawnilove/JetDeck/releases/latest">⬇ Windows용 무료 다운로드</a>
+      <a class="btn" href="#screens">화면 둘러보기</a>
+    </div>
+    <p class="others">다른 설치 방법:
+      <a data-dl="portable" href="https://github.com/Dawnilove/JetDeck/releases/latest">Windows 포터블</a> ·
+      <a data-dl="linux" href="https://github.com/Dawnilove/JetDeck/releases/latest">Linux AppImage</a> ·
+      <a data-dl="linux-arm" href="https://github.com/Dawnilove/JetDeck/releases/latest">Linux arm64 (Jetson)</a></p>
+    <ul class="facts">
+      <li><b>설치 0개</b>젯슨 쪽 준비물</li>
+      <li><b>한 창</b>터미널·편집·모니터·ROS2</li>
+      <li><b>Windows · Linux</b>arm64(젯슨 본체)도</li>
+      <li><b>무료</b>개인·교육 목적</li>
+    </ul>
+    <img class="shot" src="images/workspace.png" width="1264" height="761" alt="JetDeck 작업 공간: 왼쪽 탐색기, 가운데 편집기와 터미널, 오른쪽 시스템 모니터">
   </div>
-  <p class="others">다른 설치 방법:
-    <a id="dl-portable" href="https://github.com/Dawnilove/JetDeck/releases/latest">Windows 포터블</a> ·
-    <a id="dl-linux" href="https://github.com/Dawnilove/JetDeck/releases/latest">Linux AppImage</a> ·
-    <a id="dl-linux-arm" href="https://github.com/Dawnilove/JetDeck/releases/latest">Linux arm64 (Jetson)</a></p>
-  <img class="shot" src="images/workspace.png" alt="JetDeck 작업 공간: 왼쪽 탐색기, 가운데 편집기와 터미널, 오른쪽 시스템 모니터">
 </header>
 
-<main class="wrap">
-  <section id="features">
-    <h2>한 창에서, SSH만으로</h2>
-    <table>
-      <tr><th>하고 싶은 일</th><th>보통은</th><th>JetDeck</th></tr>
-      <tr><td>명령 실행</td><td>PuTTY · Windows 터미널</td><td>탭·분할 터미널</td></tr>
-      <tr><td>코드 편집</td><td>VS Code 원격 (젯슨에 서버 설치)</td><td>탐색기 + 편집기, 젯슨에 설치 없음</td></tr>
-      <tr><td>상태 확인</td><td><code>jtop</code> 설치, <code>tegrastats</code> 해석</td><td>CPU 코어·GPU·온도·전력 그래프</td></tr>
-      <tr><td>파일 주고받기</td><td>WinSCP · <code>scp</code></td><td>끌어다 놓기</td></tr>
-      <tr><td>Jupyter·대시보드</td><td><code>ssh -L 8888:…</code> 외우기</td><td>버튼 한 번 포트 포워딩</td></tr>
-      <tr><td>ROS2 토픽 확인</td><td><code>ros2 topic hz …</code> 반복 입력</td><td>목록에서 골라 실시간 Hz</td></tr>
-      <tr><td>네트워크가 죽었을 때</td><td>PuTTY 시리얼 설정</td><td>포트 고르고 연결</td></tr>
-    </table>
-    <div class="grid" style="margin-top:18px">
-      <div class="card"><h3>⌨️ 터미널</h3><p>여러 탭·분할·터미널만 크게. 끊기면 자동 재연결하고 탭은 그대로.</p></div>
-      <div class="card"><h3>📝 원격 편집</h3><p>VS Code와 같은 Monaco 편집기. 젯슨에서 바뀐 파일은 덮어쓰기 전에 알려 줘요.</p></div>
-      <div class="card"><h3>📊 시스템 모니터</h3><p>코어별 CPU·GPU·메모리·온도·전력, JetPack·CUDA 버전. 라즈베리 파이 같은 일반 리눅스도 지원. 전원 모드 전환, 절전·재부팅, Wake-on-LAN.</p></div>
-      <div class="card"><h3>▦ 분할 화면</h3><p>연결을 최대 4개까지 한 화면에 나란히(좌우) 또는 바둑판으로. 탭을 끌어다 놓거나 분할 버튼으로.</p></div>
-      <div class="card"><h3>🔑 SSH 키 마법사</h3><p>이 PC의 키를 만들어 Device에 등록하고, 비밀번호 없이 접속하도록 한 번에 바꿔요.</p></div>
-      <div class="card"><h3>🤖 ROS2 도구</h3><p>토픽·노드 목록과 info, echo·hz 실시간, launch 파일 바로 실행.</p></div>
-      <div class="card"><h3>🔧 시리얼 콘솔</h3><p>SSH가 안 될 때의 비상구. 포트와 속도만 고르면 끝.</p></div>
-      <div class="card"><h3>📁 파일 전송</h3><p>내 PC ↔ 젯슨 양쪽 목록, 끌어다 놓기, 진행률·속도, 전송 취소.</p></div>
-      <div class="card"><h3>🔀 포트 포워딩</h3><p>로컬·원격·동적(SOCKS5). Jupyter·TensorBoard 프리셋, 접속하면 자동 시작.</p></div>
-      <div class="card"><h3>✳️ MCP 연결</h3><p>Claude·Cursor·Codex 등 AI가 젯슨에서 명령 실행·파일 편집. 위험한 명령은 내가 허용해야 실행. 연결되면 버튼에 불이 켜져요.</p></div>
-      <div class="card"><h3>📂 폴더 전송·스니펫</h3><p>폴더 통째 올리기·내려받기, 동시 4개 전송. 자주 쓰는 명령은 스니펫으로 저장해 팔레트에서 실행.</p></div>
-      <div class="card"><h3>🤖 ROS2 서비스·파라미터·bag</h3><p>서비스 호출, 노드 파라미터 읽기·설정, bag 목록·정보·재생·녹화.</p></div>
-      <div class="card"><h3>🖥 기기 화면 보기</h3><p>VNC 데스크톱을 앱 안에서 바로(noVNC, SSH 터널). VNC·RDP를 PC 뷰어/mstsc로 여는 버튼도 있어요. rviz·rqt 같은 X11 창은 PC의 X 서버로.</p></div>
-      <div class="card"><h3>🐳 Docker</h3><p>컨테이너·이미지 목록, 시작·정지·재시작·삭제, 로그 보기.</p></div>
-      <div class="card"><h3>📈 기록·프로세스·AI 활동</h3><p>최근 1시간 모니터 그래프와 CSV, 프로세스 종료, AI·다른 SSH 접속이 한 일 기록.</p></div>
-      <div class="card"><h3>🗂 여러 기기 대시보드</h3><p>저장한 기기마다 CPU·GPU·메모리·온도·전력 카드를 한 화면에. 카드를 누르면 그 기기로 이동.</p></div>
-      <div class="card"><h3>📷 카메라 미리보기</h3><p>기기의 USB 카메라를 장치·해상도·fps를 골라 앱 안에서 실시간으로.</p></div>
-      <div class="card"><h3>🌐 영어 화면</h3><p>위쪽 언어 버튼으로 한국어 ↔ English.</p></div>
-    </div>
-  </section>
-
-  <section id="screens">
-    <h2>화면</h2>
-    <div class="shots">
-      <figure><img class="shot" loading="lazy" src="images/hosts.png" alt="연결 관리 화면"><figcaption><b>연결 관리</b> · 호스트 저장, 온라인 표시, 주변 Jetson 자동 찾기</figcaption></figure>
-      <figure><img class="shot" loading="lazy" src="images/files.png" alt="파일 전송 화면"><figcaption><b>파일 전송</b> · 양쪽 목록, 끌어다 놓기, 전송 대기열</figcaption></figure>
-      <figure><img class="shot" loading="lazy" src="images/ros.png" alt="ROS2 화면"><figcaption><b>ROS2 도구</b> · 토픽·노드, echo·hz 실시간, launch 실행</figcaption></figure>
-      <figure><img class="shot" loading="lazy" src="images/forward.png" alt="포트 포워딩 화면"><figcaption><b>포트 포워딩</b> · 자주 쓰는 포트 한 번에</figcaption></figure>
-      <figure><img class="shot" loading="lazy" src="images/serial.png" alt="시리얼 연결 설정"><figcaption><b>시리얼 콘솔</b> · 포트와 속도만 고르면 끝</figcaption></figure>
-    </div>
-  </section>
-
-  <section id="install">
-    <h2>설치</h2>
-    <h3>Windows 10 / 11</h3>
-    <ol>
-      <li>위 <b>Windows 설치 파일</b>을 받아 실행 (설치 없이 쓰려면 포터블)</li>
-      <li><b>"Windows의 PC 보호"</b> 창이 뜨면 <b>추가 정보 → 실행</b>. 아직 코드 서명 인증서가 없어서 나오는 안내예요.</li>
-      <li>새 버전이 나오면 앱이 알아서 받아 두고 알려 줘요.</li>
-    </ol>
-    <h3>Linux (x64)</h3>
-    <pre>chmod +x JetDeck-*-x86_64.AppImage &amp;&amp; ./JetDeck-*-x86_64.AppImage</pre>
-    <h3>Linux arm64 (Jetson 등)</h3>
-    <p>젯슨 본체에서 바로 쓰려면 arm64판을 받으세요. (PC에서 젯슨에 접속하는 용도라면 PC용을 받으면 돼요.)</p>
-    <pre>chmod +x JetDeck-*-arm64.AppImage &amp;&amp; ./JetDeck-*-arm64.AppImage</pre>
-    <ul class="note">
-      <li>안 열리면 FUSE 2 설치: <code>sudo apt install libfuse2</code> (Ubuntu 24.04는 <code>libfuse2t64</code>)</li>
-      <li>비밀번호 저장에는 키링(GNOME Keyring 등)이 필요해요. 키링이 없으면 비밀번호를 저장하지 않으니 SSH 키를 쓰세요.</li>
-    </ul>
-    <p class="note">젯슨 쪽 준비물: SSH 서버만 켜져 있으면 돼요 (JetPack 기본 상태 그대로 OK).</p>
-  </section>
-
-  <section id="start">
-    <h2>3분 시작</h2>
-    <ol>
-      <li><b>새 연결</b>에 젯슨 IP·사용자 이름·비밀번호 → <b>저장 후 연결</b>
-        <ul><li>USB 케이블로 직접 연결했다면 <code>192.168.55.1</code></li><li>IP를 모르면 오른쪽 <b>주변 Jetson 찾기</b></li></ul></li>
-      <li>처음 접속 때 뜨는 <b>호스트 키 확인</b> → 지문을 보고 <b>신뢰하고 연결</b></li>
-      <li>왼쪽에서 파일 열기 · 아래에서 명령 실행 · 오른쪽에서 상태 확인. 모든 기능은 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd></li>
-    </ol>
-    <h3>🤖 ROS2 도구</h3>
-    <p>왼쪽 활동 바의 <b>ROS2</b> 버튼. 젯슨의 <code>ros2</code> 명령을 SSH로 실행해 보여 줘요.</p>
-    <ul>
-      <li><b>토픽</b> — 발행·구독 노드, 메시지 보기(echo), 주기 측정(hz). 멈추거나 화면을 닫으면 젯슨 쪽 명령도 끝나요.</li>
-      <li><b>노드</b> — 연결된 토픽·서비스</li>
-      <li><b>launch</b> — 내 워크스페이스와 설치된 패키지의 launch 파일을 찾아, 확인 후 새 터미널 탭에서 <code>ros2 launch</code></li>
-    </ul>
-    <p class="note">ROS 환경은 젯슨 <code>~/.bashrc</code>의 <code>source /opt/ros/&lt;배포판&gt;/setup.bash</code>를 따라요.</p>
-    <h3>🔧 시리얼 콘솔</h3>
-    <ol>
-      <li>젯슨 USB(장치 모드)를 PC에 꽂거나, USB-TTL 어댑터를 디버그 UART에 연결</li>
-      <li><b>새 연결 → 시리얼</b>에서 포트와 속도(젯슨 기본 <b>115200</b>) → <b>저장 후 연결</b></li>
-      <li>케이블이 빠졌다 다시 꽂히면 자동으로 다시 연결해요.</li>
-    </ol>
-    <p class="note">Linux에서 "접근 권한이 없어요"가 뜨면 <code>sudo usermod -aG dialout $USER</code> 후 다시 로그인.</p>
-    <h3>🖥 기기 화면·X11·카메라 (4.0)</h3>
-    <ul>
-      <li><b>기기 화면 보기</b> — 기기에 VNC 서버가 켜져 있어야 해요(없으면 앱이 켜는 방법을 안내). 연결 설정의 원격 화면 종류를 VNC로 두고 작업 공간의 <b>원격 화면</b>을 누르면 앱 안에서 열려요.</li>
-      <li><b>X11 화면</b> — 연결 설정에서 "X11 화면"을 켜고 PC에서 X 서버(<code>winget install marha.VcXsrv</code>, XLaunch에서 <i>Disable access control</i>)를 실행한 뒤 터미널에서 <code>rviz2</code> 등을 실행하면 PC 창으로 떠요.</li>
-      <li><b>카메라</b> — 활동 버튼의 <b>카메라</b>에서 장치·해상도·fps를 고르고 시작. 기기에 <code>v4l2-ctl</code>·<code>gst-launch-1.0</code>이 있어야 해요.</li>
-      <li><b>언어</b> — 위쪽 언어 버튼. 바꾸면 화면을 다시 불러와서 열린 연결이 닫혀요(바꾸기 전에 확인).</li>
-    </ul>
-  </section>
-
-  <section id="themes">
-    <h2>테마 17종</h2>
-    <p>연결 관리 화면 오른쪽 위 <b>테마</b> 메뉴에서 바로 바뀌어요. 다시 시작할 필요 없어요. 모든 테마는 글자·터미널 색 대비 4.5:1 이상, 터미널과 편집기는 항상 불투명해요.</p>
-    <ul>
-      <li><b>에센셜</b> — 매일 쓰는 기본 4종</li>
-      <li><b>컬러 무드</b> — 노을·숲·바다·종이·레트로 등 분위기 7종</li>
-      <li><b>네온 사인</b> — 그라데이션 배경과 유리 패널, 연결 중일 때만 창 테두리가 빛나요</li>
-      <li><b>마스코트</b> — 모모·볼트·두두가 연결 상태에 따라 표정을 바꾸고 한마디씩 해요</li>
-    </ul>
-    <div class="themes">
-      <figure><img loading="lazy" src="images/theme-limited-bloom.jpg" alt="모모의 꽃잎 공방"><figcaption>모모의 꽃잎 공방</figcaption></figure>
-      <figure><img loading="lazy" src="images/theme-limited-night.jpg" alt="볼트의 한밤 격납고"><figcaption>볼트의 한밤 격납고</figcaption></figure>
-      <figure><img loading="lazy" src="images/theme-limited-festival.jpg" alt="두두의 터널 공사장"><figcaption>두두의 터널 공사장</figcaption></figure>
-      <figure><img loading="lazy" src="images/theme-cyber-neon.jpg" alt="네온 시안"><figcaption>네온 시안</figcaption></figure>
-      <figure><img loading="lazy" src="images/theme-neon-phosphor.jpg" alt="네온 그린"><figcaption>네온 그린</figcaption></figure>
-      <figure><img loading="lazy" src="images/theme-neon-overdrive.jpg" alt="네온 마젠타"><figcaption>네온 마젠타</figcaption></figure>
-    </div>
-    <details>
-      <summary>나머지 11종 보기 (에센셜 4 · 컬러 무드 7)</summary>
-      <div class="themes" style="margin-top:12px">
-        <figure><img loading="lazy" src="images/theme-lime-dark.jpg" alt="기본 다크 (라임)"><figcaption>기본 다크 (라임)</figcaption></figure>
-        <figure><img loading="lazy" src="images/theme-light-olive.jpg" alt="라이트 (베이지 · 올리브)"><figcaption>라이트 (베이지 · 올리브)</figcaption></figure>
-        <figure><img loading="lazy" src="images/theme-mono-dark.jpg" alt="다크 (모노 블랙)"><figcaption>다크 (모노 블랙)</figcaption></figure>
-        <figure><img loading="lazy" src="images/theme-cotton.jpg" alt="솜사탕 (파스텔)"><figcaption>솜사탕 (파스텔)</figcaption></figure>
-        <figure><img loading="lazy" src="images/theme-sunset.jpg" alt="노을 (코랄 · 보라)"><figcaption>노을 (코랄 · 보라)</figcaption></figure>
-        <figure><img loading="lazy" src="images/theme-forest.jpg" alt="숲 (세이지 그린)"><figcaption>숲 (세이지 그린)</figcaption></figure>
-        <figure><img loading="lazy" src="images/theme-ocean.jpg" alt="딥 오션 (하늘색)"><figcaption>딥 오션 (하늘색)</figcaption></figure>
-        <figure><img loading="lazy" src="images/theme-paper.jpg" alt="종이 (세피아)"><figcaption>종이 (세피아)</figcaption></figure>
-        <figure><img loading="lazy" src="images/theme-retro-crt.jpg" alt="레트로 터미널 (CRT 그린)"><figcaption>레트로 터미널 (CRT 그린)</figcaption></figure>
-        <figure><img loading="lazy" src="images/theme-lavender.jpg" alt="라벤더 (연보라)"><figcaption>라벤더 (연보라)</figcaption></figure>
-        <figure><img loading="lazy" src="images/theme-high-contrast.jpg" alt="고대비 (검정 · 노랑)"><figcaption>고대비 (검정 · 노랑)</figcaption></figure>
+<main>
+  <div class="wrap">
+    <section id="why">
+      <span class="eyebrow">왜 JetDeck인가요</span>
+      <h2>젯슨 작업, 이제 앱 하나로 끝내세요</h2>
+      <p class="sec-lead">PuTTY, WinSCP, VS Code 원격, jtop… 젯슨 하나에 쓰던 도구들을 한곳에 모았어요.</p>
+      <div class="grid why">
+        <div class="card"><span class="ico">🧩</span><h3>젯슨에 깔 게 없어요</h3><p>JetPack 기본 상태 그대로, SSH만 켜져 있으면 바로 연결. VS Code 원격처럼 젯슨에 서버를 설치하지 않아요.</p></div>
+        <div class="card"><span class="ico">🪟</span><h3>창을 오갈 필요가 없어요</h3><p>왼쪽에서 파일 열고, 아래에서 명령 실행, 오른쪽에서 CPU·GPU·온도 확인. 끊기면 자동으로 다시 연결돼요.</p></div>
+        <div class="card"><span class="ico">🤖</span><h3>AI에게 맡길 수 있어요</h3><p>Claude·Cursor 같은 AI가 젯슨에서 명령을 실행하고 파일을 고쳐요. 위험한 명령은 내가 허용해야만 실행돼요.</p></div>
       </div>
-    </details>
-    <details>
-      <summary>나만의 테마 만들기</summary>
-      <p>테마 폴더에 JSON 파일을 넣고 앱을 다시 켜면 메뉴에 추가돼요. 같은 <code>id</code>면 기본 테마를 덮어써요.</p>
-      <ul><li>Windows: <code>%APPDATA%\nanoterm\themes\</code></li><li>Linux: <code>~/.config/nanoterm/themes/</code></li></ul>
-      <p class="note">기본 테마와 같은 형식(<code>id</code>, <code>label</code>, <code>kind</code>, <code>ui</code>, <code>status</code>, <code>terminal.theme</code>, <code>editor</code>, <code>font</code>)을 따르면 돼요. 네온 효과(<code>ui.backgroundCss</code>, <code>effects</code>)와 마스코트(<code>mascot</code>)도 같은 방식으로 정의해요.</p>
-    </details>
-  </section>
+    </section>
 
-  <section id="mcp">
-    <h2>AI에 연결하기 (MCP)</h2>
-    <p>MCP를 지원하는 AI(Claude·Cursor·VS Code·Codex CLI·Gemini CLI 등)에게 "젯슨 온도 확인해 줘", "~/ros2_ws 빌드하고 오류 고쳐 줘"처럼 말하면 JetDeck을 통해 젯슨에서 바로 실행해요.</p>
-    <ol>
-      <li>연결 관리 화면 위쪽 <b>MCP 연결</b> 버튼 — 연결된 AI가 있으면 버튼 옆에 <b>초록 불</b>이 켜져요</li>
-      <li>위쪽 탭에서 쓰는 AI를 고르면 그 AI에 맞는 설정이 나와요. 복사해서 붙여 넣고(또는 명령을 한 번 실행하고) 그 프로그램을 다시 켜기 — Claude Desktop·Claude Code·Cursor·VS Code·Codex CLI·Gemini CLI, 그 밖의 MCP 프로그램은 실행 명령만 알려 줘요</li>
-      <li>"orin에 연결해서 GPU 온도 알려 줘"</li>
-    </ol>
-    <table>
-      <tr><th>도구</th><th>하는 일</th></tr>
-      <tr><td><code>list_hosts</code> · <code>connect</code></td><td>저장된 젯슨 목록·연결 (JetDeck에 탭이 열림)</td></tr>
-      <tr><td><code>run_command</code></td><td>명령 실행 후 출력·종료 코드</td></tr>
-      <tr><td><code>read_file</code> · <code>write_file</code> · <code>list_dir</code></td><td>파일 읽기·쓰기, 폴더 목록</td></tr>
-      <tr><td><code>get_status</code></td><td>CPU·GPU·메모리·온도·전력·전원 모드·ROS 버전</td></tr>
-    </table>
-    <p class="note">🛡️ <code>rm</code>·<code>sudo</code>·<code>reboot</code>·<code>kill</code>·<code>dd</code>·<code>apt</code>·<code>systemctl</code>, <code>&gt;</code>로 덮어쓰기 같은 명령은 JetDeck 화면에서 <b>허용</b>을 눌러야 실행돼요. JetDeck은 이 PC 안(127.0.0.1)에서 비밀 토큰을 가진 요청만 받아요.</p>
-  </section>
+    <section id="compare">
+      <span class="eyebrow">보통은 vs JetDeck</span>
+      <h2>외우고 설치하던 일을 버튼 하나로</h2>
+      <div class="vs" role="table" aria-label="보통 방법과 JetDeck 비교">
+        <div class="vs-row vs-head" role="row"><span role="columnheader">하고 싶은 일</span><span class="old" role="columnheader">보통은</span><span></span><span class="new" role="columnheader">JetDeck이면</span></div>
+        <div class="vs-row" role="row"><span class="task" role="cell">명령 실행</span><span class="old" role="cell">PuTTY · Windows 터미널</span><span class="arrow" aria-hidden="true">→</span><span class="new" role="cell">탭·분할 터미널</span></div>
+        <div class="vs-row" role="row"><span class="task" role="cell">코드 편집</span><span class="old" role="cell">VS Code 원격 (젯슨에 서버 설치)</span><span class="arrow" aria-hidden="true">→</span><span class="new" role="cell">탐색기 + 편집기, 젯슨에 설치 없음</span></div>
+        <div class="vs-row" role="row"><span class="task" role="cell">상태 확인</span><span class="old" role="cell"><code>jtop</code> 설치, <code>tegrastats</code> 해석</span><span class="arrow" aria-hidden="true">→</span><span class="new" role="cell">CPU 코어·GPU·온도·전력 그래프</span></div>
+        <div class="vs-row" role="row"><span class="task" role="cell">파일 주고받기</span><span class="old" role="cell">WinSCP · <code>scp</code></span><span class="arrow" aria-hidden="true">→</span><span class="new" role="cell">끌어다 놓기</span></div>
+        <div class="vs-row" role="row"><span class="task" role="cell">Jupyter·대시보드</span><span class="old" role="cell"><code>ssh -L 8888:…</code> 외우기</span><span class="arrow" aria-hidden="true">→</span><span class="new" role="cell">버튼 한 번 포트 포워딩</span></div>
+        <div class="vs-row" role="row"><span class="task" role="cell">ROS2 토픽 확인</span><span class="old" role="cell"><code>ros2 topic hz …</code> 반복 입력</span><span class="arrow" aria-hidden="true">→</span><span class="new" role="cell">목록에서 골라 실시간 Hz</span></div>
+        <div class="vs-row" role="row"><span class="task" role="cell">네트워크가 죽었을 때</span><span class="old" role="cell">PuTTY 시리얼 설정</span><span class="arrow" aria-hidden="true">→</span><span class="new" role="cell">포트 고르고 연결</span></div>
+      </div>
+    </section>
 
-  <section id="keys">
-    <h2>단축키</h2>
-    <table>
-      <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd></td><td>명령 팔레트 (모든 기능)</td></tr>
-      <tr><td><kbd>Ctrl</kbd>+<kbd>P</kbd></td><td>파일 이름으로 열기</td></tr>
-      <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>저장</td></tr>
-      <tr><td><kbd>Ctrl</kbd>+<kbd>`</kbd></td><td>터미널 패널 접기/펴기</td></tr>
-      <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>`</kbd></td><td>새 터미널</td></tr>
-      <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>V</kbd> (터미널)</td><td>선택이 있으면 복사, 없으면 중단(^C) / 붙여넣기</td></tr>
-      <tr><td><kbd>Esc</kbd></td><td>ROS2·파일 전송·포워딩 화면 닫기</td></tr>
-    </table>
-    <h3>🔒 데이터와 보안</h3>
-    <ul>
-      <li><b>비밀번호</b>는 OS 암호화로 이 PC에만 (Windows: DPAPI, Linux: 키링). 다른 PC로 복사해도 못 풀어요.</li>
-      <li><b>호스트 키</b>는 처음 접속 때 확인하고, 바뀌면 경고해요. <code>~/.ssh/known_hosts</code>도 함께 읽어요 (쓰지 않음).</li>
-      <li><b>저장 위치</b>: Windows <code>%APPDATA%\nanoterm\</code>, Linux <code>~/.config/nanoterm/</code></li>
-      <li>앱이 밖으로 보내는 건 <b>젯슨과의 SSH 연결</b>과 <b>업데이트 확인(GitHub Releases)</b> 뿐이에요.</li>
-    </ul>
-  </section>
+    <section id="screens">
+      <span class="eyebrow">화면으로 보기</span>
+      <h2>자주 쓰는 화면</h2>
+      <div class="spot">
+        <figure><img class="shot" loading="lazy" src="images/hosts.png" width="1264" height="761" alt="연결 관리 화면"></figure>
+        <div><h3>🔌 연결 관리</h3><ul>
+          <li>젯슨을 저장해 두고 클릭 한 번으로 접속</li>
+          <li>지금 켜져 있는 기기는 온라인 표시</li>
+          <li>IP를 몰라도 <b>주변 Jetson 찾기</b>로 자동 검색</li>
+        </ul></div>
+      </div>
+      <div class="spot">
+        <figure><img class="shot" loading="lazy" src="images/files.png" width="1264" height="761" alt="파일 전송 화면"></figure>
+        <div><h3>📁 파일 전송</h3><ul>
+          <li>내 PC ↔ 젯슨 양쪽 목록을 나란히</li>
+          <li>끌어다 놓으면 끝, 폴더도 통째로</li>
+          <li>진행률·속도 표시, 전송 대기열과 취소</li>
+        </ul></div>
+      </div>
+      <div class="spot">
+        <figure><img class="shot" loading="lazy" src="images/ros.png" width="1280" height="720" alt="ROS2 화면"></figure>
+        <div><h3>🤖 ROS2 도구</h3><ul>
+          <li>토픽·노드 목록에서 골라 echo·hz 실시간 확인</li>
+          <li>launch 파일을 찾아 바로 실행</li>
+          <li>서비스 호출, 파라미터 설정, bag 재생·녹화</li>
+        </ul></div>
+      </div>
+      <div class="spot">
+        <figure><img class="shot" loading="lazy" src="images/forward.png" width="1264" height="761" alt="포트 포워딩 화면"></figure>
+        <div><h3>🔀 포트 포워딩</h3><ul>
+          <li>Jupyter·TensorBoard는 프리셋으로 한 번에</li>
+          <li>접속하면 자동으로 시작</li>
+          <li>로컬·원격·동적(SOCKS5) 모두 지원</li>
+        </ul></div>
+      </div>
+      <div class="spot">
+        <figure><img class="shot" loading="lazy" src="images/serial.png" width="1264" height="761" alt="시리얼 연결 설정"></figure>
+        <div><h3>🔧 시리얼 콘솔</h3><ul>
+          <li>SSH가 안 될 때의 비상구</li>
+          <li>포트와 속도만 고르면 끝 (젯슨 기본 115200)</li>
+          <li>케이블이 빠졌다 꽂혀도 자동 재연결</li>
+        </ul></div>
+      </div>
+    </section>
+  </div>
 
-  <section id="help">
-    <h2>문제 해결</h2>
-    <details>
-      <summary>증상별 확인할 것</summary>
-      <table>
-        <tr><th>증상</th><th>확인할 것</th></tr>
-        <tr><td>"응답이 없어요"</td><td>젯슨 전원·네트워크, 같은 공유기인지, IP가 바뀌지 않았는지</td></tr>
-        <tr><td>"인증 실패"</td><td>사용자 이름·비밀번호. 키 인증이면 키 파일 경로</td></tr>
-        <tr><td>"비밀번호 로그인을 막아 두었어요"</td><td>그 기기는 SSH 키로만 접속돼요. ① 등록된 키가 있으면 인증 방식을 "SSH 키"로 ② 없으면 <code>ssh-keygen -t ed25519</code>로 만든 뒤 <code>id_ed25519.pub</code>를 젯슨 <code>~/.ssh/authorized_keys</code>에 추가 ③ 본인 젯슨이면 <code>/etc/ssh/sshd_config.d/</code>의 <code>PasswordAuthentication no</code>를 <code>yes</code>로 바꾸고 <code>sudo systemctl restart ssh</code></td></tr>
-        <tr><td>암호 걸린 SSH 키</td><td><code>ssh-add</code>로 ssh-agent에 등록한 뒤 연결</td></tr>
-        <tr><td>ROS2 목록이 비어 있음</td><td>노드가 실행 중인지, <code>~/.bashrc</code>에 ROS <code>setup.bash</code>를 source하는 줄이 있는지</td></tr>
-        <tr><td>시리얼 "다른 프로그램이 쓰고 있어요"</td><td>PuTTY·Arduino IDE가 같은 포트를 열고 있는지</td></tr>
-        <tr><td>시리얼 글자가 깨짐</td><td>속도(baud). 젯슨 디버그 콘솔은 115200</td></tr>
-        <tr><td>시스템 모니터가 비어 있음</td><td>Linux가 아니거나 <code>/proc</code>·<code>/sys</code>를 읽을 수 없는 기기 (젯슨이 아니어도 일반 리눅스는 표시돼요)</td></tr>
-        <tr><td>파일이 편집기로 안 열림</td><td>5MB 초과, 바이너리, UTF-8이 아닌 파일은 열지 않아요 (원본 보호)</td></tr>
-      </table>
+  <div class="band">
+    <div class="wrap">
+      <section id="features">
+        <span class="eyebrow">전체 기능</span>
+        <h2>필요한 건 다 들어 있어요</h2>
+        <p class="sec-lead">모든 기능은 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> 명령 팔레트에서 바로 찾을 수 있어요.</p>
+
+        <div class="group">
+          <h3>💻 매일 쓰는 기본 <span>터미널·편집·파일</span></h3>
+          <div class="grid">
+            <div class="card"><span class="ico">⌨️</span><h3>터미널</h3><p>여러 탭·분할·터미널만 크게. 끊기면 자동 재연결하고 탭은 그대로.</p></div>
+            <div class="card"><span class="ico">📝</span><h3>원격 편집</h3><p>VS Code와 같은 Monaco 편집기. 젯슨에서 바뀐 파일은 덮어쓰기 전에 알려 줘요.</p></div>
+            <div class="card"><span class="ico">📁</span><h3>파일·폴더 전송</h3><p>내 PC ↔ 젯슨 끌어다 놓기, 폴더 통째 올리기·내려받기, 동시 4개 전송.</p></div>
+            <div class="card"><span class="ico">▦</span><h3>분할 화면</h3><p>연결을 최대 4개까지 한 화면에 나란히(좌우) 또는 바둑판으로.</p></div>
+            <div class="card"><span class="ico">📌</span><h3>스니펫</h3><p>자주 쓰는 명령은 저장해 두고 팔레트에서 바로 실행.</p></div>
+            <div class="card"><span class="ico">🔀</span><h3>포트 포워딩</h3><p>로컬·원격·동적(SOCKS5). Jupyter·TensorBoard 프리셋, 접속하면 자동 시작.</p></div>
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>📊 상태 확인·관리 <span>모니터·여러 기기</span></h3>
+          <div class="grid">
+            <div class="card"><span class="ico">📊</span><h3>시스템 모니터</h3><p>코어별 CPU·GPU·메모리·온도·전력, JetPack·CUDA 버전. 전원 모드 전환, 절전·재부팅, Wake-on-LAN. 라즈베리 파이 같은 일반 리눅스도 지원.</p></div>
+            <div class="card"><span class="ico">🗂</span><h3>여러 기기 대시보드</h3><p>저장한 기기마다 CPU·GPU·메모리·온도·전력 카드를 한 화면에. 누르면 그 기기로 이동.</p></div>
+            <div class="card"><span class="ico">📈</span><h3>기록·프로세스·AI 활동</h3><p>최근 1시간 모니터 그래프와 CSV, 프로세스 종료, AI·다른 SSH 접속이 한 일 기록.</p></div>
+            <div class="card"><span class="ico">🐳</span><h3>Docker</h3><p>컨테이너·이미지 목록, 시작·정지·재시작·삭제, 로그 보기.</p></div>
+            <div class="card"><span class="ico">🔑</span><h3>SSH 키 마법사</h3><p>이 PC의 키를 만들어 기기에 등록하고, 비밀번호 없이 접속하도록 한 번에.</p></div>
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>🤖 로봇·하드웨어 <span>ROS2·시리얼·카메라·화면</span></h3>
+          <div class="grid">
+            <div class="card"><span class="ico">🤖</span><h3>ROS2 도구</h3><p>토픽·노드 목록과 info, echo·hz 실시간, launch 바로 실행. 서비스 호출, 파라미터 읽기·설정, bag 정보·재생·녹화.</p></div>
+            <div class="card"><span class="ico">🔧</span><h3>시리얼 콘솔</h3><p>SSH가 안 될 때의 비상구. 포트와 속도만 고르면 끝.</p></div>
+            <div class="card"><span class="ico">📷</span><h3>카메라 미리보기</h3><p>기기의 USB 카메라를 장치·해상도·fps를 골라 앱 안에서 실시간으로.</p></div>
+            <div class="card"><span class="ico">🖥</span><h3>기기 화면 보기</h3><p>VNC 데스크톱을 앱 안에서 바로(SSH 터널). VNC·RDP 뷰어 열기, rviz·rqt 같은 X11 창은 PC의 X 서버로.</p></div>
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>✨ AI·편의 <span>MCP·테마·언어</span></h3>
+          <div class="grid">
+            <div class="card"><span class="ico">✳️</span><h3>MCP 연결</h3><p>Claude·Cursor·Codex 등 AI가 젯슨에서 명령 실행·파일 편집. 연결되면 버튼에 불이 켜져요.</p></div>
+            <div class="card"><span class="ico">🎨</span><h3>테마 17종</h3><p>기본 다크·라이트부터 네온, 마스코트 테마까지. 다시 시작 없이 바로 바뀌어요.</p></div>
+            <div class="card"><span class="ico">🌐</span><h3>영어 화면</h3><p>위쪽 언어 버튼으로 한국어 ↔ English.</p></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <section id="mcp">
+      <span class="eyebrow">AI에 연결하기 (MCP)</span>
+      <h2>"젯슨 온도 확인해 줘"라고 말하세요</h2>
+      <p class="sec-lead">MCP를 지원하는 AI(Claude·Cursor·VS Code·Codex CLI·Gemini CLI 등)에게 말하면 JetDeck을 통해 젯슨에서 바로 실행해요.</p>
+      <div class="chat">
+        <div class="bubble">orin에 연결해서 GPU 온도 알려 줘</div>
+        <div class="bubble">~/ros2_ws 빌드하고 오류 고쳐 줘</div>
+      </div>
+      <ol class="steps">
+        <li>연결 관리 화면 위쪽 <b>MCP 연결</b> 버튼을 눌러요. 연결된 AI가 있으면 버튼 옆에 <b>초록 불</b>이 켜져요.</li>
+        <li>위쪽 탭에서 <b>쓰는 AI를 고르면</b> 맞는 설정이 나와요. 복사해서 붙여 넣고(또는 명령을 한 번 실행하고) 그 프로그램을 다시 켜요.</li>
+        <li>AI에게 <b>평소처럼 말하면</b> 끝. 그 밖의 MCP 프로그램은 실행 명령만 알려 줘요.</li>
+      </ol>
+      <div class="callout">🛡️ <code>rm</code>·<code>sudo</code>·<code>reboot</code>·<code>kill</code>·<code>dd</code>·<code>apt</code>·<code>systemctl</code>, <code>&gt;</code>로 덮어쓰기 같은 명령은 JetDeck 화면에서 <b>허용</b>을 눌러야 실행돼요. JetDeck은 이 PC 안(127.0.0.1)에서 비밀 토큰을 가진 요청만 받아요.</div>
+      <details>
+        <summary>AI가 쓸 수 있는 도구 보기</summary>
+        <div class="table"><table>
+          <tr><th>도구</th><th>하는 일</th></tr>
+          <tr><td><code>list_hosts</code> · <code>connect</code></td><td>저장된 젯슨 목록·연결 (JetDeck에 탭이 열림)</td></tr>
+          <tr><td><code>run_command</code></td><td>명령 실행 후 출력·종료 코드</td></tr>
+          <tr><td><code>read_file</code> · <code>write_file</code> · <code>list_dir</code></td><td>파일 읽기·쓰기, 폴더 목록</td></tr>
+          <tr><td><code>get_status</code></td><td>CPU·GPU·메모리·온도·전력·전원 모드·ROS 버전</td></tr>
+        </table></div>
+      </details>
+    </section>
+
+    <section id="themes">
+      <span class="eyebrow">테마 17종</span>
+      <h2>오래 보는 화면, 취향대로</h2>
+      <p class="sec-lead">연결 관리 화면 오른쪽 위 <b>테마</b> 메뉴에서 바로 바뀌어요. 모든 테마는 글자·터미널 색 대비 4.5:1 이상, 터미널과 편집기는 항상 불투명해요.</p>
+      <div class="grid">
+        <div class="card"><h3>에센셜</h3><p>매일 쓰는 기본 4종</p></div>
+        <div class="card"><h3>컬러 무드</h3><p>노을·숲·바다·종이·레트로 등 분위기 7종</p></div>
+        <div class="card"><h3>네온 사인</h3><p>그라데이션 배경과 유리 패널, 연결 중일 때만 창 테두리가 빛나요</p></div>
+        <div class="card"><h3>마스코트</h3><p>모모·볼트·두두가 연결 상태에 따라 표정을 바꾸고 한마디씩 해요</p></div>
+      </div>
+      <div class="themes" style="margin-top:18px">
+        <figure><img loading="lazy" src="images/theme-limited-bloom.jpg" alt="모모의 꽃잎 공방"><figcaption>모모의 꽃잎 공방</figcaption></figure>
+        <figure><img loading="lazy" src="images/theme-limited-night.jpg" alt="볼트의 한밤 격납고"><figcaption>볼트의 한밤 격납고</figcaption></figure>
+        <figure><img loading="lazy" src="images/theme-limited-festival.jpg" alt="두두의 터널 공사장"><figcaption>두두의 터널 공사장</figcaption></figure>
+        <figure><img loading="lazy" src="images/theme-cyber-neon.jpg" alt="네온 시안"><figcaption>네온 시안</figcaption></figure>
+        <figure><img loading="lazy" src="images/theme-neon-phosphor.jpg" alt="네온 그린"><figcaption>네온 그린</figcaption></figure>
+        <figure><img loading="lazy" src="images/theme-neon-overdrive.jpg" alt="네온 마젠타"><figcaption>네온 마젠타</figcaption></figure>
+      </div>
+      <details>
+        <summary>나머지 11종 보기 (에센셜 4 · 컬러 무드 7)</summary>
+        <div class="themes" style="margin-top:12px">
+          <figure><img loading="lazy" src="images/theme-lime-dark.jpg" alt="기본 다크 (라임)"><figcaption>기본 다크 (라임)</figcaption></figure>
+          <figure><img loading="lazy" src="images/theme-light-olive.jpg" alt="라이트 (베이지 · 올리브)"><figcaption>라이트 (베이지 · 올리브)</figcaption></figure>
+          <figure><img loading="lazy" src="images/theme-mono-dark.jpg" alt="다크 (모노 블랙)"><figcaption>다크 (모노 블랙)</figcaption></figure>
+          <figure><img loading="lazy" src="images/theme-cotton.jpg" alt="솜사탕 (파스텔)"><figcaption>솜사탕 (파스텔)</figcaption></figure>
+          <figure><img loading="lazy" src="images/theme-sunset.jpg" alt="노을 (코랄 · 보라)"><figcaption>노을 (코랄 · 보라)</figcaption></figure>
+          <figure><img loading="lazy" src="images/theme-forest.jpg" alt="숲 (세이지 그린)"><figcaption>숲 (세이지 그린)</figcaption></figure>
+          <figure><img loading="lazy" src="images/theme-ocean.jpg" alt="딥 오션 (하늘색)"><figcaption>딥 오션 (하늘색)</figcaption></figure>
+          <figure><img loading="lazy" src="images/theme-paper.jpg" alt="종이 (세피아)"><figcaption>종이 (세피아)</figcaption></figure>
+          <figure><img loading="lazy" src="images/theme-retro-crt.jpg" alt="레트로 터미널 (CRT 그린)"><figcaption>레트로 터미널 (CRT 그린)</figcaption></figure>
+          <figure><img loading="lazy" src="images/theme-lavender.jpg" alt="라벤더 (연보라)"><figcaption>라벤더 (연보라)</figcaption></figure>
+          <figure><img loading="lazy" src="images/theme-high-contrast.jpg" alt="고대비 (검정 · 노랑)"><figcaption>고대비 (검정 · 노랑)</figcaption></figure>
+        </div>
+      </details>
+      <details>
+        <summary>나만의 테마 만들기</summary>
+        <p>테마 폴더에 JSON 파일을 넣고 앱을 다시 켜면 메뉴에 추가돼요. 같은 <code>id</code>면 기본 테마를 덮어써요.</p>
+        <ul><li>Windows: <code>%APPDATA%\nanoterm\themes\</code></li><li>Linux: <code>~/.config/nanoterm/themes/</code></li></ul>
+        <p class="note">기본 테마와 같은 형식(<code>id</code>, <code>label</code>, <code>kind</code>, <code>ui</code>, <code>status</code>, <code>terminal.theme</code>, <code>editor</code>, <code>font</code>)을 따르면 돼요. 네온 효과(<code>ui.backgroundCss</code>, <code>effects</code>)와 마스코트(<code>mascot</code>)도 같은 방식으로 정의해요.</p>
+      </details>
+    </section>
+
+    <section id="security">
+      <span class="eyebrow">데이터와 보안</span>
+      <h2>안심하고 쓰세요</h2>
+      <div class="grid">
+        <div class="card"><span class="ico">🔒</span><h3>비밀번호는 이 PC에만</h3><p>OS 암호화로 저장해요 (Windows: DPAPI, Linux: 키링). 다른 PC로 복사해도 못 풀어요.</p></div>
+        <div class="card"><span class="ico">🛡️</span><h3>호스트 키 확인</h3><p>처음 접속 때 확인하고, 바뀌면 경고해요. <code>~/.ssh/known_hosts</code>도 함께 읽어요 (쓰지 않음).</p></div>
+        <div class="card"><span class="ico">📡</span><h3>밖으로 보내는 건 두 가지뿐</h3><p><b>젯슨과의 SSH 연결</b>과 <b>업데이트 확인(GitHub Releases)</b>.</p></div>
+      </div>
+      <p class="note">저장 위치: Windows <code>%APPDATA%\nanoterm\</code>, Linux <code>~/.config/nanoterm/</code></p>
+    </section>
+
+    <section id="install">
+      <span class="eyebrow">설치</span>
+      <h2>내 컴퓨터에 맞는 걸 받으세요</h2>
+      <p class="sec-lead">젯슨 쪽 준비물은 <b>SSH 서버</b> 하나뿐이에요 (JetPack 기본 상태 그대로 OK).</p>
+      <div class="grid">
+        <div class="card os"><span class="ico">🪟</span><h3>Windows 10 / 11</h3>
+          <p>설치 파일을 받아 실행하세요. 설치 없이 쓰려면 포터블. 새 버전이 나오면 앱이 알아서 받아 두고 알려 줘요.</p>
+          <a class="btn main" data-dl="win" href="https://github.com/Dawnilove/JetDeck/releases/latest">설치 파일 받기</a>
+          <a class="btn" data-dl="portable" href="https://github.com/Dawnilove/JetDeck/releases/latest" style="margin-top:8px">포터블 받기</a></div>
+        <div class="card os"><span class="ico">🐧</span><h3>Linux (x64)</h3>
+          <p>PC용 AppImage. 받아서 실행 권한만 주면 돼요.</p>
+          <pre>chmod +x JetDeck-*-x86_64.AppImage &amp;&amp; ./JetDeck-*-x86_64.AppImage</pre>
+          <a class="btn" data-dl="linux" href="https://github.com/Dawnilove/JetDeck/releases/latest">AppImage 받기</a></div>
+        <div class="card os"><span class="ico">🟩</span><h3>Linux arm64 (젯슨 본체)</h3>
+          <p>젯슨에서 직접 쓸 때만 받으세요. PC에서 젯슨에 접속한다면 PC용을 받으면 돼요.</p>
+          <pre>chmod +x JetDeck-*-arm64.AppImage &amp;&amp; ./JetDeck-*-arm64.AppImage</pre>
+          <a class="btn" data-dl="linux-arm" href="https://github.com/Dawnilove/JetDeck/releases/latest">arm64 받기</a></div>
+      </div>
+      <div class="callout"><b>"Windows의 PC 보호"</b> 창이 뜨면 <b>추가 정보 → 실행</b>을 누르세요. 아직 코드 서명 인증서가 없어서 나오는 안내예요.</div>
+      <details>
+        <summary>Linux에서 안 열릴 때</summary>
+        <ul class="note">
+          <li>FUSE 2 설치: <code>sudo apt install libfuse2</code> (Ubuntu 24.04는 <code>libfuse2t64</code>)</li>
+          <li>비밀번호 저장에는 키링(GNOME Keyring 등)이 필요해요. 키링이 없으면 비밀번호를 저장하지 않으니 SSH 키를 쓰세요.</li>
+        </ul>
+      </details>
+    </section>
+
+    <section id="start">
+      <span class="eyebrow">3분 시작</span>
+      <h2>세 단계면 연결돼요</h2>
+      <ol class="steps">
+        <li><b>새 연결</b>에 젯슨 IP·사용자 이름·비밀번호를 넣고 <b>저장 후 연결</b>
+          <ul><li>USB 케이블로 직접 연결했다면 <code>192.168.55.1</code></li><li>IP를 모르면 오른쪽 <b>주변 Jetson 찾기</b></li></ul></li>
+        <li>처음 접속 때 뜨는 <b>호스트 키 확인</b>에서 지문을 보고 <b>신뢰하고 연결</b></li>
+        <li>왼쪽에서 파일 열기 · 아래에서 명령 실행 · 오른쪽에서 상태 확인. 모든 기능은 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd></li>
+      </ol>
+
+      <h3 style="margin-top:36px">기능별 사용법</h3>
+      <details>
+        <summary>🤖 ROS2 도구</summary>
+        <p>왼쪽 활동 바의 <b>ROS2</b> 버튼. 젯슨의 <code>ros2</code> 명령을 SSH로 실행해 보여 줘요.</p>
+        <ul>
+          <li><b>토픽</b> — 발행·구독 노드, 메시지 보기(echo), 주기 측정(hz). 멈추거나 화면을 닫으면 젯슨 쪽 명령도 끝나요.</li>
+          <li><b>노드</b> — 연결된 토픽·서비스</li>
+          <li><b>launch</b> — 내 워크스페이스와 설치된 패키지의 launch 파일을 찾아, 확인 후 새 터미널 탭에서 <code>ros2 launch</code></li>
+        </ul>
+        <p class="note">ROS 환경은 젯슨 <code>~/.bashrc</code>의 <code>source /opt/ros/&lt;배포판&gt;/setup.bash</code>를 따라요.</p>
+      </details>
+      <details>
+        <summary>🔧 시리얼 콘솔</summary>
+        <ol>
+          <li>젯슨 USB(장치 모드)를 PC에 꽂거나, USB-TTL 어댑터를 디버그 UART에 연결</li>
+          <li><b>새 연결 → 시리얼</b>에서 포트와 속도(젯슨 기본 <b>115200</b>) → <b>저장 후 연결</b></li>
+          <li>케이블이 빠졌다 다시 꽂히면 자동으로 다시 연결해요.</li>
+        </ol>
+        <p class="note">Linux에서 "접근 권한이 없어요"가 뜨면 <code>sudo usermod -aG dialout $USER</code> 후 다시 로그인.</p>
+      </details>
+      <details>
+        <summary>🖥 기기 화면·X11·카메라·언어</summary>
+        <ul>
+          <li><b>기기 화면 보기</b> — 기기에 VNC 서버가 켜져 있어야 해요(없으면 앱이 켜는 방법을 안내). 연결 설정의 원격 화면 종류를 VNC로 두고 작업 공간의 <b>원격 화면</b>을 누르면 앱 안에서 열려요.</li>
+          <li><b>X11 화면</b> — 연결 설정에서 "X11 화면"을 켜고 PC에서 X 서버(<code>winget install marha.VcXsrv</code>, XLaunch에서 <i>Disable access control</i>)를 실행한 뒤 터미널에서 <code>rviz2</code> 등을 실행하면 PC 창으로 떠요.</li>
+          <li><b>카메라</b> — 활동 버튼의 <b>카메라</b>에서 장치·해상도·fps를 고르고 시작. 기기에 <code>v4l2-ctl</code>·<code>gst-launch-1.0</code>이 있어야 해요.</li>
+          <li><b>언어</b> — 위쪽 언어 버튼. 바꾸면 화면을 다시 불러와서 열린 연결이 닫혀요(바꾸기 전에 확인).</li>
+        </ul>
+      </details>
+      <details>
+        <summary>⌨️ 단축키</summary>
+        <div class="table"><table>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd></td><td>명령 팔레트 (모든 기능)</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>P</kbd></td><td>파일 이름으로 열기</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>저장</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>`</kbd></td><td>터미널 패널 접기/펴기</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>`</kbd></td><td>새 터미널</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>V</kbd> (터미널)</td><td>선택이 있으면 복사, 없으면 중단(^C) / 붙여넣기</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>ROS2·파일 전송·포워딩 화면 닫기</td></tr>
+        </table></div>
+      </details>
+    </section>
+
+    <section id="help">
+      <span class="eyebrow">문제 해결</span>
+      <h2>잘 안 될 때</h2>
+      <details>
+        <summary>증상별 확인할 것</summary>
+        <div class="table"><table>
+          <tr><th>증상</th><th>확인할 것</th></tr>
+          <tr><td>"응답이 없어요"</td><td>젯슨 전원·네트워크, 같은 공유기인지, IP가 바뀌지 않았는지</td></tr>
+          <tr><td>"인증 실패"</td><td>사용자 이름·비밀번호. 키 인증이면 키 파일 경로</td></tr>
+          <tr><td>"비밀번호 로그인을 막아 두었어요"</td><td>그 기기는 SSH 키로만 접속돼요. ① 등록된 키가 있으면 인증 방식을 "SSH 키"로 ② 없으면 <code>ssh-keygen -t ed25519</code>로 만든 뒤 <code>id_ed25519.pub</code>를 젯슨 <code>~/.ssh/authorized_keys</code>에 추가 ③ 본인 젯슨이면 <code>/etc/ssh/sshd_config.d/</code>의 <code>PasswordAuthentication no</code>를 <code>yes</code>로 바꾸고 <code>sudo systemctl restart ssh</code></td></tr>
+          <tr><td>암호 걸린 SSH 키</td><td><code>ssh-add</code>로 ssh-agent에 등록한 뒤 연결</td></tr>
+          <tr><td>ROS2 목록이 비어 있음</td><td>노드가 실행 중인지, <code>~/.bashrc</code>에 ROS <code>setup.bash</code>를 source하는 줄이 있는지</td></tr>
+          <tr><td>시리얼 "다른 프로그램이 쓰고 있어요"</td><td>PuTTY·Arduino IDE가 같은 포트를 열고 있는지</td></tr>
+          <tr><td>시리얼 글자가 깨짐</td><td>속도(baud). 젯슨 디버그 콘솔은 115200</td></tr>
+          <tr><td>시스템 모니터가 비어 있음</td><td>Linux가 아니거나 <code>/proc</code>·<code>/sys</code>를 읽을 수 없는 기기 (젯슨이 아니어도 일반 리눅스는 표시돼요)</td></tr>
+          <tr><td>파일이 편집기로 안 열림</td><td>5MB 초과, 바이너리, UTF-8이 아닌 파일은 열지 않아요 (원본 보호)</td></tr>
+        </table></div>
+      </details>
       <p class="note">그래도 안 되면 <a href="https://github.com/Dawnilove/JetDeck/issues">Issues</a>에 증상과 앱 버전(연결 관리 화면 왼쪽 위 <code>vX.Y.Z</code>)을 적어 주세요.</p>
-    </details>
-  </section>
+    </section>
 
-  <section id="versions">
-    <h2>이전 버전</h2>
-    <p class="note">예전 버전이 필요할 때 받으세요. 최신 버전을 권장해요.</p>
-    <ul id="vlist"><li>목록을 불러오는 중…</li></ul>
-  </section>
+    <section id="versions">
+      <span class="eyebrow">이전 버전</span>
+      <h2>예전 버전 받기</h2>
+      <p class="note">예전 버전이 필요할 때 받으세요. 최신 버전을 권장해요.</p>
+      <ul id="vlist"><li>목록을 불러오는 중…</li></ul>
+    </section>
 
-  <section id="roadmap">
-    <h2>앞으로</h2>
-    <table>
-      <tr><th>버전</th><th>계획</th></tr>
-      <tr><td>4.0 (출시)</td><td>폴더 전송·스니펫 · ROS2 서비스·파라미터·bag · VNC·RDP · Docker · 모니터 기록·프로세스·AI 활동 · 기기 화면 · 대시보드 · 카메라 · X11 · 영어 화면</td></tr>
-      <tr><td>다음</td><td>쓰시면서 불편한 점부터 다듬어요. 바라는 기능은 <a href="https://github.com/Dawnilove/JetDeck/issues">Issues</a>에 남겨 주세요.</td></tr>
-    </table>
-  </section>
+    <section id="roadmap">
+      <span class="eyebrow">앞으로</span>
+      <h2>로드맵</h2>
+      <div class="table"><table>
+        <tr><th>버전</th><th>계획</th></tr>
+        <tr><td>4.0 (출시)</td><td>폴더 전송·스니펫 · ROS2 서비스·파라미터·bag · VNC·RDP · Docker · 모니터 기록·프로세스·AI 활동 · 기기 화면 · 대시보드 · 카메라 · X11 · 영어 화면</td></tr>
+        <tr><td>다음</td><td>쓰시면서 불편한 점부터 다듬어요. 바라는 기능은 <a href="https://github.com/Dawnilove/JetDeck/issues">Issues</a>에 남겨 주세요.</td></tr>
+      </table></div>
+    </section>
 
-  <section id="tech">
-    <h2>만든 기술</h2>
-    <p>기기에는 아무것도 설치하지 않고 SSH로만 동작해요.</p>
-    <p>Electron 45 · React 19 · TypeScript · ssh2(SSH·SFTP·포워딩) · xterm.js(터미널) · Monaco Editor(편집기) · serialport(시리얼) · noVNC(기기 화면) · electron-updater(자동 업데이트). 빌드는 electron-vite + electron-builder(Windows NSIS·포터블, Linux AppImage).</p>
-    <p class="note">noVNC는 <a href="https://github.com/novnc/noVNC/blob/master/LICENSE.txt">MPL-2.0 라이선스</a>로 제공돼요.</p>
-  </section>
+    <section id="tech">
+      <span class="eyebrow">만든 기술</span>
+      <p>기기에는 아무것도 설치하지 않고 SSH로만 동작해요.</p>
+      <p class="note">Electron 45 · React 19 · TypeScript · ssh2(SSH·SFTP·포워딩) · xterm.js(터미널) · Monaco Editor(편집기) · serialport(시리얼) · noVNC(기기 화면) · electron-updater(자동 업데이트). 빌드는 electron-vite + electron-builder(Windows NSIS·포터블, Linux AppImage).</p>
+      <p class="note">noVNC는 <a href="https://github.com/novnc/noVNC/blob/master/LICENSE.txt">MPL-2.0 라이선스</a>로 제공돼요.</p>
+    </section>
+
+    <section class="final">
+      <h2>젯슨 작업, 오늘부터 한 창에서</h2>
+      <p>개인·교육 목적이라면 무료예요.</p>
+      <div class="cta"><a class="btn main" data-dl="win" href="https://github.com/Dawnilove/JetDeck/releases/latest">⬇ Windows용 무료 다운로드</a><a class="btn" href="#install">다른 OS 보기</a></div>
+    </section>
+  </div>
 </main>
 
 <footer>
   <div class="wrap">
     <a href="https://github.com/Dawnilove/JetDeck">GitHub</a> ·
     <a href="https://github.com/Dawnilove/JetDeck/tree/main/docs/releases">릴리스 노트</a> ·
+    <a href="#roadmap">로드맵</a> ·
     <a href="https://github.com/Dawnilove/JetDeck/issues">버그 신고</a><br>
     Copyright © 2026 Dawnilove. 개인·교육 목적 무료. 설치 파일의 수정·재배포·역설계는 허용하지 않습니다.
   </div>
@@ -329,9 +549,9 @@ fetch("https://api.github.com/repos/Dawnilove/JetDeck/releases?per_page=100")
   .then(function (rels) {
     rels = rels.filter(function (r) { return !r.draft && !r.prerelease; });
     var latest = rels[0];
-    [["dl-win", KINDS[0][1]], ["dl-portable", KINDS[1][1]], ["dl-linux", KINDS[2][1]], ["dl-linux-arm", KINDS[3][1]]].forEach(function (p) {
+    [["win", KINDS[0][1]], ["portable", KINDS[1][1]], ["linux", KINDS[2][1]], ["linux-arm", KINDS[3][1]]].forEach(function (p) {
       var a = pick(latest, p[1]);
-      if (a) document.getElementById(p[0]).href = a.browser_download_url;
+      if (a) document.querySelectorAll('[data-dl="' + p[0] + '"]').forEach(function (el) { el.href = a.browser_download_url; });
     });
     document.getElementById("ver").textContent = "최신 버전 " + latest.tag_name;
 
