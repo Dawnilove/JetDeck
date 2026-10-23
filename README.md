@@ -55,6 +55,7 @@
 
 - **Windows 10 / 11** — 설치 파일 또는 포터블. "PC 보호" 창이 뜨면 **추가 정보 → 실행**
 - **Linux (x64)** — AppImage, `chmod +x` 후 실행
+- **Linux (arm64, Jetson 등)** — AppImage, `chmod +x` 후 실행
 - **젯슨 쪽 준비물** — SSH 서버만 켜져 있으면 돼요 (JetPack 기본 상태 그대로 OK)
 
 ## 🐞 문제가 있나요?
