@@ -77,6 +77,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
     <a class="btn main" id="dl-win" href="https://github.com/Dawnilove/JetDeck/releases/latest">⬇ Windows 설치 파일</a>
     <a class="btn" id="dl-portable" href="https://github.com/Dawnilove/JetDeck/releases/latest">Windows 포터블</a>
     <a class="btn" id="dl-linux" href="https://github.com/Dawnilove/JetDeck/releases/latest">Linux AppImage</a>
+    <a class="btn" id="dl-linux-arm" href="https://github.com/Dawnilove/JetDeck/releases/latest">Linux arm64 (Jetson)</a>
   </div>
   <p class="ver" id="ver">최신 버전은 아래 <a href="#versions">이전 버전</a> 목록에서도 볼 수 있어요.</p>
   <img class="shot" src="images/workspace.png" alt="JetDeck 작업 공간: 왼쪽 탐색기, 가운데 편집기와 터미널, 오른쪽 시스템 모니터">
@@ -130,6 +131,9 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
     </ol>
     <h3>Linux (x64)</h3>
     <pre>chmod +x JetDeck-*-x86_64.AppImage &amp;&amp; ./JetDeck-*-x86_64.AppImage</pre>
+    <h3>Linux arm64 (Jetson 등)</h3>
+    <p>젯슨 본체에서 바로 쓰려면 arm64판을 받으세요. (PC에서 젯슨에 접속하는 용도라면 PC용을 받으면 돼요.)</p>
+    <pre>chmod +x JetDeck-*-arm64.AppImage &amp;&amp; ./JetDeck-*-arm64.AppImage</pre>
     <ul class="note">
       <li>안 열리면 FUSE 2 설치: <code>sudo apt install libfuse2</code> (Ubuntu 24.04는 <code>libfuse2t64</code>)</li>
       <li>비밀번호 저장에는 키링(GNOME Keyring 등)이 필요해요. 키링이 없으면 비밀번호를 저장하지 않으니 SSH 키를 쓰세요.</li>
@@ -271,7 +275,6 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
     <h2>앞으로</h2>
     <table>
       <tr><th>버전</th><th>계획</th></tr>
-      <tr><td>2.2.1</td><td>젯슨용 arm64판 (Jetson에서 바로 실행)</td></tr>
       <tr><td>2.3 – 2.5</td><td>폴더 전송·스니펫 · ROS2 bag·파라미터·서비스 · VNC·RDP 바로 열기</td></tr>
       <tr><td>2.6 – 2.9</td><td>Docker 패널 · 모니터 기록·프로세스 관리 · 여러 기기 대시보드 · 카메라 미리보기</td></tr>
       <tr><td>3.0</td><td>X11 화면 전달 (rviz·rqt)</td></tr>
@@ -290,7 +293,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
 
 <script>
 // 설치 파일 이름에 버전이 붙어서 고정 링크를 쓸 수 없으니 릴리스 목록에서 찾아 연결한다. 실패하면 기본 링크(Releases 페이지)가 남는다.
-var KINDS = [["설치", /Setup-.*\.exe$/], ["포터블", /portable\.exe$/], ["Linux", /\.AppImage$/]];
+var KINDS = [["설치", /Setup-.*\.exe$/], ["포터블", /portable\.exe$/], ["Linux", /x86_64\.AppImage$/], ["Linux arm64", /arm64\.AppImage$/]];
 function pick(rel, re) { return rel.assets.find(function (a) { return re.test(a.name); }); }
 function link(text, href) { var a = document.createElement("a"); a.textContent = text; a.href = href; return a; }
 
@@ -299,7 +302,7 @@ fetch("https://api.github.com/repos/Dawnilove/JetDeck/releases?per_page=100")
   .then(function (rels) {
     rels = rels.filter(function (r) { return !r.draft && !r.prerelease; });
     var latest = rels[0];
-    [["dl-win", KINDS[0][1]], ["dl-portable", KINDS[1][1]], ["dl-linux", KINDS[2][1]]].forEach(function (p) {
+    [["dl-win", KINDS[0][1]], ["dl-portable", KINDS[1][1]], ["dl-linux", KINDS[2][1]], ["dl-linux-arm", KINDS[3][1]]].forEach(function (p) {
       var a = pick(latest, p[1]);
       if (a) document.getElementById(p[0]).href = a.browser_download_url;
     });
