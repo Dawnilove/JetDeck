@@ -98,7 +98,9 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
     <div class="grid" style="margin-top:18px">
       <div class="card"><h3>⌨️ 터미널</h3><p>여러 탭·분할·터미널만 크게. 끊기면 자동 재연결하고 탭은 그대로.</p></div>
       <div class="card"><h3>📝 원격 편집</h3><p>VS Code와 같은 Monaco 편집기. 젯슨에서 바뀐 파일은 덮어쓰기 전에 알려 줘요.</p></div>
-      <div class="card"><h3>📊 시스템 모니터</h3><p>코어별 CPU·GPU·메모리·온도·전력. 전원 모드 전환, 절전·재부팅, Wake-on-LAN.</p></div>
+      <div class="card"><h3>📊 시스템 모니터</h3><p>코어별 CPU·GPU·메모리·온도·전력, JetPack·CUDA 버전. 라즈베리 파이 같은 일반 리눅스도 지원. 전원 모드 전환, 절전·재부팅, Wake-on-LAN.</p></div>
+      <div class="card"><h3>▦ 분할 화면</h3><p>연결을 최대 4개까지 한 화면에 나란히(좌우) 또는 바둑판으로. 탭을 끌어다 놓거나 분할 버튼으로.</p></div>
+      <div class="card"><h3>🔑 SSH 키 마법사</h3><p>이 PC의 키를 만들어 Device에 등록하고, 비밀번호 없이 접속하도록 한 번에 바꿔요.</p></div>
       <div class="card"><h3>🤖 ROS2 도구</h3><p>토픽·노드 목록과 info, echo·hz 실시간, launch 파일 바로 실행.</p></div>
       <div class="card"><h3>🔧 시리얼 콘솔</h3><p>SSH가 안 될 때의 비상구. 포트와 속도만 고르면 끝.</p></div>
       <div class="card"><h3>📁 파일 전송</h3><p>내 PC ↔ 젯슨 양쪽 목록, 끌어다 놓기, 진행률·속도, 전송 취소.</p></div>
@@ -252,7 +254,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
         <tr><td>ROS2 목록이 비어 있음</td><td>노드가 실행 중인지, <code>~/.bashrc</code>에 ROS <code>setup.bash</code>를 source하는 줄이 있는지</td></tr>
         <tr><td>시리얼 "다른 프로그램이 쓰고 있어요"</td><td>PuTTY·Arduino IDE가 같은 포트를 열고 있는지</td></tr>
         <tr><td>시리얼 글자가 깨짐</td><td>속도(baud). 젯슨 디버그 콘솔은 115200</td></tr>
-        <tr><td>시스템 모니터가 비어 있음</td><td>젯슨이 아니거나 <code>tegrastats</code>가 없는 기기</td></tr>
+        <tr><td>시스템 모니터가 비어 있음</td><td>Linux가 아니거나 <code>/proc</code>·<code>/sys</code>를 읽을 수 없는 기기 (젯슨이 아니어도 일반 리눅스는 표시돼요)</td></tr>
         <tr><td>파일이 편집기로 안 열림</td><td>5MB 초과, 바이너리, UTF-8이 아닌 파일은 열지 않아요 (원본 보호)</td></tr>
       </table>
       <p class="note">그래도 안 되면 <a href="https://github.com/Dawnilove/JetDeck/issues">Issues</a>에 증상과 앱 버전(연결 관리 화면 왼쪽 위 <code>vX.Y.Z</code>)을 적어 주세요.</p>
@@ -269,7 +271,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
     <h2>앞으로</h2>
     <table>
       <tr><th>버전</th><th>계획</th></tr>
-      <tr><td>2.2</td><td>라즈베리파이·우분투 등 일반 리눅스 모니터 · JetPack/CUDA 버전 표시 · SSH 키 마법사 · 젯슨용 arm64판</td></tr>
+      <tr><td>2.2.1</td><td>젯슨용 arm64판 (Jetson에서 바로 실행)</td></tr>
       <tr><td>2.3 – 2.5</td><td>폴더 전송·스니펫 · ROS2 bag·파라미터·서비스 · VNC·RDP 바로 열기</td></tr>
       <tr><td>2.6 – 2.9</td><td>Docker 패널 · 모니터 기록·프로세스 관리 · 여러 기기 대시보드 · 카메라 미리보기</td></tr>
       <tr><td>3.0</td><td>X11 화면 전달 (rviz·rqt)</td></tr>
