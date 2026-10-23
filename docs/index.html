@@ -107,6 +107,14 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
       <div class="card"><h3>📁 파일 전송</h3><p>내 PC ↔ 젯슨 양쪽 목록, 끌어다 놓기, 진행률·속도, 전송 취소.</p></div>
       <div class="card"><h3>🔀 포트 포워딩</h3><p>로컬·원격·동적(SOCKS5). Jupyter·TensorBoard 프리셋, 접속하면 자동 시작.</p></div>
       <div class="card"><h3>✳️ MCP 연결</h3><p>Claude·Cursor·Codex 등 AI가 젯슨에서 명령 실행·파일 편집. 위험한 명령은 내가 허용해야 실행. 연결되면 버튼에 불이 켜져요.</p></div>
+      <div class="card"><h3>📂 폴더 전송·스니펫</h3><p>폴더 통째 올리기·내려받기, 동시 4개 전송. 자주 쓰는 명령은 스니펫으로 저장해 팔레트에서 실행.</p></div>
+      <div class="card"><h3>🤖 ROS2 서비스·파라미터·bag</h3><p>서비스 호출, 노드 파라미터 읽기·설정, bag 목록·정보·재생·녹화.</p></div>
+      <div class="card"><h3>🖥 기기 화면 보기</h3><p>VNC 데스크톱을 앱 안에서 바로(noVNC, SSH 터널). VNC·RDP를 PC 뷰어/mstsc로 여는 버튼도 있어요. rviz·rqt 같은 X11 창은 PC의 X 서버로.</p></div>
+      <div class="card"><h3>🐳 Docker</h3><p>컨테이너·이미지 목록, 시작·정지·재시작·삭제, 로그 보기.</p></div>
+      <div class="card"><h3>📈 기록·프로세스·AI 활동</h3><p>최근 1시간 모니터 그래프와 CSV, 프로세스 종료, AI·다른 SSH 접속이 한 일 기록.</p></div>
+      <div class="card"><h3>🗂 여러 기기 대시보드</h3><p>저장한 기기마다 CPU·GPU·메모리·온도·전력 카드를 한 화면에. 카드를 누르면 그 기기로 이동.</p></div>
+      <div class="card"><h3>📷 카메라 미리보기</h3><p>기기의 USB 카메라를 장치·해상도·fps를 골라 앱 안에서 실시간으로.</p></div>
+      <div class="card"><h3>🌐 영어 화면</h3><p>위쪽 언어 버튼으로 한국어 ↔ English.</p></div>
     </div>
   </section>
 
@@ -164,6 +172,13 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
       <li>케이블이 빠졌다 다시 꽂히면 자동으로 다시 연결해요.</li>
     </ol>
     <p class="note">Linux에서 "접근 권한이 없어요"가 뜨면 <code>sudo usermod -aG dialout $USER</code> 후 다시 로그인.</p>
+    <h3>🖥 기기 화면·X11·카메라 (4.0)</h3>
+    <ul>
+      <li><b>기기 화면 보기</b> — 기기에 VNC 서버가 켜져 있어야 해요(없으면 앱이 켜는 방법을 안내). 연결 설정의 원격 화면 종류를 VNC로 두고 작업 공간의 <b>원격 화면</b>을 누르면 앱 안에서 열려요.</li>
+      <li><b>X11 화면</b> — 연결 설정에서 "X11 화면"을 켜고 PC에서 X 서버(<code>winget install marha.VcXsrv</code>, XLaunch에서 <i>Disable access control</i>)를 실행한 뒤 터미널에서 <code>rviz2</code> 등을 실행하면 PC 창으로 떠요.</li>
+      <li><b>카메라</b> — 활동 버튼의 <b>카메라</b>에서 장치·해상도·fps를 고르고 시작. 기기에 <code>v4l2-ctl</code>·<code>gst-launch-1.0</code>이 있어야 해요.</li>
+      <li><b>언어</b> — 위쪽 언어 버튼. 바꾸면 화면을 다시 불러와서 열린 연결이 닫혀요(바꾸기 전에 확인).</li>
+    </ul>
   </section>
 
   <section id="themes">
@@ -275,10 +290,16 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
     <h2>앞으로</h2>
     <table>
       <tr><th>버전</th><th>계획</th></tr>
-      <tr><td>2.3 – 2.5</td><td>폴더 전송·스니펫 · ROS2 bag·파라미터·서비스 · VNC·RDP 바로 열기</td></tr>
-      <tr><td>2.6 – 2.9</td><td>Docker 패널 · 모니터 기록·프로세스 관리 · 여러 기기 대시보드 · 카메라 미리보기</td></tr>
-      <tr><td>3.0</td><td>X11 화면 전달 (rviz·rqt)</td></tr>
+      <tr><td>4.0 (출시)</td><td>폴더 전송·스니펫 · ROS2 서비스·파라미터·bag · VNC·RDP · Docker · 모니터 기록·프로세스·AI 활동 · 기기 화면 · 대시보드 · 카메라 · X11 · 영어 화면</td></tr>
+      <tr><td>다음</td><td>쓰시면서 불편한 점부터 다듬어요. 바라는 기능은 <a href="https://github.com/Dawnilove/JetDeck/issues">Issues</a>에 남겨 주세요.</td></tr>
     </table>
+  </section>
+
+  <section id="tech">
+    <h2>만든 기술</h2>
+    <p>기기에는 아무것도 설치하지 않고 SSH로만 동작해요.</p>
+    <p>Electron 45 · React 19 · TypeScript · ssh2(SSH·SFTP·포워딩) · xterm.js(터미널) · Monaco Editor(편집기) · serialport(시리얼) · noVNC(기기 화면) · electron-updater(자동 업데이트). 빌드는 electron-vite + electron-builder(Windows NSIS·포터블, Linux AppImage).</p>
+    <p class="note">noVNC는 <a href="https://github.com/novnc/noVNC/blob/master/LICENSE.txt">MPL-2.0 라이선스</a>로 제공돼요.</p>
   </section>
 </main>
 

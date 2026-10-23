@@ -26,6 +26,11 @@
 - 🔧 **시리얼 콘솔** — SSH가 안 될 때의 비상구
 - 📁 **파일 전송** · 🔀 **포트 포워딩** — 끌어다 놓기, Jupyter 포트 버튼 한 번
 - ✳️ **MCP 연결** — Claude·Cursor·Codex 등 AI가 젯슨에서 명령 실행·파일 편집 (위험한 명령은 내가 허용해야 실행, 연결되면 버튼에 불이 켜짐)
+- 📂 **폴더 전송·명령 스니펫** — 폴더 통째, 동시 4개 전송 / 자주 쓰는 명령 저장
+- 🤖 **ROS2 서비스·파라미터·bag** — 호출, 읽기·설정, 재생·녹화
+- 🖥 **기기 화면** — VNC 내장 뷰어(noVNC), VNC·RDP 외부 실행, X11(rviz·rqt)을 PC의 X 서버로
+- 🐳 **Docker** · 📈 **모니터 기록·프로세스·AI 활동** · 🗂 **여러 기기 대시보드** · 📷 **카메라 미리보기**
+- 🌐 **영어 화면** — 한국어 ↔ English
 - 🎨 **테마 17종**
 
 <p align="center">
@@ -57,6 +62,10 @@
 - **Linux (x64)** — AppImage, `chmod +x` 후 실행
 - **Linux (arm64, Jetson 등)** — AppImage, `chmod +x` 후 실행
 - **젯슨 쪽 준비물** — SSH 서버만 켜져 있으면 돼요 (JetPack 기본 상태 그대로 OK)
+
+## 🛠 만든 기술
+
+기기에는 아무것도 설치하지 않고 SSH로만 동작해요. Electron 45 · React 19 · TypeScript · ssh2 · xterm.js · Monaco Editor · serialport · noVNC · electron-updater, 빌드는 electron-vite + electron-builder. noVNC는 [MPL-2.0](https://github.com/novnc/noVNC/blob/master/LICENSE.txt) 라이선스예요.
 
 ## 🐞 문제가 있나요?
 
