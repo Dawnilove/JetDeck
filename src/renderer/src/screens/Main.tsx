@@ -216,7 +216,7 @@ export default function Main({ onConnect, theme, onTheme, onGuide, onNews, onMcp
           </MascotOr>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span className="display" style={{ fontWeight: 600, fontSize: 16 }}>JetDeck</span>
-            <span className="dim" style={{ fontSize: 12 }}>{tr('Jetson에 특화된 SSH 클라이언트')}{version && ` · v${version}`}</span>
+            <span className="dim" style={{ fontSize: 12 }}>{tr('Jetson에 특화된, 모든 리눅스 기기를 위한 SSH 클라이언트')}{version && ` · v${version}`}</span>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
