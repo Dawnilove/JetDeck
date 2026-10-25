@@ -148,18 +148,28 @@ export function probe(host: string, port: number): Promise<number | null> {
 }
 
 // 가져온 호스트 추가: 이미 같은 기기(주소·포트·사용자, 시리얼은 포트)가 있으면 건너뜀
-export function addHosts(items: Host[]): { added: number; skipped: number } {
+// overwrite: 같은 기기(hostKey)가 있으면 가져온 값으로 바꿈. id·저장된 비밀번호·Wake 설정은 그대로 둠
+export function addHosts(items: Host[], overwrite = false): { added: number; updated: number; skipped: number } {
   const list = load()
   const seen = new Set(list.map(hostKey))
   let added = 0
+  let updated = 0
   for (const h of items) {
-    if (seen.has(hostKey(h))) continue
+    if (seen.has(hostKey(h))) {
+      const i = overwrite ? list.findIndex((x) => hostKey(x) === hostKey(h)) : -1
+      if (i >= 0) {
+        const old = list[i]
+        list[i] = { ...h, id: old.id, wake: old.wake, passwordEnc: h.auth === 'password' ? old.passwordEnc : undefined }
+        updated++
+      }
+      continue
+    }
     seen.add(hostKey(h))
     list.push(h)
     added++
   }
-  if (added) save(list)
-  return { added, skipped: items.length - added }
+  if (added || updated) save(list)
+  return { added, updated, skipped: items.length - added - updated }
 }
 
 export function registerStoreIpc(): void {

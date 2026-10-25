@@ -184,15 +184,16 @@ export default function Main({ onConnect, theme, onTheme, onGuide, onNews, onMcp
       setMsg({ text: errText(e), ok: false })
     }
   }
+  const [overwriteCfg, setOverwriteCfg] = useState(false) // 가져올 때 같은 기기·스니펫을 덮어쓸지 (기본은 새 것만 추가)
   const importCfg = async () => {
     try {
-      const r = await window.api.importSettings()
+      const r = await window.api.importSettings(overwriteCfg)
       if (r.canceled) return
-      const m = mergeSnippets(readSnips(), r.snippets)
-      if (m.added) localStorage.setItem('snippets', JSON.stringify(m.list))
+      const m = mergeSnippets(readSnips(), r.snippets, overwriteCfg)
+      if (m.added || m.updated) localStorage.setItem('snippets', JSON.stringify(m.list))
       if (r.theme && themeList().some((t) => t.id === r.theme)) onTheme(r.theme)
       await refresh()
-      setMsg({ text: tr('가져왔어요: 호스트 {0}개 추가 (이미 있어서 {1}개 건너뜀, 올바르지 않은 {2}개), 스니펫 {3}개 추가. 비밀번호 방식 호스트는 호스트를 눌러 비밀번호를 다시 입력하세요.', r.added, r.skipped, r.invalid, m.added), ok: true })
+      setMsg({ text: tr('가져왔어요: 호스트 {0}개 추가 (이미 있어서 {1}개 건너뜀, 올바르지 않은 {2}개), 스니펫 {3}개 추가. 비밀번호 방식 호스트는 호스트를 눌러 비밀번호를 다시 입력하세요.', r.added, r.skipped, r.invalid, m.added) + (overwriteCfg ? ' ' + tr('덮어쓴 것: 호스트 {0}개, 스니펫 {1}개.', r.updated, m.updated) : ''), ok: true })
     } catch (e) {
       setMsg({ text: errText(e), ok: false })
     }
@@ -229,6 +230,10 @@ export default function Main({ onConnect, theme, onTheme, onGuide, onNews, onMcp
         <Button size={40} onClick={onNews}>{tr('업데이트 내용')}</Button>
         <Button size={40} onClick={exportCfg} title={tr('호스트 목록·스니펫·테마를 파일로 저장 (비밀번호 제외)')}>{tr('설정 내보내기')}</Button>
         <Button size={40} onClick={importCfg} title={tr('내보낸 설정 파일에서 호스트·스니펫·테마를 가져와요')}>{tr('설정 가져오기')}</Button>
+        <label className="dim" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }} title={tr('같은 주소·사용자의 호스트와 이름이 같은 스니펫을 가져온 것으로 바꿔요 (저장된 비밀번호는 그대로)')}>
+          <input type="checkbox" checked={overwriteCfg} onChange={(e) => setOverwriteCfg(e.target.checked)} />
+          {tr('같은 것은 덮어쓰기')}
+        </label>
         <span className="field" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {tr('테마')}
           <ThemePicker value={theme} onChange={onTheme} />

@@ -5,7 +5,7 @@ import { tr } from './i18n.mts'
 import { buildExport, parseImport, type Snip } from './settingsio.mts'
 import { addHosts, clean, listHosts, type Host } from './store'
 
-export type ImportResult = { canceled: true } | { canceled?: false; added: number; skipped: number; invalid: number; snippets: Snip[]; theme: string }
+export type ImportResult = { canceled: true } | { canceled?: false; added: number; updated: number; skipped: number; invalid: number; snippets: Snip[]; theme: string }
 
 // 설정 내보내기·가져오기: 호스트는 main이 저장소에서 읽고 쓰고, 스니펫·테마(화면 localStorage)는 화면이 넘기고 받음
 export function registerSettingsIpc(): void {
@@ -18,7 +18,7 @@ export function registerSettingsIpc(): void {
     return { path: r.filePath, hosts: hosts.length, snippets: (Array.isArray(snippets) ? snippets : []).length, masked }
   })
 
-  ipcMain.handle('settings:import', async (e): Promise<ImportResult> => {
+  ipcMain.handle('settings:import', async (e, overwrite?: boolean): Promise<ImportResult> => {
     const r = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender)!, { title: tr('설정 가져오기'), defaultPath: app.getPath('documents'), filters: [{ name: 'JSON', extensions: ['json'] }], properties: ['openFile'] })
     if (r.canceled || !r.filePaths[0]) return { canceled: true }
     if (statSync(r.filePaths[0]).size > 2_000_000) throw new Error(tr('설정 파일이 너무 커요'))
@@ -33,6 +33,6 @@ export function registerSettingsIpc(): void {
         invalid++
       }
     }
-    return { ...addHosts(ok), invalid, snippets, theme }
+    return { ...addHosts(ok, overwrite === true), invalid, snippets, theme }
   })
 }

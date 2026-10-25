@@ -49,8 +49,16 @@ export function parseImport(text: string): { hosts: Record<string, unknown>[]; s
 export const hostKey = (h: { kind?: string; host?: string; port?: number; username?: string; serialPath?: string }): string =>
   h.kind === 'serial' ? `serial:${(h.serialPath ?? '').toLowerCase()}` : `ssh:${(h.host ?? '').toLowerCase()}:${h.port}:${h.username}`
 
-export const mergeSnippets = (cur: Snip[], inc: Snip[]): { list: Snip[]; added: number } => {
-  const seen = new Set(cur.map((s) => s.name + '\u0000' + s.cmd))
-  const add = inc.filter((s) => !seen.has(s.name + '\u0000' + s.cmd))
-  return { list: [...cur, ...add], added: add.length }
+// overwrite: 이름이 같고 명령이 다른 스니펫은 가져온 것으로 바꿈 (기본은 새 것만 추가)
+export const mergeSnippets = (cur: Snip[], inc: Snip[], overwrite = false): { list: Snip[]; added: number; updated: number } => {
+  const list = [...cur]
+  let added = 0
+  let updated = 0
+  for (const s of inc) {
+    if (list.some((c) => c.name === s.name && c.cmd === s.cmd)) continue
+    const i = overwrite ? list.findIndex((c) => c.name === s.name) : -1
+    if (i >= 0) (list[i] = s, updated++)
+    else (list.push(s), added++)
+  }
+  return { list, added, updated }
 }

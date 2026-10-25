@@ -126,5 +126,8 @@ export const EN_G: Record<string, string> = {
   '내보낸 설정 파일에서 호스트·스니펫·테마를 가져와요': 'Import hosts, snippets and theme from an exported settings file',
   '설정을 저장했어요: {0} (호스트 {1}개, 스니펫 {2}개). 비밀번호는 들어 있지 않아요.': 'Settings saved: {0} ({1} hosts, {2} snippets). No passwords are included.',
   '비밀처럼 보이는 스니펫 값 {0}개는 가렸어요.': '{0} snippet value(s) that looked like secrets were masked.',
+  '덮어쓴 것: 호스트 {0}개, 스니펫 {1}개.': 'Overwritten: {0} host(s), {1} snippet(s).',
+  '같은 것은 덮어쓰기': 'Overwrite existing',
+  '같은 주소·사용자의 호스트와 이름이 같은 스니펫을 가져온 것으로 바꿔요 (저장된 비밀번호는 그대로)': 'Replace hosts with the same address and user, and snippets with the same name, by the imported ones (saved passwords are kept)',
   '가져왔어요: 호스트 {0}개 추가 (이미 있어서 {1}개 건너뜀, 올바르지 않은 {2}개), 스니펫 {3}개 추가. 비밀번호 방식 호스트는 호스트를 눌러 비밀번호를 다시 입력하세요.': 'Imported: {0} host(s) added ({1} skipped as already present, {2} invalid), {3} snippet(s) added. For password-based hosts, select the host and enter the password again.'
 }

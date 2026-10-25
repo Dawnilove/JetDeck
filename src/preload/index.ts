@@ -114,7 +114,7 @@ const api = {
   onSvcEnd: (cb: (id: string) => void) => on('svc:end', cb),
   // 설정 내보내기·가져오기 (호스트는 main, 스니펫·테마는 화면이 넘기고 받음)
   exportSettings: (snippets: Snip[], theme: string): Promise<{ path: string; hosts: number; snippets: number; masked: number } | null> => ipcRenderer.invoke('settings:export', snippets, theme),
-  importSettings: (): Promise<ImportResult> => ipcRenderer.invoke('settings:import'),
+  importSettings: (overwrite = false): Promise<ImportResult> => ipcRenderer.invoke('settings:import', overwrite),
   saveTermLog: (text: string, name: string): Promise<string | null> => ipcRenderer.invoke('termlog:save', text, name),
   // 기기 점검 (읽기 전용). smart=false면 SMART 생략
   healthRead: (connId: string, smart: boolean): Promise<Health> => ipcRenderer.invoke('health:read', connId, smart),

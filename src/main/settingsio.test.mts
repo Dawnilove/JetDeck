@@ -29,4 +29,7 @@ test('같은 기기 열쇠 · 스니펫 합치기', () => {
   const m = mergeSnippets([{ name: 'a', cmd: 'ls', enter: true }], [{ name: 'a', cmd: 'ls', enter: true }, { name: 'b', cmd: 'pwd', enter: true }])
   assert.equal(m.added, 1)
   assert.equal(m.list.length, 2)
+  const o = mergeSnippets([{ name: 'a', cmd: 'ls', enter: true }], [{ name: 'a', cmd: 'ls -l', enter: true }], true)
+  assert.deepEqual([o.added, o.updated, o.list[0].cmd], [0, 1, 'ls -l'])
+  assert.equal(mergeSnippets([{ name: 'a', cmd: 'ls', enter: true }], [{ name: 'a', cmd: 'ls -l', enter: true }]).added, 1)
 })
