@@ -82,9 +82,19 @@
 
 ## 🐞 문제가 있나요?
 
-[Issues](https://github.com/Dawnilove/JetDeck/issues)에 증상과 앱 버전을 적어 주세요.
+[Issues](https://github.com/Dawnilove/JetDeck/issues)에 증상과 앱 버전을 적어 주세요. 코드를 고쳐서 도와주고 싶다면 [CONTRIBUTING.md](CONTRIBUTING.md)를 읽어 주세요.
+
+## 🧑‍💻 소스 코드와 기여
+
+JetDeck은 오픈 소스예요. 이 저장소에 소스가 있어요.
+
+- **빌드하기**: [BUILDING.md](BUILDING.md)
+- **기여하기** (Issues · Pull Request): [CONTRIBUTING.md](CONTRIBUTING.md)
+- **보안 제보**: [SECURITY.md](SECURITY.md)
 
 ## 📄 라이선스
 
-Copyright © 2026 Dawnilove. All rights reserved.
-개인·교육 목적으로 무료로 사용할 수 있으며, 설치 파일의 수정·재배포·역설계는 허용하지 않습니다. 소스 코드는 공개하지 않습니다.
+코드는 [Apache License 2.0](LICENSE)이에요. Copyright © 2026 Dawnilove.
+이름 "JetDeck"·로고·마스코트는 코드와 별도예요 → [TRADEMARKS.md](TRADEMARKS.md).
+제3자 구성요소(noVNC MPL-2.0, 글꼴 OFL 등)는 [NOTICE](NOTICE)에 있어요.
+이전 버전(v4.3.0 이하)의 설치 파일도 같은 조건으로 사용·재배포할 수 있어요.
