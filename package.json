@@ -1,7 +1,7 @@
 {
   "name": "nanoterm",
-  "version": "4.3.1",
-  "description": "Jetson용 SSH 데스크톱 클라이언트",
+  "version": "4.4.0",
+  "description": "Jetson에 특화된, 모든 리눅스 기기를 위한 SSH 데스크톱 클라이언트",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",

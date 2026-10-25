@@ -3,12 +3,20 @@ export type Release = { version: string; ko: string[]; en: string[] }
 
 export const RELEASES: Release[] = [
   {
-    version: '4.3.1',
+    version: '4.4.0',
     ko: [
-      '안정화 점검: 설치판 업데이트(4.0.0 → 4.3.0)와 Git 표시·파일 검색·바꾸기·서비스·기기 점검·AI 터미널 읽기 승인, 영어 화면을 확인했어요 (동작 변경 없음)'
+      '터미널 출력 검색: 터미널 위쪽 돋보기로 스크롤백에서 글자를 찾고, 저장 버튼으로 터미널 내용을 로그 파일로 저장해요',
+      '진단 정보 저장: 문제를 신고할 때 붙일 정보(버전·OS·호스트 개수·최근 오류)를 파일로 저장해요 (기기 이름·주소·비밀번호는 빼고 비밀처럼 보이는 값은 가려요)',
+      '설정 가져오기에 "같은 것은 덮어쓰기" 옵션 추가 (같은 주소·사용자의 호스트와 이름이 같은 스니펫을 바꿔요, 저장된 비밀번호는 그대로)',
+      '편집기 빈 화면에 단축키 바로가기 추가',
+      '카메라 화면 이름을 "영상 입력 미리보기"로 바꾸고, 앱 소개 문구를 "Jetson에 특화된, 모든 리눅스 기기를 위한 SSH 클라이언트"로 다듬었어요'
     ],
     en: [
-      'Stability check: verified the installed-app update (4.0.0 → 4.3.0), Git markers, search & replace, services, Device check, the AI terminal-read approval and the English screens (no behavior changes)'
+      'Terminal output search: the magnifier above the terminal finds text in the scrollback, and the save button writes the terminal contents to a log file',
+      'Save diagnostics: writes info to attach to a bug report (version, OS, host count, recent errors) to a file — device names, addresses and passwords are left out and secret-looking values are masked',
+      'New "Overwrite existing" option for importing settings (replaces hosts with the same address and user and snippets with the same name; saved passwords are kept)',
+      'Shortcuts list on the empty editor screen',
+      'The Camera screen is now "Video input preview", and the app tagline reads "An SSH client built for Jetson, for any Linux device"'
     ]
   },
   {
