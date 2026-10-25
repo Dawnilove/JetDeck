@@ -356,6 +356,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
             <div class="card"><span class="ico">📈</span><h3>기록·프로세스·AI 활동</h3><p>최근 1시간 모니터 그래프와 CSV, 프로세스 종료, AI·다른 SSH 접속이 한 일 기록.</p></div>
             <div class="card"><span class="ico">⚙️</span><h3>서비스 (systemd)</h3><p>서비스 시작·정지·재시작, journalctl 로그 실시간. sudo 비밀번호는 새 터미널에서 직접 입력.</p></div>
             <div class="card"><span class="ico">🩺</span><h3>기기 점검</h3><p>온도·Wi-Fi 신호·디스크 SMART·실패한 서비스. 문제가 생기면 알림.</p></div>
+            <div class="card"><span class="ico">🧰</span><h3>업데이트·디스크·전원</h3><p>apt 업데이트 확인·설치, 큰 폴더 보기와 미리보기 후 정리, 부팅 방식·재부팅·종료 예약. 명령은 확인창에 그대로 보여 줘요.</p></div>
             <div class="card"><span class="ico">🐳</span><h3>Docker</h3><p>컨테이너·이미지 목록, 시작·정지·재시작·삭제, 로그 보기.</p></div>
             <div class="card"><span class="ico">🔑</span><h3>SSH 키 마법사</h3><p>이 PC의 키를 만들어 기기에 등록하고, 비밀번호 없이 접속하도록 한 번에.</p></div>
           </div>
@@ -583,7 +584,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
         <tr><td>4.0.x</td><td>설치판에서 나온 불편 수정 · 새 기능 화면 사진 보강 · 영어 화면 다듬기</td></tr>
         <tr><td>4.1 · 4.2 · 4.3 (출시)</td><td>시작 화면 · 빌드 도구(colcon·catkin_make, 오류 줄 → 파일 이동) · 원격 파일 검색·전체 바꾸기 · Git 상태 / systemd 서비스 시작·정지·journalctl 실시간 · 기기 점검(온도·Wi-Fi·SMART·실패한 서비스 알림) / 설정 내보내기·가져오기 · AI가 터미널 읽기(승인·비밀 가리기)</td></tr>
         <tr><td>4.4 (출시)</td><td>터미널 출력 검색·로그 저장 · 진단 정보 저장 · 설정 가져오기 덮어쓰기 · 편집기 단축키 바로가기</td></tr>
-        <tr><td>4.5 (준비 중)</td><td>기기 관리 확장: apt 업데이트 확인·설치 · 디스크 정리 도우미(큰 폴더 보기, 미리보기 후 정리) · 전원·부팅 설정(부팅 대상, 예약 재부팅·종료). 설치·정리는 항상 확인창을 거쳐요</td></tr>
+        <tr><td>4.5 (출시 준비)</td><td>기기 관리 확장: apt 업데이트 확인·설치 · 디스크 정리 도우미(큰 폴더 보기, 미리보기 후 정리) · 전원·부팅 설정(부팅 대상, 예약 재부팅·종료). 설치·정리는 항상 확인창을 거쳐요</td></tr>
         <tr><td>4.6 (선택)</td><td>원격 파일 비교(diff) · 편집기 탭 복원. 규모를 보고 넣을지 정해요</td></tr>
         <tr><td>5.0</td><td>플러그인 1단계: 파일에 명령과 표시 방식(글자·표)·버튼·확인창을 적으면 화면에 기능이 생겨요. 팩(묶음) 단위로 배포하고, 예제 팩과 첫 공식 팩(기기 관리 등)을 함께 제공해요</td></tr>
         <tr><td>5.1 ~ 5.x</td><td>플러그인 2단계: 흐르는 출력 · 입력 폼 · 시계열 그래프 · 탐색기 배지. ROS2·Git 상태·모니터 그래프·카메라 같은 기능을 팩으로 하나씩 옮겨요</td></tr>

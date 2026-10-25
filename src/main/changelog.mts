@@ -3,6 +3,21 @@ export type Release = { version: string; ko: string[]; en: string[] }
 
 export const RELEASES: Release[] = [
   {
+    version: '4.5.0',
+    ko: [
+      '기기 관리 도구: apt 업데이트 확인·설치, 디스크 사용량·큰 폴더 보기와 정리, 전원·부팅 설정(부팅 방식, 재부팅·종료 예약)을 한 화면에서 해요. 설치·정리·재부팅은 항상 확인창을 거치고, 정리는 미리보기를 본 뒤에만 실행돼요',
+      'sudo가 필요한 작업은 비밀번호 없이 먼저 시도하고, 비밀번호가 필요하면 새 터미널에서 직접 입력하게 해요 (앱은 비밀번호를 받지 않아요)',
+      '왼쪽 막대를 7개로 줄였어요: 같은 종류는 묶고 화면 위쪽 탭으로 오가요 (개발·실행 환경 / 연결·전송 / 기기 관리 / 화면·영상). 연결 관리는 위쪽 버튼으로 옮겼어요',
+      '맨 위의 언어·테마·설정 내보내기/가져오기·진단 정보 저장을 "환경 설정" 메뉴 하나로 모았어요'
+    ],
+    en: [
+      'Device tools: check and install apt updates, see disk usage and the largest folders and clean up, and manage power and boot settings (boot mode, scheduled reboot/shutdown) in one screen. Installs, cleanups and reboots always ask first, and cleanups only run after you have seen a preview',
+      'Tasks that need sudo are tried without a password first; if one is needed, it is typed in a new terminal by you (the app never takes your password)',
+      'The left bar is down to 7 icons: related screens are grouped and switched with tabs at the top (Dev & runtime / Connect & transfer / Device management / Display & video). The connection manager moved to a button in the top bar',
+      'Language, theme, export/import settings and save diagnostics at the top are now in a single "Settings" menu'
+    ]
+  },
+  {
     version: '4.4.0',
     ko: [
       '터미널 출력 검색: 터미널 위쪽 돋보기로 스크롤백에서 글자를 찾고, 저장 버튼으로 터미널 내용을 로그 파일로 저장해요',
