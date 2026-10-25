@@ -62,3 +62,8 @@ test('잘못된 항목만 빼고 나머지는 남김, id는 팩 전체에서 하
   assert.equal(r.errors.length, 2)
   assert.equal(validatePack({ id: 'x' }).pack, null)
 })
+
+test('표의 labels: {값: {ko, en}}만 허용', () => {
+  ok({ display: { type: 'table', match: '^(a)=(b)$', columns: [L('a'), L('b')], labels: { a: L('에이') } } })
+  assert.match(errs({ display: { type: 'table', match: '^(a)=(b)$', columns: [L('a'), L('b')], labels: { a: '에이' } } }), /labels/)
+})
