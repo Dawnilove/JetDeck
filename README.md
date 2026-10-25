@@ -52,7 +52,15 @@
   </tr>
   <tr>
     <td width="50%"><img src="docs/images/ros.png" alt="ROS2 화면"><br><sub><b>ROS2 도구</b> · 토픽·노드, echo·hz 실시간, launch 실행</sub></td>
-    <td width="50%"></td>
+    <td width="50%"><img src="docs/images/services.png" alt="서비스 화면"><br><sub><b>서비스</b> · systemd 시작·정지, 로그 보기</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/git.png" alt="탐색기의 Git 상태 표시"><br><sub><b>Git 상태</b> · 브랜치와 바뀐 파일 표시</sub></td>
+    <td width="50%"><img src="docs/images/search.png" alt="파일 검색·바꾸기 화면"><br><sub><b>검색·바꾸기</b> · 결과를 누르면 그 줄로 이동</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/health.png" alt="기기 점검 화면"><br><sub><b>기기 점검</b> · 온도·Wi-Fi·디스크·실패한 서비스</sub></td>
+    <td width="50%"><img src="docs/images/ai-read.png" alt="AI 터미널 읽기 승인 창"><br><sub><b>AI 터미널 읽기</b> · 허용을 먼저 묻고 비밀은 가림</sub></td>
   </tr>
 </table>
 
