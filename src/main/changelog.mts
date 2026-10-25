@@ -3,6 +3,19 @@ export type Release = { version: string; ko: string[]; en: string[] }
 
 export const RELEASES: Release[] = [
   {
+    version: '4.6.0',
+    ko: [
+      '파일 비교(diff): 편집기 위쪽의 "Device와 비교"로 기기에 저장된 파일과 지금 편집 중인 내용을 나란히 봐요 (오른쪽은 그대로 고칠 수 있어요)',
+      '저장하려는데 기기에서 파일이 바뀌어 있으면 바로 덮어쓰기를 묻지 않고, 달라진 부분을 보여 준 뒤 "덮어쓰기"를 고르게 해요',
+      '탭 복원: 연결을 다시 열면(앱을 다시 켠 뒤 포함) 열어 두었던 파일 탭과 보던 탭이 돌아와요. 기기별로 이 PC에만 기억하고, 저장하지 않은 내용은 복원하지 않아요'
+    ],
+    en: [
+      'File compare (diff): "Compare with device" above the editor shows the file saved on the device next to what you are editing (the right side stays editable)',
+      'If the file changed on the device since you opened it, saving no longer just asks to overwrite: it shows the differences first, then you choose "Overwrite"',
+      'Tab restore: when you open the connection again (also after restarting the app), the file tabs you had open and the active tab come back. Remembered per device on this PC only; unsaved edits are not restored'
+    ]
+  },
+  {
     version: '4.5.0',
     ko: [
       '기기 관리 도구: apt 업데이트 확인·설치, 디스크 사용량·큰 폴더 보기와 정리, 전원·부팅 설정(부팅 방식, 재부팅·종료 예약)을 한 화면에서 해요. 설치·정리·재부팅은 항상 확인창을 거치고, 정리는 미리보기를 본 뒤에만 실행돼요',
