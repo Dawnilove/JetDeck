@@ -130,6 +130,7 @@ export const EN_G: Record<string, string> = {
   '진단 정보를 저장했어요: {0}. 기기 이름·주소·비밀번호는 들어 있지 않아서 문제 신고에 붙여도 돼요.': 'Diagnostics saved: {0}. It contains no device names, addresses or passwords, so you can attach it to a bug report.',
   '문제 신고용 정보(버전·OS·호스트 개수·최근 오류)를 파일로 저장. 이름·주소·비밀은 빼요': 'Save info for bug reports (version, OS, host count, recent errors) to a file. Names, addresses and secrets are left out',
   '덮어쓴 것: 호스트 {0}개, 스니펫 {1}개.': 'Overwritten: {0} host(s), {1} snippet(s).',
+  '비밀이 가려진 스니펫 {0}개는 원래 것을 그대로 뒀어요.': 'Kept the original {0} snippet(s) whose secrets were masked in the file.',
   '같은 것은 덮어쓰기': 'Overwrite existing',
   '같은 주소·사용자의 호스트와 이름이 같은 스니펫을 가져온 것으로 바꿔요 (저장된 비밀번호는 그대로)': 'Replace hosts with the same address and user, and snippets with the same name, by the imported ones (saved passwords are kept)',
   '가져왔어요: 호스트 {0}개 추가 (이미 있어서 {1}개 건너뜀, 올바르지 않은 {2}개), 스니펫 {3}개 추가. 비밀번호 방식 호스트는 호스트를 눌러 비밀번호를 다시 입력하세요.': 'Imported: {0} host(s) added ({1} skipped as already present, {2} invalid), {3} snippet(s) added. For password-based hosts, select the host and enter the password again.'

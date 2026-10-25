@@ -19,6 +19,7 @@ import Build from './Build'
 import Forward, { type FwdRule } from './Forward'
 import Mascot, { MascotOr, MascotTip, MascotToast } from '../components/Mascot'
 import Monitor, { SUSPEND_ASK, suspendCommand } from '../components/Monitor'
+import { bufferRows } from '../components/TermSearch'
 import Terminal, { terms as xterms } from '../components/Terminal'
 import TermSearch from '../components/TermSearch'
 import { toLog } from './termsearch.mts'
@@ -315,10 +316,15 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
   const saveTermLog = async () => {
     const t = xterms.get(sess.activeTerm)
     if (!t) return
-    const b = t.buffer.active
-    const rows = Array.from({ length: b.length }, (_, i) => b.getLine(i)).map((l) => ({ text: l?.translateToString(true) ?? '', wrapped: !!l?.isWrapped }))
-    const path = await window.api.saveTermLog(toLog(rows), host.name)
-    if (path) t.write(`\r\n\x1b[33m[${tr('터미널 로그를 저장했어요')}: ${path}]\x1b[0m\r\n`)
+    const note = (msg: string) => t.write(`
+[33m[${msg}][0m
+`)
+    try {
+      const path = await window.api.saveTermLog(toLog(bufferRows(t)), host.name)
+      if (path) note(`${tr('터미널 로그를 저장했어요')}: ${path}`)
+    } catch (e) {
+      note(errText(e))
+    }
   }
   const newTerm = (split = false) => {
     const termId = crypto.randomUUID()

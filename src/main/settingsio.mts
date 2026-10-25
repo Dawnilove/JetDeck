@@ -49,16 +49,23 @@ export function parseImport(text: string): { hosts: Record<string, unknown>[]; s
 export const hostKey = (h: { kind?: string; host?: string; port?: number; username?: string; serialPath?: string }): string =>
   h.kind === 'serial' ? `serial:${(h.serialPath ?? '').toLowerCase()}` : `ssh:${(h.host ?? '').toLowerCase()}:${h.port}:${h.username}`
 
-// overwrite: 이름이 같고 명령이 다른 스니펫은 가져온 것으로 바꿈 (기본은 새 것만 추가)
-export const mergeSnippets = (cur: Snip[], inc: Snip[], overwrite = false): { list: Snip[]; added: number; updated: number } => {
+// 내보낼 때 가려진 명령인지 (가려진 것으로 덮어쓰면 원래 명령을 잃음)
+const isMasked = (cmd: string) => cmd.includes('••••') || cmd.includes('(개인 키는 가렸어요)') || cmd.includes(tr('(개인 키는 가렸어요)'))
+
+// overwrite: 이름이 같고 명령이 다른 스니펫은 가져온 것으로 바꿈 (기본은 새 것만 추가). 가려진 명령은 덮어쓰지 않고 kept로 셈.
+// 같은 이름이 여럿이어도 가져오기 전 목록의 서로 다른 항목에 하나씩만 맞춤
+export const mergeSnippets = (cur: Snip[], inc: Snip[], overwrite = false): { list: Snip[]; added: number; updated: number; kept: number } => {
   const list = [...cur]
+  const used = new Set<number>()
   let added = 0
   let updated = 0
+  let kept = 0
   for (const s of inc) {
-    if (list.some((c) => c.name === s.name && c.cmd === s.cmd)) continue
-    const i = overwrite ? list.findIndex((c) => c.name === s.name) : -1
-    if (i >= 0) (list[i] = s, updated++)
+    if (cur.some((c) => c.name === s.name && c.cmd === s.cmd)) continue
+    const i = overwrite ? cur.findIndex((c, k) => c.name === s.name && !used.has(k)) : -1
+    if (i >= 0 && isMasked(s.cmd)) (used.add(i), kept++)
+    else if (i >= 0) (used.add(i), (list[i] = s), updated++)
     else (list.push(s), added++)
   }
-  return { list, added, updated }
+  return { list, added, updated, kept }
 }

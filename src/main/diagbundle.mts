@@ -4,7 +4,8 @@ import { redact } from './activitylog.mts'
 import type { Act } from './activitylog.mts'
 
 const LOG_MAX = 100
-const LINE_MAX = 500
+const LINE_MAX = 500 // 보여줄 줄 길이: 가린 뒤에 자름 (자르고 가리면 경계에 걸린 비밀이 안 가려짐)
+const KEEP_MAX = 20_000 // 메모리에 모을 때만 거는 큰 한도 (shortcut: 이 길이에 걸친 비밀은 못 가림)
 const logs: string[] = []
 
 // 앱(main)의 console.warn/error를 최근 100줄만 메모리에 모음. 앱을 닫으면 사라짐
@@ -12,7 +13,7 @@ export function captureConsole(): void {
   for (const level of ['warn', 'error'] as const) {
     const orig = console[level].bind(console)
     console[level] = (...args: unknown[]) => {
-      logs.push(`${new Date().toISOString()} ${level} ${args.map((a) => (a instanceof Error ? a.message : String(a))).join(' ')}`.slice(0, LINE_MAX))
+      logs.push(`${new Date().toISOString()} ${level} ${args.map((a) => (a instanceof Error ? a.message : String(a))).join(' ')}`.slice(0, KEEP_MAX))
       if (logs.length > LOG_MAX) logs.shift()
       orig(...args)
     }
@@ -22,14 +23,16 @@ export const recentLogs = (): string[] => [...logs]
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 // 경로 구분자는 / \ 어느 쪽이든 맞게
+// 다른 영문·숫자 사이에 낀 건 가리지 않음 ('pi'가 'api'·'EPIPE' 안에서 가려지지 않게)
+const wordRe = (n: string) => new RegExp(`(?<![A-Za-z0-9])${esc(n)}(?![A-Za-z0-9])`, 'gi')
 const pathRe = (p: string) => new RegExp(p.split(/[\\/]+/).map(esc).join('[\\\\/]+'), 'gi')
 
 // 비밀(redact 규칙)에 더해 내 PC 사용자 이름·홈 경로·IP·.local 이름·MAC·저장된 기기 이름/주소/사용자를 가림
 export function scrub(text: string, o: { home?: string; user?: string; names?: string[] } = {}): string {
   let s = redact(text)
   if (o.home) s = s.replace(pathRe(o.home), '~')
-  for (const n of [...(o.names ?? [])].filter((x) => x && x.length >= 2).sort((a, b) => b.length - a.length)) s = s.replace(new RegExp(esc(n), 'gi'), '<name>')
-  if (o.user && o.user.length >= 2) s = s.replace(new RegExp(esc(o.user), 'gi'), '<user>')
+  for (const n of [...(o.names ?? [])].filter((x) => x && x.length >= 2).sort((a, b) => b.length - a.length)) s = s.replace(wordRe(n), '<name>')
+  if (o.user && o.user.length >= 2) s = s.replace(wordRe(o.user), '<user>')
   return s
     .replace(/\b\d{1,3}(?:\.\d{1,3}){3}\b/g, '<ip>')
     .replace(/\b[\w-]+(?:\.[\w-]+)*\.(?:local|lan|home)\b/gi, '<host>')
@@ -77,7 +80,7 @@ export function buildDiag(i: DiagInput): string {
     ...i.acts.map((a) => `${new Date(a.t).toISOString()} ${a.client} ${a.tool} ${a.status}${a.ms == null ? '' : ` ${a.ms}ms`}`),
     '',
     `## App warnings/errors (last ${i.logs.length})`,
-    ...i.logs.map((l) => scrub(l, i.scrubOpts))
+    ...i.logs.map((l) => scrub(l, i.scrubOpts).slice(0, LINE_MAX))
   ]
   return out.join('\n') + '\n'
 }

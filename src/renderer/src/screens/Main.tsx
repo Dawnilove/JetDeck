@@ -201,7 +201,7 @@ export default function Main({ onConnect, theme, onTheme, onGuide, onNews, onMcp
       if (m.added || m.updated) localStorage.setItem('snippets', JSON.stringify(m.list))
       if (r.theme && themeList().some((t) => t.id === r.theme)) onTheme(r.theme)
       await refresh()
-      setMsg({ text: tr('가져왔어요: 호스트 {0}개 추가 (이미 있어서 {1}개 건너뜀, 올바르지 않은 {2}개), 스니펫 {3}개 추가. 비밀번호 방식 호스트는 호스트를 눌러 비밀번호를 다시 입력하세요.', r.added, r.skipped, r.invalid, m.added) + (overwriteCfg ? ' ' + tr('덮어쓴 것: 호스트 {0}개, 스니펫 {1}개.', r.updated, m.updated) : ''), ok: true })
+      setMsg({ text: tr('가져왔어요: 호스트 {0}개 추가 (이미 있어서 {1}개 건너뜀, 올바르지 않은 {2}개), 스니펫 {3}개 추가. 비밀번호 방식 호스트는 호스트를 눌러 비밀번호를 다시 입력하세요.', r.added, r.skipped, r.invalid, m.added) + (overwriteCfg ? ' ' + tr('덮어쓴 것: 호스트 {0}개, 스니펫 {1}개.', r.updated, m.updated) + (m.kept ? ' ' + tr('비밀이 가려진 스니펫 {0}개는 원래 것을 그대로 뒀어요.', m.kept) : '') : ''), ok: true })
     } catch (e) {
       setMsg({ text: errText(e), ok: false })
     }

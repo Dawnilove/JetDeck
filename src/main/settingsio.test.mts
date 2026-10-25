@@ -33,3 +33,11 @@ test('같은 기기 열쇠 · 스니펫 합치기', () => {
   assert.deepEqual([o.added, o.updated, o.list[0].cmd], [0, 1, 'ls -l'])
   assert.equal(mergeSnippets([{ name: 'a', cmd: 'ls', enter: true }], [{ name: 'a', cmd: 'ls -l', enter: true }]).added, 1)
 })
+
+test('mergeSnippets 덮어쓰기: 가려진 명령은 건너뛰고, 같은 이름이 여럿이어도 항목마다 하나씩', () => {
+  const sn = (name: string, cmd: string) => ({ name, cmd, enter: true })
+  const k = mergeSnippets([sn('dep', 'curl -H "token=real"')], [sn('dep', 'curl -H "token=••••"')], true)
+  assert.deepEqual([k.kept, k.updated, k.list[0].cmd], [1, 0, 'curl -H "token=real"'])
+  const d = mergeSnippets([sn('b', 'x')], [sn('b', 'make a'), sn('b', 'make b')], true)
+  assert.deepEqual([d.updated, d.added, d.list.map((x) => x.cmd)], [1, 1, ['make a', 'make b']])
+})

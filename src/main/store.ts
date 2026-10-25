@@ -151,16 +151,21 @@ export function probe(host: string, port: number): Promise<number | null> {
 // overwrite: 같은 기기(hostKey)가 있으면 가져온 값으로 바꿈. id·저장된 비밀번호·Wake 설정은 그대로 둠
 export function addHosts(items: Host[], overwrite = false): { added: number; updated: number; skipped: number } {
   const list = load()
+  const orig = list.length // 가져온 항목끼리는 서로 맞추지 않고, 가져오기 전 항목에 하나씩만 맞춤
+  const used = new Set<number>()
   const seen = new Set(list.map(hostKey))
   let added = 0
   let updated = 0
   for (const h of items) {
     if (seen.has(hostKey(h))) {
-      const i = overwrite ? list.findIndex((x) => hostKey(x) === hostKey(h)) : -1
+      const i = overwrite ? list.findIndex((x, k) => k < orig && !used.has(k) && hostKey(x) === hostKey(h)) : -1
       if (i >= 0) {
+        used.add(i)
         const old = list[i]
-        list[i] = { ...h, id: old.id, wake: old.wake, passwordEnc: h.auth === 'password' ? old.passwordEnc : undefined }
-        updated++
+        // keyPath는 다른 PC의 경로일 수 있어 이 PC의 것을 유지
+        const next = { ...h, id: old.id, wake: old.wake, keyPath: h.auth === 'key' ? old.keyPath || h.keyPath : '', passwordEnc: h.auth === 'password' ? old.passwordEnc : undefined }
+        const rec = (o: object) => o as Record<string, unknown>
+        if ([...new Set([...Object.keys(next), ...Object.keys(old)])].some((k) => JSON.stringify(rec(next)[k]) !== JSON.stringify(rec(old)[k]))) (list[i] = next, updated++)
       }
       continue
     }

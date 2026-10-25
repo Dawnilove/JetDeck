@@ -24,3 +24,16 @@ test('buildDiag: 호스트는 개수만, 로그 줄은 가려서', () => {
   assert.ok(t.includes('claude run_command ok 12ms'))
   assert.ok(!t.includes('10.0.0.5') && !t.includes('as kim'))
 })
+
+test('scrub: 짧은 이름은 다른 단어 안에서는 가리지 않음', () => {
+  const o = { names: ['pi'], user: 'ai' }
+  assert.equal(scrub('api write EPIPE to pi', o), 'api write EPIPE to <name>')
+})
+
+test('buildDiag: 긴 줄도 가린 뒤에 자름', () => {
+  const t = buildDiag({
+    version: '4.4.0', versions: {}, platform: 'win32', arch: 'x64', osRelease: '10', lang: 'ko', hosts: [], acts: [],
+    logs: ['x'.repeat(480) + ' https://u:s3cretpass@h.example/'], scrubOpts: {}, now: new Date(0)
+  })
+  assert.ok(!t.includes('s3cret'))
+})
