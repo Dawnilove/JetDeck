@@ -1,17 +1,32 @@
 {
   "id": "device",
   "format": 1,
-  "name": { "ko": "기기 관리", "en": "Device management" },
+  "name": {
+    "ko": "기기 관리",
+    "en": "Device management"
+  },
   "pages": [
     {
       "id": "apt",
-      "title": { "ko": "apt 업데이트", "en": "apt updates" },
-      "desc": { "ko": "설치된 패키지 중 새 버전이 있는 것을 보고 업데이트해요. 설치는 확인창을 거쳐요.", "en": "See which installed packages have newer versions and update them. Installing always asks first." },
+      "title": {
+        "ko": "apt 업데이트",
+        "en": "apt updates"
+      },
+      "desc": {
+        "ko": "설치된 패키지 중 새 버전이 있는 것을 보고 업데이트해요. 설치는 확인창을 거쳐요.",
+        "en": "See which installed packages have newer versions and update them. Installing always asks first."
+      },
       "actions": [
         {
           "id": "apt-check",
-          "label": { "ko": "업데이트 확인", "en": "Check for updates" },
-          "desc": { "ko": "지금 받을 수 있는 업데이트 목록이에요. 목록이 오래됐으면 먼저 \"목록 새로고침\"을 하세요.", "en": "Updates available right now. If the list looks stale, refresh it first." },
+          "label": {
+            "ko": "업데이트 확인",
+            "en": "Check for updates"
+          },
+          "desc": {
+            "ko": "지금 받을 수 있는 업데이트 목록이에요. 목록이 오래됐으면 먼저 \"목록 새로고침\"을 하세요.",
+            "en": "Updates available right now. If the list looks stale, refresh it first."
+          },
           "cmd": "apt list --upgradable 2>/dev/null",
           "risk": "read",
           "auto": true,
@@ -19,37 +34,280 @@
             "type": "table",
             "match": "^(\\S+)/(\\S+) (\\S+) (\\S+) \\[upgradable from: (.+)\\]$",
             "columns": [
-              { "ko": "패키지", "en": "Package" },
-              { "ko": "저장소", "en": "Repository" },
-              { "ko": "새 버전", "en": "New version" },
-              { "ko": "구조", "en": "Arch" },
-              { "ko": "현재 버전", "en": "Current version" }
+              {
+                "ko": "패키지",
+                "en": "Package"
+              },
+              {
+                "ko": "저장소",
+                "en": "Repository"
+              },
+              {
+                "ko": "새 버전",
+                "en": "New version"
+              },
+              {
+                "ko": "구조",
+                "en": "Arch"
+              },
+              {
+                "ko": "현재 버전",
+                "en": "Current version"
+              }
             ],
-            "empty": { "ko": "업데이트할 패키지가 없어요.", "en": "Everything is up to date." }
+            "empty": {
+              "ko": "업데이트할 패키지가 없어요.",
+              "en": "Everything is up to date."
+            }
           }
         },
         {
           "id": "apt-update",
-          "label": { "ko": "목록 새로고침 (apt update)", "en": "Refresh lists (apt update)" },
-          "desc": { "ko": "패키지 목록만 새로 받아요. 설치되는 것은 없어요.", "en": "Only downloads fresh package lists. Nothing gets installed." },
+          "label": {
+            "ko": "목록 새로고침 (apt update)",
+            "en": "Refresh lists (apt update)"
+          },
+          "desc": {
+            "ko": "패키지 목록만 새로 받아요. 설치되는 것은 없어요.",
+            "en": "Only downloads fresh package lists. Nothing gets installed."
+          },
           "cmd": "apt-get update",
           "sudo": true,
           "risk": "change",
-          "confirm": { "ko": "패키지 목록을 새로 받아요. 설치되는 것은 없어요.", "en": "This downloads fresh package lists. Nothing gets installed." },
+          "confirm": {
+            "ko": "패키지 목록을 새로 받아요. 설치되는 것은 없어요.",
+            "en": "This downloads fresh package lists. Nothing gets installed."
+          },
           "timeout": 300,
-          "display": { "type": "text" }
+          "display": {
+            "type": "text"
+          }
         },
         {
           "id": "apt-upgrade",
-          "label": { "ko": "모두 업그레이드 (apt upgrade)", "en": "Upgrade all (apt upgrade)" },
-          "desc": { "ko": "목록에 있는 패키지를 모두 새 버전으로 바꿔요. 몇 분 걸릴 수 있어요.", "en": "Replaces every listed package with its newer version. This can take a few minutes." },
+          "label": {
+            "ko": "모두 업그레이드 (apt upgrade)",
+            "en": "Upgrade all (apt upgrade)"
+          },
+          "desc": {
+            "ko": "목록에 있는 패키지를 모두 새 버전으로 바꿔요. 몇 분 걸릴 수 있어요.",
+            "en": "Replaces every listed package with its newer version. This can take a few minutes."
+          },
           "cmd": "apt-get -y upgrade",
           "sudo": true,
           "risk": "danger",
           "preview": "apt-get -s upgrade 2>&1 | grep -E '^(Inst|Remv|Conf)' | head -200",
-          "confirm": { "ko": "아래 패키지를 설치·교체해요. 몇 분 걸리고, 드라이버나 커널이 바뀌면 재부팅이 필요할 수 있어요. 끝날 때까지 앱을 닫지 마세요.", "en": "The packages below will be installed or replaced. It takes a few minutes, and a reboot may be needed if drivers or the kernel change. Keep the app open until it finishes." },
+          "confirm": {
+            "ko": "아래 패키지를 설치·교체해요. 몇 분 걸리고, 드라이버나 커널이 바뀌면 재부팅이 필요할 수 있어요. 끝날 때까지 앱을 닫지 마세요.",
+            "en": "The packages below will be installed or replaced. It takes a few minutes, and a reboot may be needed if drivers or the kernel change. Keep the app open until it finishes."
+          },
           "timeout": 1800,
-          "display": { "type": "text" }
+          "display": {
+            "type": "text"
+          }
+        }
+      ]
+    },
+    {
+      "id": "disk",
+      "title": {
+        "ko": "디스크",
+        "en": "Disk"
+      },
+      "desc": {
+        "ko": "어디에 공간이 쓰였는지 보고, 안전하게 줄일 수 있는 것만 정리해요. 정리는 미리보기를 본 뒤에만 실행돼요.",
+        "en": "See where space is used and clean up only what is safe to remove. Cleanup runs only after you have seen the preview."
+      },
+      "actions": [
+        {
+          "id": "disk-df",
+          "label": {
+            "ko": "디스크 사용량",
+            "en": "Disk usage"
+          },
+          "cmd": "df -hP -x tmpfs -x devtmpfs -x squashfs -x overlay",
+          "risk": "read",
+          "auto": true,
+          "display": {
+            "type": "table",
+            "split": "ws",
+            "skip": 1,
+            "columns": [
+              {
+                "ko": "장치",
+                "en": "Device"
+              },
+              {
+                "ko": "크기",
+                "en": "Size"
+              },
+              {
+                "ko": "사용",
+                "en": "Used"
+              },
+              {
+                "ko": "남음",
+                "en": "Free"
+              },
+              {
+                "ko": "사용률",
+                "en": "Use"
+              },
+              {
+                "ko": "위치",
+                "en": "Mounted on"
+              }
+            ],
+            "empty": {
+              "ko": "디스크 정보를 읽지 못했어요.",
+              "en": "Could not read disk info."
+            }
+          }
+        },
+        {
+          "id": "disk-du",
+          "label": {
+            "ko": "큰 폴더 보기",
+            "en": "Largest folders"
+          },
+          "desc": {
+            "ko": "고른 위치 바로 아래에서 큰 폴더 15개예요. 보기만 하고 아무것도 지우지 않아요. 큰 위치는 1분 넘게 걸릴 수 있어요.",
+            "en": "The 15 largest entries directly under the chosen place. View only — nothing is deleted. Large places can take over a minute."
+          },
+          "cmd": "du -xh --max-depth=1 {dir} 2>/dev/null | sort -rh | head -15",
+          "risk": "read",
+          "timeout": 120,
+          "params": [
+            {
+              "name": "dir",
+              "label": {
+                "ko": "위치",
+                "en": "Location"
+              },
+              "choices": [
+                {
+                  "value": "~",
+                  "label": {
+                    "ko": "내 홈 폴더",
+                    "en": "My home folder"
+                  }
+                },
+                {
+                  "value": "/home",
+                  "label": {
+                    "ko": "/home (모든 사용자)",
+                    "en": "/home (all users)"
+                  }
+                },
+                {
+                  "value": "/var",
+                  "label": {
+                    "ko": "/var (로그·캐시)",
+                    "en": "/var (logs, caches)"
+                  }
+                },
+                {
+                  "value": "/opt",
+                  "label": {
+                    "ko": "/opt",
+                    "en": "/opt"
+                  }
+                },
+                {
+                  "value": "/",
+                  "label": {
+                    "ko": "/ (전체, 오래 걸림)",
+                    "en": "/ (everything, slow)"
+                  }
+                }
+              ]
+            }
+          ],
+          "display": {
+            "type": "table",
+            "match": "^(\\S+)\\t(.+)$",
+            "columns": [
+              {
+                "ko": "크기",
+                "en": "Size"
+              },
+              {
+                "ko": "폴더",
+                "en": "Folder"
+              }
+            ],
+            "empty": {
+              "ko": "읽을 수 있는 폴더가 없어요.",
+              "en": "No readable folders."
+            }
+          }
+        },
+        {
+          "id": "apt-clean",
+          "label": {
+            "ko": "apt 내려받은 파일 비우기",
+            "en": "Clear downloaded apt files"
+          },
+          "desc": {
+            "ko": "업데이트 때 내려받아 둔 설치 파일(.deb)을 지워요. 설치된 프로그램은 그대로예요.",
+            "en": "Removes cached .deb files left over from updates. Installed programs are untouched."
+          },
+          "cmd": "apt-get clean",
+          "sudo": true,
+          "risk": "change",
+          "preview": "du -sh /var/cache/apt/archives 2>&1",
+          "confirm": {
+            "ko": "아래 크기만큼의 내려받은 설치 파일을 지워요. 설치된 프로그램은 지워지지 않고, 필요하면 다시 내려받아요.",
+            "en": "The downloaded package files below will be deleted. Installed programs stay, and files are downloaded again if needed."
+          },
+          "display": {
+            "type": "text"
+          }
+        },
+        {
+          "id": "apt-autoremove",
+          "label": {
+            "ko": "안 쓰는 패키지 정리",
+            "en": "Remove unused packages"
+          },
+          "desc": {
+            "ko": "다른 프로그램이 더는 필요로 하지 않는 패키지(예전 커널·라이브러리 등)를 지워요.",
+            "en": "Removes packages no other program needs any more (old kernels, libraries and so on)."
+          },
+          "cmd": "apt-get -y autoremove",
+          "sudo": true,
+          "risk": "danger",
+          "preview": "apt-get -s autoremove 2>&1 | grep -E '^Remv' | head -100",
+          "confirm": {
+            "ko": "아래 패키지를 삭제해요. 직접 설치한 프로그램이 목록에 있으면 취소하세요.",
+            "en": "The packages below will be removed. Cancel if you see a program you installed on purpose."
+          },
+          "timeout": 600,
+          "display": {
+            "type": "text"
+          }
+        },
+        {
+          "id": "journal-vacuum",
+          "label": {
+            "ko": "시스템 로그 줄이기 (200MB까지)",
+            "en": "Shrink system logs (to 200 MB)"
+          },
+          "desc": {
+            "ko": "journalctl 로그가 200MB를 넘으면 오래된 것부터 지워요. 최근 로그는 남아요.",
+            "en": "If journal logs exceed 200 MB, the oldest entries are removed first. Recent logs stay."
+          },
+          "cmd": "journalctl --vacuum-size=200M",
+          "sudo": true,
+          "risk": "change",
+          "preview": "journalctl --disk-usage 2>&1",
+          "confirm": {
+            "ko": "현재 로그 용량은 아래와 같아요. 200MB를 넘는 오래된 로그가 지워져요.",
+            "en": "Current log size is shown below. Old logs beyond 200 MB will be deleted."
+          },
+          "display": {
+            "type": "text"
+          }
         }
       ]
     }

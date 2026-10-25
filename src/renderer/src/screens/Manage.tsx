@@ -90,7 +90,7 @@ export default function Manage({ connId, online, onLaunch }: Props) {
     <div className="fw" style={{ flexDirection: 'column', flexWrap: 'nowrap' }}>
       <PanelHead title={tr('업데이트·디스크·전원')} desc={<Desc>{tr('Device의 패키지 업데이트·디스크·전원 설정을 다뤄요. 바꾸는 작업은 항상 확인을 거치고, Device에 따로 설치할 것은 없어요.')}</Desc>} />
       {pages.length > 1 && (
-        <div>
+        <div style={{ alignSelf: 'flex-start' }}>
           <Segment label={tr('종류')} value={page?.id ?? ''} onChange={setPageId} options={pages.map((p) => ({ value: p.id, label: t(p.title) }))} />
         </div>
       )}
@@ -104,7 +104,7 @@ export default function Manage({ connId, online, onLaunch }: Props) {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
                 <h2 style={{ marginRight: 'auto' }}>{t(a.label)}</h2>
                 {a.params?.map((p) => (
-                  <label key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+                  <label key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, whiteSpace: 'nowrap' }}>
                     {t(p.label)}
                     <select className="input" style={{ height: 36 }} value={params[a.id]?.[p.name] ?? p.choices[0].value} onChange={(e) => setParams((m) => ({ ...m, [a.id]: { ...m[a.id], [p.name]: e.target.value } }))}>
                       {p.choices.map((ch) => (
@@ -145,7 +145,7 @@ function Result({ a, c }: { a: PackAction; c?: Cell }) {
           </thead>
           <tbody>
             {r.rows.map((row, i) => (
-              <tr key={i}>{row.map((cell, j) => <td key={j} className="mono">{cell}</td>)}</tr>
+              <tr key={i}>{row.map((cell, j) => <td key={j} className="mono">{j === 0 && d.labels?.[cell] ? t(d.labels[cell]) : cell}</td>)}</tr>
             ))}
           </tbody>
         </table>

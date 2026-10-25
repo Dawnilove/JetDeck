@@ -12,7 +12,8 @@ for (const e of errors) console.warn('[pack] 항목 제외:', e)
 const packs: Pack[] = pack ? [pack] : []
 const actions = new Map<string, PackAction>()
 for (const p of packs) for (const pg of p.pages) for (const a of pg.actions) actions.set(a.id, a)
-const previewed = new Set<string>() // `${connId}:${actionId}` — 미리보기를 본 항목, 실행하면 지움
+const previewed = new Map<string, number>() // `${connId}:${actionId}` → 미리보기 본 시각. 실행하면 지우고, 10분이 지나면 다시 봐야 함
+const PREVIEW_TTL = 10 * 60_000
 
 export function registerPackIpc(): void {
   ipcMain.handle('pack:list', (): Pack[] => packs)
@@ -24,10 +25,10 @@ export function registerPackIpc(): void {
     if (mode === 'preview') {
       if (!a.preview) throw new Error(tr('미리보기가 없는 항목이에요'))
       const out = await run(client(connId), buildPreview(a, values))
-      previewed.add(key)
+      previewed.set(key, Date.now())
       return { ok: true, needPassword: false, text: out.replace(/__EXIT__\d+\s*$/, '').trim() }
     }
-    if (a.preview && !previewed.has(key)) throw new Error(tr('먼저 미리보기를 확인해야 실행할 수 있어요'))
+    if (a.preview && Date.now() - (previewed.get(key) ?? 0) > PREVIEW_TTL) throw new Error(tr('먼저 미리보기를 확인해야 실행할 수 있어요'))
     previewed.delete(key)
     const b = buildRun(a, values)
     return parseResult(a, await run(client(connId), b.command), b.termCmd)

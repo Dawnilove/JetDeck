@@ -8,7 +8,7 @@
     "build": "electron-vite build",
     "start": "electron-vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "node --test src/main/*.test.mts src/renderer/src/screens/*.test.mts",
+    "test": "node --test src/main/*.test.mts src/main/packs/*.test.mts src/renderer/src/screens/*.test.mts",
     "dist": "npm run licenses && npm run build && electron-builder --win --publish never",
     "dist:linux": "npm run licenses && npm run build && electron-builder --linux --publish never",
     "dist:linux:arm64": "npm run licenses && npm run build && electron-builder --linux --arm64 --config electron-builder.arm64.cjs --publish never",

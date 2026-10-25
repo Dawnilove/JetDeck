@@ -3,7 +3,7 @@ export type L10n = { ko: string; en: string }
 export type Risk = 'read' | 'change' | 'danger'
 export type Display =
   | { type: 'text' }
-  | { type: 'table'; columns: L10n[]; match?: string; split?: 'ws'; skip?: number; empty?: L10n }
+  | { type: 'table'; columns: L10n[]; match?: string; split?: 'ws'; skip?: number; empty?: L10n; labels?: Record<string, L10n> } // labels: 첫 열의 값을 사람이 읽는 이름으로 바꿈
 export type Choice = { value: string; label: L10n }
 export type Param = { name: string; label: L10n; choices: Choice[] }
 export type PackAction = {
@@ -125,6 +125,7 @@ function checkAction(a: unknown, seen: Set<string>): { action?: PackAction; erro
       if (!Array.isArray(d.columns) || !d.columns.length || !d.columns.every(isL10n)) return bad('table의 columns는 {ko, en} 배열이에요')
       if ((d.match === undefined) === (d.split === undefined)) return bad('table은 match 또는 split 중 하나만 써요')
       if (d.empty !== undefined && !isL10n(d.empty)) return bad('table의 empty는 {ko, en}이어야 해요')
+      if (d.labels !== undefined && !(isObj(d.labels) && Object.values(d.labels).every(isL10n))) return bad('table의 labels는 {값: {ko, en}} 모양이에요')
       if (d.skip !== undefined && !(Number.isInteger(d.skip) && (d.skip as number) >= 0)) return bad('table의 skip은 0 이상의 정수예요')
       if (d.split !== undefined && d.split !== 'ws') return bad("split은 'ws'만 돼요")
       if (typeof d.match === 'string') {
@@ -136,7 +137,7 @@ function checkAction(a: unknown, seen: Set<string>): { action?: PackAction; erro
         }
         if (new RegExp(re.source + '|').exec('')!.length - 1 !== d.columns.length) return bad('match의 묶음 개수와 columns 개수가 달라요')
       } else if (d.match !== undefined) return bad('match는 문자열이에요')
-      display = { type: 'table', columns: d.columns as L10n[], match: d.match as string | undefined, split: d.split as 'ws' | undefined, skip: d.skip as number | undefined, empty: d.empty as L10n | undefined }
+      display = { type: 'table', columns: d.columns as L10n[], match: d.match as string | undefined, split: d.split as 'ws' | undefined, skip: d.skip as number | undefined, empty: d.empty as L10n | undefined, labels: d.labels as Record<string, L10n> | undefined }
     } else return bad('display.type은 text·table 중 하나예요')
   }
   let timeout: number | undefined
