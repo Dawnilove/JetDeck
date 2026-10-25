@@ -18,6 +18,8 @@ export type EditorStatus = { ln: number; col: number; eol: 'LF' | 'CRLF' } | nul
 type File = { path: string; mtime: number | null; saved: number; dirty: boolean; model: monaco.editor.ITextModel }
 type Props = {
   connId: string
+  hostId: string // 열린 탭 목록을 기기별로 기억하는 키
+  online: boolean // 연결이 열렸을 때 탭 복원
   home: string
   onStatus: (s: EditorStatus) => void
   onOpened?: (path: string) => void // 파일을 열었음 (시작 화면의 최근 파일용)
@@ -29,7 +31,21 @@ const baseOf = (p: string) => p.slice(p.lastIndexOf('/') + 1)
 // 탭 앞 색 점: .py 파랑, .yaml 노랑, 나머지 강조색 (design/Workspace.dc.html)
 const extColor = (p: string) => (/\.py$/.test(p) ? 'var(--chart-2)' : /\.ya?ml$/.test(p) ? 'var(--status-busy)' : 'var(--accent-text)')
 
-export default function Editor({ connId, home, onStatus, onOpened, children, ref }: Props) {
+// 열린 탭 복원: 경로와 활성 탭만 이 PC(앱 데이터 폴더)에 기기별로 기억. 저장 안 한 내용은 기억하지 않음
+const TABS_MAX = 30
+const tabsKey = (hostId: string) => `tabs:${hostId}`
+type SavedTabs = { paths: string[]; active: string }
+function loadTabs(hostId: string): SavedTabs {
+  try {
+    const v = JSON.parse(localStorage.getItem(tabsKey(hostId)) ?? '{}')
+    const paths = Array.isArray(v.paths) ? v.paths.filter((p: unknown): p is string => typeof p === 'string').slice(0, TABS_MAX) : []
+    return { paths, active: typeof v.active === 'string' ? v.active : '' }
+  } catch {
+    return { paths: [], active: '' }
+  }
+}
+
+export default function Editor({ connId, hostId, online, home, onStatus, onOpened, children, ref }: Props) {
   const box = useRef<HTMLDivElement>(null)
   const ed = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const diffBox = useRef<HTMLDivElement>(null)
@@ -48,6 +64,7 @@ export default function Editor({ connId, home, onStatus, onOpened, children, ref
   diffRef.current = diff
   const statusRef = useRef(onStatus)
   statusRef.current = onStatus
+  const restored = useRef(false)
 
   const fileOf = (path: string) => filesRef.current.find((f) => f.path === path)
   const report = () => {
@@ -230,6 +247,35 @@ export default function Editor({ connId, home, onStatus, onOpened, children, ref
     },
     []
   )
+
+  // 연결을 다시 열었을 때 이전에 열려 있던 탭 복원 (파일이 사라졌으면 건너뜀, 마지막 활성 탭으로 돌아감)
+  // 연결이 완전히 열린 뒤에 한 번만 (그 전에는 파일을 못 읽음)
+  const restoring = useRef(false)
+  const alive = useRef(true)
+  useEffect(() => () => void (alive.current = false), [])
+  useEffect(() => {
+    if (!online || restoring.current) return
+    restoring.current = true
+    void (async () => {
+      const saved = loadTabs(hostId)
+      for (const p of saved.paths) {
+        if (!alive.current) return
+        await open(p, undefined, true)
+      }
+      if (alive.current && saved.active && fileOf(saved.active)) activate(saved.active)
+      restored.current = true
+    })()
+  }, [online])
+
+  // 탭 목록이 바뀔 때마다 기억 (복원이 끝나기 전에는 쓰지 않음: 빈 목록이 옛 기록을 지우지 않게)
+  useEffect(() => {
+    if (!restored.current) return
+    try {
+      localStorage.setItem(tabsKey(hostId), JSON.stringify({ paths: files.map((f) => f.path), active } satisfies SavedTabs))
+    } catch {
+      /* 저장 실패해도 이번 실행 동안은 정상 */
+    }
+  }, [files, active])
 
   // 편집기 영역이 화면에 보인 뒤에 포커스 (숨겨진 상태의 focus()는 무시됨)
   // 편집기는 숨겨진 상자 안에서 만들어지므로(첫 파일을 열 때) 보이게 된 뒤 크기를 다시 잼

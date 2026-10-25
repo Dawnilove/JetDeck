@@ -671,7 +671,7 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
           <Panel id="center" minSize="30">
             <Group id={`ws-${host.id}-center`} orientation="vertical" defaultLayout={inner.defaultLayout} onLayoutChanged={inner.onLayoutChanged}>
               <Panel id="editor" panelRef={editorRef} minSize="15" collapsible collapsedSize={0} className="ws-editor">
-                <Editor ref={codeRef} connId={sess.id} home={home} onStatus={setEdStatus} onOpened={remember}>
+                <Editor ref={codeRef} connId={sess.id} hostId={host.id} online={online} home={home} onStatus={setEdStatus} onOpened={remember}>
                 {/* 가운데 영역의 화면은 작업 공간이 보일 때만 (위에 다른 화면을 덮으면 끊어서 Device 화면이 두 개 연결되지 않게) */}
                 {centerScreen ? (
                   <div style={{ height: '100%' }}>
