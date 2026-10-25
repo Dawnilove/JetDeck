@@ -635,7 +635,6 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
                   <Mascot status={sess.status} size={90} />
                   <p className="display" style={{ fontSize: 16, color: 'var(--text)' }}>{tr('열린 파일이 없어요')}</p>
                   <p>{trNode('왼쪽 탐색기에서 파일을 열면 여기에 표시돼요. 저장은 {0}', <kbd>Ctrl+S</kbd>)}</p>
-                  <p><kbd>Ctrl+`</kbd> {tr('터미널 패널 접기/펴기')} · <kbd>Ctrl+Shift+`</kbd> {tr('새 터미널')}</p>
                   <div className="start-grid">
                     <section aria-label={tr('최근 파일')}>
                       <h2>{tr('최근 파일')}</h2>
@@ -656,6 +655,16 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
                         <Button size={36} onClick={() => setView('ros')}>ROS2</Button>
                         <Button size={36} onClick={() => setView('docker')}>Docker</Button>
                         <Button size={36} onClick={() => setCenterScreen(true)} disabled={!online}>{tr('Device 화면 보기')}</Button>
+                      </div>
+                    </section>
+                    <section aria-label={tr('바로가기')}>
+                      <h2>{tr('바로가기')}</h2>
+                      <div className="start-keys">
+                        <kbd>Ctrl+Shift+P</kbd><span>{tr('명령 팔레트 (모든 기능 검색)')}</span>
+                        <kbd>Ctrl+P</kbd><span>{tr('파일 이름으로 찾아 열기')}</span>
+                        <kbd>Ctrl+Shift+F</kbd><span>{tr('파일 안의 글자 찾기·바꾸기')}</span>
+                        <kbd>Ctrl+`</kbd><span>{tr('터미널 패널 접기/펴기')}</span>
+                        <kbd>Ctrl+Shift+`</kbd><span>{tr('새 터미널')}</span>
                       </div>
                     </section>
                   </div>

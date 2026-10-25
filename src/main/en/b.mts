@@ -116,6 +116,7 @@ export const EN_B: Record<string, string> = {
   '프레임 {0}': 'Frames {0}',
   '영상 입력 미리보기': 'Video input preview',
   '영상 입력': 'Video input',
+  '바로가기': 'Shortcuts',
 
   // Dashboard.tsx
   '대시보드': 'Dashboard',
