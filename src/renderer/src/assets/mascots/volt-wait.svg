@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <defs>
+    <linearGradient id="voltShell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5C6888"/><stop offset="0.6" stop-color="#3A4360"/><stop offset="1" stop-color="#262C40"/></linearGradient>
+    <linearGradient id="voltVisor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#141A26"/><stop offset="1" stop-color="#05070B"/></linearGradient>
+    <linearGradient id="voltOrange" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB06A"/><stop offset="1" stop-color="#F2711E"/></linearGradient>
+    <linearGradient id="voltBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5CE1FF" stop-opacity="0.45"/><stop offset="1" stop-color="#5CE1FF" stop-opacity="0"/></linearGradient>
+    <radialGradient id="voltRotor" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#C9D1E0" stop-opacity="0.65"/><stop offset="1" stop-color="#C9D1E0" stop-opacity="0"/></radialGradient>
+    <linearGradient id="voltArm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#626E8E"/><stop offset="1" stop-color="#363E58"/></linearGradient>
+    <clipPath id="voltBand"><rect x="56" y="136" width="128" height="14"/></clipPath>
+  </defs>
+  <g style="">
+    <circle cx="26" cy="34" r="2" fill="#ECEFF4" opacity="0.8"/>
+    <circle cx="214" cy="26" r="1.6" fill="#ECEFF4" opacity="0.6"/>
+    <circle cx="210" cy="142" r="2.2" fill="#5CE1FF" opacity="0.8"/>
+    <path d="M22 146 c1.5 6 3 7.5 9 9 c-6 1.5 -7.5 3 -9 9 c-1.5 -6 -3 -7.5 -9 -9 c6 -1.5 7.5 -3 9 -9 z" fill="#FFC857"/>
+  </g>
+  <path d="M102 176 L80 238 L160 238 L138 176 Z" fill="url(#voltBeam)"/>
+  <ellipse cx="120" cy="232" rx="44" ry="5" fill="#5CE1FF" opacity="0.2"/>
+  <g transform="rotate(5 120 120)">
+    <ellipse cx="120" cy="180" rx="9" ry="13" fill="#5CE1FF" opacity="0.45"/>
+    <ellipse cx="120" cy="177" rx="4" ry="8" fill="#E8FBFF"/>
+    <path d="M102 164 L94 186 M138 164 L146 186" stroke="#1A1F2C" stroke-width="7" stroke-linecap="round"/>
+    <path d="M102 164 L94 186 M138 164 L146 186" stroke="#A3ABBC" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M84 187 h18 M138 187 h18" stroke="#A3ABBC" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M76 104 L38 84" stroke="#161A24" stroke-width="14" stroke-linecap="round"/>
+    <path d="M76 104 L38 84" stroke="url(#voltArm)" stroke-width="8" stroke-linecap="round"/>
+    <path d="M164 104 L202 84" stroke="#161A24" stroke-width="14" stroke-linecap="round"/>
+    <path d="M164 104 L202 84" stroke="url(#voltArm)" stroke-width="8" stroke-linecap="round"/>
+    <path d="M38 84 L38 76 M202 84 L202 76" stroke="#161A24" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="38" cy="74" rx="34" ry="8" fill="url(#voltRotor)"/>
+    <ellipse cx="202" cy="74" rx="34" ry="8" fill="url(#voltRotor)"/>
+    <path d="M10 73 q28 -8 56 2 M174 75 q28 -10 56 -2" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.35"/>
+    <circle cx="38" cy="74" r="6.5" fill="url(#voltOrange)" stroke="#161A24" stroke-width="2.5"/>
+    <circle cx="202" cy="74" r="6.5" fill="url(#voltOrange)" stroke="#161A24" stroke-width="2.5"/>
+    <path d="M142 68 L154 44" stroke="#161A24" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="155" cy="42" r="11" fill="#FFB06A" opacity="0.18"/>
+    <circle cx="155" cy="42" r="5.5" fill="url(#voltOrange)" stroke="#161A24" stroke-width="2"/>
+    <path d="M74 80 Q78 66 94 66 L146 66 Q162 66 166 80 L176 128 Q180 156 154 164 L86 164 Q60 156 64 128 Z" fill="url(#voltShell)" stroke="#161A24" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="M88 73 L136 73" stroke="#8C98B8" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+    <path d="M146 73 L152 73" stroke="#8C98B8" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+    <path d="M70 130 Q68 152 88 158" fill="none" stroke="#161A24" stroke-width="2" opacity="0.4"/>
+    <g clip-path="url(#voltBand)">
+      <rect x="56" y="136" width="128" height="14" fill="url(#voltOrange)"/>
+      <path d="M64 136 l-10 14 M78 136 l-10 14 M92 136 l-10 14 M106 136 l-10 14 M120 136 l-10 14 M134 136 l-10 14 M148 136 l-10 14 M162 136 l-10 14 M176 136 l-10 14 M190 136 l-10 14" stroke="#161A24" stroke-width="5" opacity="0.45"/>
+    </g>
+    <path d="M66 136 L174 136 M65 150 L175 150" stroke="#161A24" stroke-width="2.5"/>
+    <circle cx="90" cy="157" r="7" fill="#FFC857" opacity="0.25"/>
+    <circle cx="150" cy="157" r="7" fill="#FFC857" opacity="0.25"/>
+    <circle cx="90" cy="157" r="3.5" fill="#FFD98A"/>
+    <circle cx="150" cy="157" r="3.5" fill="#FFD98A"/>
+    <path d="M150 82 l6 5 l-6 5 M157 82 l6 5 l-6 5" fill="none" stroke="#FF8A3D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="76" y="90" width="88" height="38" rx="19" fill="url(#voltVisor)" stroke="#161A24" stroke-width="3.5"/>
+    <path d="M86 95 L106 95 L96 123 L84 123 Q81 123 81 119 L81 106 Q81 95 86 95 Z" fill="#FFFFFF" opacity="0.08"/>
+    <g style="display:none">
+      <path d="M96 115 q9 -12 18 0 M126 115 q9 -12 18 0" fill="none" stroke="#5CE1FF" stroke-width="12" stroke-linecap="round" opacity="0.22"/>
+      <path d="M96 115 q9 -12 18 0 M126 115 q9 -12 18 0" fill="none" stroke="#A8F0FF" stroke-width="5.5" stroke-linecap="round"/>
+    </g>
+    <g style="">
+      <rect x="88" y="104" width="34" height="10" rx="5" fill="#5CE1FF" opacity="0.2"/>
+      <rect x="90" y="106" width="30" height="6" rx="3" fill="#A8F0FF"/>
+      <rect x="126" y="106" width="12" height="6" rx="3" fill="#5CE1FF" opacity="0.45"/>
+      <rect x="142" y="106" width="6" height="6" rx="3" fill="#5CE1FF" opacity="0.22"/>
+    </g>
+    <g style="display:none">
+      <rect x="114" y="96" width="12" height="22" rx="6" fill="#FF6B6B" opacity="0.2"/>
+      <rect x="116.5" y="98" width="7" height="15" rx="3.5" fill="#FF8A8A"/>
+      <circle cx="120" cy="120" r="3.8" fill="#FF8A8A"/>
+      <path d="M164 46 l8 -6 M168 54 l10 -1 M160 38 l2 -9" stroke="#FFC857" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

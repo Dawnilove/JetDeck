@@ -1,0 +1,18 @@
+node_modules/
+out/
+release/
+*.log
+.env*
+
+.claude/settings.local.json
+
+# 공개 저장소에 올리지 않는 내부 문서 (비공개 JetDeck-src에서만 관리)
+CLAUDE.md
+HANDOFF.md
+PLAN.md
+ROADMAP.md
+.claude/
+.internal/
+
+# 빌드 중간 결과
+build/

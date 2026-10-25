@@ -1,0 +1,209 @@
+{
+  "id": "limited-festival",
+  "label": "두두의 터널 공사장",
+  "labelEn": "Dudu's Tunnel Site",
+  "kind": "light",
+  "notes": "모든 글자색은 배경 대비 4.5:1 이상, 입력창 테두리·상태 점은 3:1 이상으로 맞춤. 파스텔은 '면'에만 쓰고 글자는 진한 색으로 둔다(흰 글자 + 핑크 버튼 금지). 연결 상태 점은 테마 색(핑크)으로 바꾸지 말고 항상 이 세 색을 쓴다. 점 옆에 '연결됨' 같은 글자도 같이 표시.",
+  "ui": {
+    "bg": "#FFF8E1",
+    "surfaceHover": "#FFE4EA",
+    "text": "#1F1A14",
+    "textMuted": "#665432",
+    "placeholder": "#7A6650",
+    "accentFill": "#1F1A14",
+    "accentFillHover": "#1A1611",
+    "accentFillText": "#FFD84D",
+    "accentStrong": "#A8501A",
+    "focusRing": "#A8501A",
+    "secondaryFill": "#FFE08A",
+    "success": "#3E9C78",
+    "successText": "#24704F",
+    "successFill": "#DDF4E9",
+    "warningText": "#7A4E00",
+    "warningFill": "#FFE9C2",
+    "dangerText": "#9E2F2A",
+    "dangerFill": "#FFE0DD",
+    "infoFill": "#E3EEFF",
+    "header": "#FFEFC2",
+    "panel": "#FFFFFF",
+    "selection": "#FFE08A",
+    "border": "#EED38A",
+    "inputBg": "#FFFFFF",
+    "inputBorder": "#A18447",
+    "secondaryText": "#1F1A14",
+    "statusBar": "#FFE08A",
+    "statusBarText": "#1F1A14",
+    "panel2": "#FFFCF0",
+    "track": "#EED38A",
+    "chartPrimary": "#A8501A",
+    "chartSecondary": "#846455"
+  },
+  "shape": {
+    "radiusWindow": 20,
+    "radiusSmall": 12,
+    "radiusInput": 999,
+    "radiusButton": 999,
+    "buttonShadow": "0 4px 0 #A8501A",
+    "radiusCard": 18,
+    "radiusDialog": 22
+  },
+  "font": {
+    "ui": "'IBM Plex Sans KR', sans-serif",
+    "display": "'Black Han Sans', 'IBM Plex Sans KR', sans-serif",
+    "mono": "'JetBrains Mono', 'IBM Plex Sans KR', monospace"
+  },
+  "terminal": {
+    "xtermOptions": {
+      "minimumContrastRatio": 4.5
+    },
+    "theme": {
+      "background": "#FFFCF0",
+      "foreground": "#1F1A14",
+      "cursor": "#A8501A",
+      "cursorAccent": "#FFFCF0",
+      "selectionBackground": "#FBE2A2",
+      "black": "#1F1A14",
+      "red": "#B03A30",
+      "green": "#2E7D5B",
+      "yellow": "#8A6000",
+      "blue": "#2F5E9A",
+      "magenta": "#9A3F70",
+      "cyan": "#1C6E80",
+      "white": "#665432",
+      "brightBlack": "#7A6650",
+      "brightRed": "#B03530",
+      "brightGreen": "#24704F",
+      "brightYellow": "#845700",
+      "brightBlue": "#3460A0",
+      "brightMagenta": "#8A3F83",
+      "brightCyan": "#166C72",
+      "brightWhite": "#3A3020"
+    }
+  },
+  "editor": {
+    "monacoBase": "vs",
+    "colors": {
+      "editor.background": "#FFFCF0",
+      "editor.foreground": "#1F1A14",
+      "editor.lineHighlightBackground": "#FDF3D4",
+      "editor.selectionBackground": "#FBE2A2",
+      "editorCursor.foreground": "#A8501A",
+      "editorLineNumber.foreground": "#A1875E",
+      "editorLineNumber.activeForeground": "#1F1A14",
+      "editorGutter.background": "#FFFCF0",
+      "minimap.background": "#FFFCF0",
+      "editor.inactiveSelectionBackground": "#FBE2A299",
+      "editorIndentGuide.background1": "#EED38A",
+      "editorIndentGuide.activeBackground1": "#A18447",
+      "editorWhitespace.foreground": "#EED38A",
+      "editorBracketMatch.background": "#FBE2A280",
+      "editorBracketMatch.border": "#A18447",
+      "editor.findMatchBackground": "#8F5A0066",
+      "editor.findMatchHighlightBackground": "#8F5A0033",
+      "editorWidget.background": "#FFFFFF",
+      "editorWidget.border": "#EED38A",
+      "editorSuggestWidget.background": "#FFFFFF",
+      "editorSuggestWidget.border": "#EED38A",
+      "editorSuggestWidget.foreground": "#1F1A14",
+      "editorSuggestWidget.selectedBackground": "#FFE08A",
+      "editorSuggestWidget.highlightForeground": "#A8501A",
+      "editorHoverWidget.background": "#FFFFFF",
+      "editorHoverWidget.border": "#EED38A",
+      "scrollbarSlider.background": "#66543233",
+      "scrollbarSlider.hoverBackground": "#66543255",
+      "scrollbarSlider.activeBackground": "#66543277"
+    },
+    "rules": [
+      {
+        "token": "comment",
+        "foreground": "7A6650",
+        "fontStyle": "italic"
+      },
+      {
+        "token": "keyword",
+        "foreground": "A8501A",
+        "fontStyle": "bold"
+      },
+      {
+        "token": "string",
+        "foreground": "2D7B5A"
+      },
+      {
+        "token": "number",
+        "foreground": "B03A4E"
+      },
+      {
+        "token": "function",
+        "foreground": "6E4A38"
+      },
+      {
+        "token": "type",
+        "foreground": "1C6E80"
+      },
+      {
+        "token": "tag",
+        "foreground": "A8501A"
+      },
+      {
+        "token": "metatag",
+        "foreground": "A8501A"
+      },
+      {
+        "token": "attribute.name",
+        "foreground": "6E4A38"
+      },
+      {
+        "token": "attribute.value",
+        "foreground": "2D7B5A"
+      },
+      {
+        "token": "regexp",
+        "foreground": "B03A4E"
+      },
+      {
+        "token": "string.escape",
+        "foreground": "B03A4E"
+      },
+      {
+        "token": "predefined",
+        "foreground": "6E4A38"
+      },
+      {
+        "token": "key",
+        "foreground": "1C6E80"
+      }
+    ]
+  },
+  "limited": true,
+  "status": {
+    "connected": "#2E7D5B",
+    "connecting": "#8F5A00",
+    "disconnected": "#C2413B"
+  },
+  "mascot": {
+    "name": "dudu",
+    "assets": {
+      "happy": "assets/mascots/dudu-happy.svg",
+      "wait": "assets/mascots/dudu-wait.svg",
+      "oops": "assets/mascots/dudu-oops.svg"
+    },
+    "moodByStatus": {
+      "connected": "happy",
+      "connecting": "wait",
+      "disconnected": "oops"
+    },
+    "placements": [
+      "타이틀바 로고(28px)",
+      "탐색기 하단 팁 카드(56px)",
+      "빈 에디터 화면(170px)",
+      "상태줄(18px)",
+      "연결 상태 토스트(110px)"
+    ],
+    "assetsMini": {
+      "happy": "assets/mascots/dudu-happy-mini.svg",
+      "wait": "assets/mascots/dudu-wait-mini.svg",
+      "oops": "assets/mascots/dudu-oops-mini.svg"
+    },
+    "miniBelowPx": 32
+  }
+}

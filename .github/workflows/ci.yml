@@ -1,0 +1,24 @@
+name: CI
+
+# Pull Request·main push에서 타입 검사·테스트·번역 사전 검사만 돌림 (비밀 접근 없음, 읽기 전용)
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: node scripts/i18n-check.mjs

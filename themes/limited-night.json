@@ -1,0 +1,196 @@
+{
+  "id": "limited-night",
+  "label": "볼트의 한밤 격납고",
+  "labelEn": "Volt's Midnight Hangar",
+  "kind": "dark",
+  "ui": {
+    "bg": "#11131A",
+    "header": "#151821",
+    "panel": "#1A1E29",
+    "panel2": "#11131A",
+    "selection": "#2A3040",
+    "border": "#2A3040",
+    "inputBg": "#11131A",
+    "inputBorder": "#5E6A85",
+    "track": "#232838",
+    "text": "#ECEFF4",
+    "textMuted": "#A3ABBC",
+    "accentFill": "#FF8A3D",
+    "accentFillText": "#11131A",
+    "accentStrong": "#FF8A3D",
+    "secondaryFill": "#1A1E29",
+    "secondaryText": "#ECEFF4",
+    "statusBar": "#1A1E29",
+    "statusBarText": "#ECEFF4",
+    "chartPrimary": "#FF8A3D",
+    "chartSecondary": "#5CE1FF",
+    "focusRing": "#5CE1FF",
+    "placeholder": "#8A93A8"
+  },
+  "status": {
+    "connected": "#6EE7A8",
+    "connecting": "#FFC857",
+    "disconnected": "#FF6B6B"
+  },
+  "terminal": {
+    "xtermOptions": {
+      "minimumContrastRatio": 4.5
+    },
+    "theme": {
+      "background": "#0B0D12",
+      "foreground": "#DCE1EA",
+      "cursor": "#FF8A3D",
+      "cursorAccent": "#0B0D12",
+      "selectionBackground": "#22404C",
+      "black": "#1A1E29",
+      "red": "#FF6B6B",
+      "green": "#8FE388",
+      "yellow": "#FFC857",
+      "blue": "#6FA8FF",
+      "magenta": "#D59BFF",
+      "cyan": "#5CE1FF",
+      "white": "#C9D0DC",
+      "brightBlack": "#7D8799",
+      "brightRed": "#FF9A9A",
+      "brightGreen": "#B5F0A8",
+      "brightYellow": "#FFDA8A",
+      "brightBlue": "#9CC4FF",
+      "brightMagenta": "#E5BFFF",
+      "brightCyan": "#9AEEFF",
+      "brightWhite": "#FFFFFF"
+    }
+  },
+  "editor": {
+    "monacoBase": "vs-dark",
+    "colors": {
+      "editor.background": "#11131A",
+      "editor.foreground": "#DCE1EA",
+      "editorLineNumber.foreground": "#677389",
+      "editorLineNumber.activeForeground": "#DCE1EA",
+      "editor.lineHighlightBackground": "#232835",
+      "editor.selectionBackground": "#22404C",
+      "editorCursor.foreground": "#FF8A3D",
+      "editorGutter.background": "#11131A",
+      "minimap.background": "#11131A",
+      "editor.inactiveSelectionBackground": "#22404C99",
+      "editorIndentGuide.background1": "#2A3040",
+      "editorIndentGuide.activeBackground1": "#5E6A85",
+      "editorWhitespace.foreground": "#2A3040",
+      "editorBracketMatch.background": "#22404C80",
+      "editorBracketMatch.border": "#5E6A85",
+      "editor.findMatchBackground": "#FFC85766",
+      "editor.findMatchHighlightBackground": "#FFC85733",
+      "editorWidget.background": "#1A1E29",
+      "editorWidget.border": "#2A3040",
+      "editorSuggestWidget.background": "#1A1E29",
+      "editorSuggestWidget.border": "#2A3040",
+      "editorSuggestWidget.foreground": "#ECEFF4",
+      "editorSuggestWidget.selectedBackground": "#2A3040",
+      "editorSuggestWidget.highlightForeground": "#FF8A3D",
+      "editorHoverWidget.background": "#1A1E29",
+      "editorHoverWidget.border": "#2A3040",
+      "scrollbarSlider.background": "#A3ABBC33",
+      "scrollbarSlider.hoverBackground": "#A3ABBC55",
+      "scrollbarSlider.activeBackground": "#A3ABBC77"
+    },
+    "rules": [
+      {
+        "token": "comment",
+        "foreground": "8892A2",
+        "fontStyle": "italic"
+      },
+      {
+        "token": "keyword",
+        "foreground": "FF8A3D",
+        "fontStyle": "bold"
+      },
+      {
+        "token": "string",
+        "foreground": "FFC857"
+      },
+      {
+        "token": "number",
+        "foreground": "FF7A90"
+      },
+      {
+        "token": "function",
+        "foreground": "5CE1FF"
+      },
+      {
+        "token": "type",
+        "foreground": "A8B4FF"
+      },
+      {
+        "token": "tag",
+        "foreground": "FF8A3D"
+      },
+      {
+        "token": "metatag",
+        "foreground": "FF8A3D"
+      },
+      {
+        "token": "attribute.name",
+        "foreground": "5CE1FF"
+      },
+      {
+        "token": "attribute.value",
+        "foreground": "FFC857"
+      },
+      {
+        "token": "regexp",
+        "foreground": "FF7A90"
+      },
+      {
+        "token": "string.escape",
+        "foreground": "FF7A90"
+      },
+      {
+        "token": "predefined",
+        "foreground": "5CE1FF"
+      },
+      {
+        "token": "key",
+        "foreground": "A8B4FF"
+      }
+    ]
+  },
+  "shape": {
+    "radiusWindow": 12,
+    "radiusSmall": 8,
+    "radiusInput": 8,
+    "radiusButton": 8,
+    "buttonShadow": "0 0 18px rgba(255,138,61,0.35)"
+  },
+  "font": {
+    "ui": "'IBM Plex Sans KR', sans-serif",
+    "display": "'Black Han Sans', 'IBM Plex Sans KR', sans-serif",
+    "mono": "'JetBrains Mono', 'IBM Plex Sans KR', monospace"
+  },
+  "limited": true,
+  "mascot": {
+    "name": "volt",
+    "assets": {
+      "happy": "assets/mascots/volt-happy.svg",
+      "wait": "assets/mascots/volt-wait.svg",
+      "oops": "assets/mascots/volt-oops.svg"
+    },
+    "moodByStatus": {
+      "connected": "happy",
+      "connecting": "wait",
+      "disconnected": "oops"
+    },
+    "placements": [
+      "타이틀바 로고(28px)",
+      "탐색기 하단 팁 카드(56px)",
+      "빈 에디터 화면(170px)",
+      "상태줄(18px)",
+      "연결 상태 토스트(110px)"
+    ],
+    "assetsMini": {
+      "happy": "assets/mascots/volt-happy-mini.svg",
+      "wait": "assets/mascots/volt-wait-mini.svg",
+      "oops": "assets/mascots/volt-oops-mini.svg"
+    },
+    "miniBelowPx": 32
+  }
+}

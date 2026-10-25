@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: JBM; src: url('../node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff2'); }
+  @font-face { font-family: Pre; font-weight: 400; src: url('../node_modules/pretendard/dist/web/static/woff2/Pretendard-Regular.woff2'); }
+  @font-face { font-family: Pre; font-weight: 600; src: url('../node_modules/pretendard/dist/web/static/woff2/Pretendard-SemiBold.woff2'); }
+  html, body { margin: 0; }
+  .banner { position: relative; width: 1280px; height: 640px; overflow: hidden; background: #0E1014; font-family: Pre, sans-serif; }
+  .left { position: absolute; left: 72px; top: 0; bottom: 0; width: 470px; display: flex; flex-direction: column; justify-content: center; gap: 22px; }
+  .logo { width: 128px; height: 128px; }
+  .name { display: flex; align-items: center; gap: 14px; font-family: JBM, monospace; font-size: 64px; color: #E7E9EE; letter-spacing: -1px; line-height: 1; }
+  .cursor { width: 22px; height: 58px; background: #A3E06B; }
+  .sub { font-size: 26px; font-weight: 600; color: #C9CED8; line-height: 1.35; }
+  .feat { font-size: 18px; color: #7C8596; }
+  .feat { line-height: 1.5; }
+  .os { margin-top: -8px; font-family: JBM, monospace; font-size: 15px; color: #A3E06B; letter-spacing: 0.5px; }
+  .btn { align-self: flex-start; margin-top: 6px; padding: 14px 28px; border-radius: 999px; background: #A3E06B; color: #0E1014; font-size: 18px; font-weight: 600; }
+  .shot { position: absolute; left: 576px; top: 128px; width: 640px; border-radius: 14px; border: 1px solid #2A303C; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55); }
+  .glow { position: absolute; left: 540px; top: 92px; width: 712px; height: 456px; border-radius: 40px; background: #151820; }
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="glow"></div>
+  <img class="shot" src="app-shot.png" alt="">
+  <div class="left">
+    <svg class="logo" viewBox="0 0 160 160"><rect width="160" height="160" rx="36" fill="#151820" stroke="#2A303C" stroke-width="2"/><polyline points="34,52 60,78 34,104" fill="none" stroke="#A3E06B" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M72 104 H92 C114 104 126 84 126 62" fill="none" stroke="#A3E06B" stroke-width="9" stroke-linecap="round"/><circle cx="126" cy="48" r="11" fill="#A3E06B"/></svg>
+    <div class="name">JetDeck<span class="cursor"></span></div>
+    <div class="sub">Jetson에 특화된 SSH 작업 공간</div>
+    <div class="feat">터미널 · 원격 편집 · 시스템 모니터 · ROS2 도구<br>시리얼 콘솔 · 파일 전송 · Claude 연결</div>
+    <div class="os">Windows · Linux</div>
+    <div class="btn">최신 버전 내려받기</div>
+  </div>
+</div>
+</body>
+</html>

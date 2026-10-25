@@ -1,0 +1,140 @@
+{
+  "id": "cyber-neon",
+  "label": "네온 시안",
+  "labelEn": "Neon Cyan",
+  "kind": "dark",
+  "family": "neon",
+  "description": "시안·노랑 포인트, 보라-남색 그라데이션 배경, 유리 패널.",
+  "ui": {
+    "bg": "#090A0F",
+    "backgroundCss": "radial-gradient(circle at 12% 18%, rgba(0,240,255,0.16), transparent 42%), radial-gradient(circle at 88% 85%, rgba(255,61,184,0.14), transparent 45%), linear-gradient(135deg, #090A0F, #1C0E22 55%, #001F3F)",
+    "header": "rgba(10,10,15,0.65)",
+    "panel": "rgba(10,10,15,0.7)",
+    "panel2": "#080B12",
+    "selection": "rgba(0,240,255,0.14)",
+    "border": "rgba(0,240,255,0.22)",
+    "inputBg": "rgba(0,0,0,0.35)",
+    "inputBorder": "rgba(0,240,255,0.5)",
+    "track": "rgba(255,255,255,0.08)",
+    "text": "#E6F1F5",
+    "textMuted": "#9FB3BF",
+    "accentFill": "#00F0FF",
+    "accentFillText": "#04110E",
+    "accentStrong": "#00F0FF",
+    "accentSecondary": "#FCE205",
+    "secondaryFill": "rgba(0,0,0,0.25)",
+    "secondaryText": "#00F0FF",
+    "statusBar": "rgba(0,0,0,0.55)",
+    "statusBarText": "#D6E2E8",
+    "chartPrimary": "#00F0FF",
+    "chartSecondary": "#FCE205"
+  },
+  "status": {
+    "connected": "#3DFF9A",
+    "connecting": "#FCE205",
+    "disconnected": "#FF5F7A"
+  },
+  "terminal": {
+    "xtermOptions": {
+      "minimumContrastRatio": 4.5
+    },
+    "theme": {
+      "background": "#05070C",
+      "foreground": "#D6E2E8",
+      "cursor": "#00F0FF",
+      "cursorAccent": "#05070C",
+      "selectionBackground": "rgba(0,240,255,0.25)",
+      "black": "#05070C",
+      "red": "#FF5F7A",
+      "green": "#3DFF9A",
+      "yellow": "#FCE205",
+      "blue": "#5CA8FF",
+      "magenta": "#FF6BD5",
+      "cyan": "#00F0FF",
+      "white": "#D6E2E8",
+      "brightBlack": "#7A93A3",
+      "brightRed": "#FF8FA2",
+      "brightGreen": "#77FFB8",
+      "brightYellow": "#FDEB50",
+      "brightBlue": "#8DC2FF",
+      "brightMagenta": "#FF97E2",
+      "brightCyan": "#4CF4FF",
+      "brightWhite": "#FFFFFF"
+    },
+    "prompt": "#FCE205"
+  },
+  "editor": {
+    "monacoBase": "vs-dark",
+    "colors": {
+      "editor.background": "#080B12",
+      "editor.foreground": "#D6E2E8",
+      "editorLineNumber.foreground": "#3A4A57",
+      "editorLineNumber.activeForeground": "#E6F1F5",
+      "editor.selectionBackground": "rgba(0,240,255,0.25)",
+      "editorCursor.foreground": "#00F0FF"
+    },
+    "rules": [
+      {
+        "token": "comment",
+        "foreground": "7A93A3",
+        "fontStyle": "italic"
+      },
+      {
+        "token": "keyword",
+        "foreground": "FF6BD5",
+        "fontStyle": "bold"
+      },
+      {
+        "token": "string",
+        "foreground": "3DFF9A"
+      },
+      {
+        "token": "number",
+        "foreground": "FCE205"
+      },
+      {
+        "token": "function",
+        "foreground": "5CA8FF"
+      }
+    ]
+  },
+  "shape": {
+    "radiusWindow": 14,
+    "radiusSmall": 8,
+    "radiusInput": 8,
+    "radiusButton": 8,
+    "buttonShadow": "0 0 16px rgba(0,240,255,0.55)"
+  },
+  "font": {
+    "ui": "'JetBrains Mono', 'IBM Plex Sans KR', monospace",
+    "display": "'VT323', monospace",
+    "mono": "'JetBrains Mono', monospace",
+    "displayGlow": "0 0 6px rgba(0,240,255,0.6), 0 0 14px rgba(0,240,255,0.3)"
+  },
+  "effects": {
+    "glass": {
+      "blur": 12,
+      "applyTo": [
+        "titleBar",
+        "activityBar",
+        "sidebar",
+        "rightPanel",
+        "statusBar"
+      ],
+      "never": [
+        "terminal",
+        "editor"
+      ]
+    },
+    "connectingGlow": {
+      "keyframes": "neonPulseCyan",
+      "color": "rgba(0,240,255,0.9)",
+      "duration": "1.4s",
+      "onlyWhen": "connecting"
+    },
+    "animatedBackground": false,
+    "respectReducedMotion": true,
+    "glowOnBodyText": false,
+    "customCursor": false
+  }
+}

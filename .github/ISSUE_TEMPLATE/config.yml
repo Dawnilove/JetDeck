@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 보안 취약점 (Security vulnerability)
+    url: https://github.com/Dawnilove/JetDeck/security/advisories/new
+    about: 공개 Issue에 올리지 말고 여기로 비공개 제보해 주세요.

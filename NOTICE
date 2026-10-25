@@ -1,0 +1,36 @@
+JetDeck
+Copyright 2026 Dawnilove
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+The name "JetDeck", the logo, the app icon and the mascots (Momo, Volt, Dudu)
+are not covered by the Apache-2.0 license; see TRADEMARKS.md.
+The mascot and logo artwork was created with the help of AI tools; the scope
+of any rights in it is not asserted here.
+
+This product includes third-party software. The main components are listed
+below; the full license texts are in THIRD_PARTY_LICENSES.txt (included in
+the installed app) and in each package's own repository.
+
+Runtime / bundled code
+- Electron (MIT) and Chromium (various open source licenses, see
+  LICENSES.chromium.html shipped with the app) - https://www.electronjs.org
+- ssh2 (MIT) - https://github.com/mscdex/ssh2
+- serialport (MIT) - https://github.com/serialport/node-serialport
+- electron-updater (MIT) - https://github.com/electron-userland/electron-builder
+- React, React DOM (MIT) - https://react.dev
+- xterm.js, @xterm/addon-fit (MIT) - https://github.com/xtermjs/xterm.js
+- Monaco Editor (MIT, with its own ThirdPartyNotices) - https://github.com/microsoft/monaco-editor
+- react-resizable-panels (MIT) - https://github.com/bvaughn/react-resizable-panels
+- noVNC (MPL-2.0) - https://github.com/novnc/noVNC
+  JetDeck bundles the unmodified noVNC core library. Its source code is
+  available at the address above under the Mozilla Public License 2.0.
+- DOMPurify (MPL-2.0 OR Apache-2.0; used under Apache-2.0, via Monaco)
+
+Fonts (SIL Open Font License 1.1, https://openfontlicense.org)
+- IBM Plex Sans KR, JetBrains Mono, Jua, VT323, Black Han Sans,
+  Gowun Batang (via @fontsource packages), Pretendard
+
+Build tools (not distributed in the installers)
+- electron-vite, electron-builder, Vite, TypeScript (Apache-2.0) and others.
+
+Each component remains under its own license and copyright.

@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -16 240 256">
+  <defs>
+    <radialGradient id="momoHead" cx="0.35" cy="0.28" r="0.8"><stop offset="0" stop-color="#FFEFE7"/><stop offset="0.55" stop-color="#FFD5C3"/><stop offset="1" stop-color="#F3AE95"/></radialGradient>
+    <linearGradient id="momoBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF4EE"/><stop offset="1" stop-color="#FFCDB9"/></linearGradient>
+    <linearGradient id="momoLimb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC9B4"/><stop offset="1" stop-color="#F09C80"/></linearGradient>
+    <linearGradient id="momoScreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4B3834"/><stop offset="1" stop-color="#241A18"/></linearGradient>
+    <radialGradient id="momoPetal" cx="0.5" cy="0.8" r="0.9"><stop offset="0" stop-color="#FF7F98"/><stop offset="1" stop-color="#FFC2CE"/></radialGradient>
+    <linearGradient id="momoMetal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4F8FA"/><stop offset="1" stop-color="#AEBCC6"/></linearGradient>
+  </defs>
+  <g style="">
+    <path d="M30 56 c2 8 4 10 12 12 c-8 2 -10 4 -12 12 c-2 -8 -4 -10 -12 -12 c8 -2 10 -4 12 -12 z" fill="#FFD66B"/>
+    <path d="M208 70 c1.5 6 3 7.5 9 9 c-6 1.5 -7.5 3 -9 9 c-1.5 -6 -3 -7.5 -9 -9 c6 -1.5 7.5 -3 9 -9 z" fill="#8FD9B8"/>
+    <circle cx="214" cy="150" r="4" fill="#FF9FB2"/>
+    <circle cx="26" cy="150" r="3" fill="#8FD9B8"/>
+  </g>
+  <ellipse cx="120" cy="224" rx="58" ry="8" fill="#6B4A44" opacity="0.13"/>
+  <ellipse cx="100" cy="212" rx="16" ry="9" fill="url(#momoLimb)" stroke="#6B4A44" stroke-width="3"/>
+  <ellipse cx="140" cy="212" rx="16" ry="9" fill="url(#momoLimb)" stroke="#6B4A44" stroke-width="3"/>
+  <path d="M90 208 q10 -4 20 0" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+  <path d="M130 208 q10 -4 20 0" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+  <path d="M90 170 L60 160" stroke="#6B4A44" stroke-width="14" stroke-linecap="round"/>
+  <path d="M90 170 L60 160" stroke="url(#momoLimb)" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="54" cy="158" r="10" fill="url(#momoLimb)" stroke="#6B4A44" stroke-width="3"/>
+  <path d="M42 146 q-5 -5 -10 -4 M38 156 q-7 -1 -10 1" stroke="#6B4A44" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.6"/>
+  <rect x="84" y="150" width="72" height="58" rx="24" fill="url(#momoBody)" stroke="#6B4A44" stroke-width="3"/>
+  <path d="M92 160 q8 -6 20 -6" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <rect x="85.5" y="186" width="69" height="9" fill="#9FE3C4" stroke="#6B4A44" stroke-width="2.5"/>
+  <rect x="113" y="184" width="14" height="13" rx="3" fill="#FFD66B" stroke="#6B4A44" stroke-width="2.5"/>
+  <circle cx="120" cy="170" r="9" fill="#9FE3C4" stroke="#6B4A44" stroke-width="2.5"/>
+  <circle cx="117" cy="167" r="2.5" fill="#FFFFFF" opacity="0.9"/>
+  <path d="M150 170 L170 186" stroke="#6B4A44" stroke-width="14" stroke-linecap="round"/>
+  <path d="M150 170 L170 186" stroke="url(#momoLimb)" stroke-width="8" stroke-linecap="round"/>
+  <g transform="rotate(28 176 186)">
+    <rect x="171" y="146" width="10" height="44" rx="4" fill="url(#momoMetal)" stroke="#6B4A44" stroke-width="2.5"/>
+    <path d="M164 140 a12 12 0 1 1 24 0 l-6 0 l0 -8 l-12 0 l0 8 z" fill="url(#momoMetal)" stroke="#6B4A44" stroke-width="2.5" stroke-linejoin="round"/>
+    <rect x="173" y="160" width="6" height="18" rx="3" fill="#FF9FB2"/>
+  </g>
+  <circle cx="174" cy="190" r="10" fill="url(#momoLimb)" stroke="#6B4A44" stroke-width="3"/>
+  <rect x="110" y="140" width="20" height="14" rx="4" fill="#EBA48C" stroke="#6B4A44" stroke-width="3"/>
+  <g transform="rotate(-6 120 100)">
+    <rect x="32" y="82" width="20" height="38" rx="10" fill="url(#momoLimb)" stroke="#6B4A44" stroke-width="3"/>
+    <rect x="188" y="82" width="20" height="38" rx="10" fill="url(#momoLimb)" stroke="#6B4A44" stroke-width="3"/>
+    <circle cx="42" cy="101" r="4" fill="#9FE3C4"/>
+    <circle cx="198" cy="101" r="4" fill="#9FE3C4"/>
+    <path d="M120 46 C120 34 118 26 124 16" fill="none" stroke="#6B4A44" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M121 34 c-12 -8 -20 -2 -22 2 c8 4 16 4 22 -2 z" fill="#8FD1A9" stroke="#6B4A44" stroke-width="2.2" stroke-linejoin="round"/>
+    <g transform="translate(125 14)">
+      <ellipse cx="0" cy="-8" rx="6" ry="8" fill="url(#momoPetal)" stroke="#6B4A44" stroke-width="2"/>
+      <ellipse cx="0" cy="-8" rx="6" ry="8" fill="url(#momoPetal)" stroke="#6B4A44" stroke-width="2" transform="rotate(72)"/>
+      <ellipse cx="0" cy="-8" rx="6" ry="8" fill="url(#momoPetal)" stroke="#6B4A44" stroke-width="2" transform="rotate(144)"/>
+      <ellipse cx="0" cy="-8" rx="6" ry="8" fill="url(#momoPetal)" stroke="#6B4A44" stroke-width="2" transform="rotate(216)"/>
+      <ellipse cx="0" cy="-8" rx="6" ry="8" fill="url(#momoPetal)" stroke="#6B4A44" stroke-width="2" transform="rotate(288)"/>
+      <circle cx="0" cy="0" r="5.5" fill="#FFD66B" stroke="#6B4A44" stroke-width="2"/>
+      <circle cx="-1.5" cy="-1.5" r="1.6" fill="#FFFFFF"/>
+    </g>
+    <rect x="48" y="44" width="144" height="110" rx="44" fill="url(#momoHead)" stroke="#6B4A44" stroke-width="3.5"/>
+    <path d="M58 118 q4 30 46 34 l32 0 q42 -4 46 -34" fill="none" stroke="#D98F76" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
+    <path d="M64 70 q10 -18 40 -20" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+    <circle cx="116" cy="50" r="3" fill="#FFFFFF" opacity="0.85"/>
+    <rect x="64" y="64" width="112" height="72" rx="26" fill="url(#momoScreen)" stroke="#6B4A44" stroke-width="2.5"/>
+    <path d="M78 68 L104 68 L82 132 L72 132 Q68 132 68 128 L68 90 Q68 72 78 68 Z" fill="#FFFFFF" opacity="0.07"/>
+    <g style="display:none">
+      <path d="M88 104 q10 -14 20 0" fill="none" stroke="#9FE3C4" stroke-width="12" stroke-linecap="round" opacity="0.22"/>
+      <path d="M132 104 q10 -14 20 0" fill="none" stroke="#9FE3C4" stroke-width="12" stroke-linecap="round" opacity="0.22"/>
+      <path d="M88 104 q10 -14 20 0" fill="none" stroke="#B8F2D8" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M132 104 q10 -14 20 0" fill="none" stroke="#B8F2D8" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M112 116 q8 7 16 0" fill="none" stroke="#B8F2D8" stroke-width="4.5" stroke-linecap="round"/>
+    </g>
+    <g style="">
+      <circle cx="100" cy="100" r="10" fill="#9FE3C4" opacity="0.12"/>
+      <circle cx="120" cy="100" r="10" fill="#9FE3C4" opacity="0.18"/>
+      <circle cx="140" cy="100" r="10" fill="#9FE3C4" opacity="0.25"/>
+      <circle cx="100" cy="100" r="5" fill="#B8F2D8" opacity="0.4"/>
+      <circle cx="120" cy="100" r="5" fill="#B8F2D8" opacity="0.7"/>
+      <circle cx="140" cy="100" r="5" fill="#B8F2D8"/>
+      <path d="M112 118 h16" stroke="#B8F2D8" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
+    </g>
+    <g style="display:none">
+      <path d="M90 90 l14 14 M104 90 l-14 14 M136 90 l14 14 M150 90 l-14 14" stroke="#FFB4A8" stroke-width="10" stroke-linecap="round" opacity="0.2"/>
+      <path d="M90 90 l14 14 M104 90 l-14 14 M136 90 l14 14 M150 90 l-14 14" stroke="#FFC4BA" stroke-width="5" stroke-linecap="round"/>
+      <path d="M106 120 q7 -6 14 0 q7 6 14 0" fill="none" stroke="#FFC4BA" stroke-width="4.5" stroke-linecap="round"/>
+      <path d="M186 52 q-8 12 0 16 q8 -4 0 -16 z" fill="#9CD3F5" stroke="#6B4A44" stroke-width="2"/>
+    </g>
+  </g>
+</svg>

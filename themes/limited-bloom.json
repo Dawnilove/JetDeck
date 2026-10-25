@@ -1,0 +1,209 @@
+{
+  "id": "limited-bloom",
+  "label": "모모의 꽃잎 공방",
+  "labelEn": "Momo's Petal Workshop",
+  "kind": "light",
+  "notes": "모든 글자색은 배경 대비 4.5:1 이상, 입력창 테두리·상태 점은 3:1 이상으로 맞춤. 파스텔은 '면'에만 쓰고 글자는 진한 색으로 둔다(흰 글자 + 핑크 버튼 금지). 연결 상태 점은 테마 색(핑크)으로 바꾸지 말고 항상 이 세 색을 쓴다. 점 옆에 '연결됨' 같은 글자도 같이 표시.",
+  "ui": {
+    "bg": "#FFF6F1",
+    "surfaceHover": "#FFE4EA",
+    "text": "#3A2C2A",
+    "textMuted": "#75625D",
+    "placeholder": "#7C6863",
+    "accentFill": "#FFB9A0",
+    "accentFillHover": "#FFA488",
+    "accentFillText": "#3A2C2A",
+    "accentStrong": "#B8452F",
+    "focusRing": "#B8452F",
+    "secondaryFill": "#DDEFE3",
+    "success": "#3E9C78",
+    "successText": "#24704F",
+    "successFill": "#DDF4E9",
+    "warningText": "#7A4E00",
+    "warningFill": "#FFE9C2",
+    "dangerText": "#9E2F2A",
+    "dangerFill": "#FFE0DD",
+    "infoFill": "#E3EEFF",
+    "header": "#FFEDE4",
+    "panel": "#FFFFFF",
+    "selection": "#FFE0D3",
+    "border": "#F2D2C4",
+    "inputBg": "#FFFFFF",
+    "inputBorder": "#B57C69",
+    "secondaryText": "#2D5A3E",
+    "statusBar": "#FFE0D3",
+    "statusBarText": "#3A2C2A",
+    "panel2": "#FFFBF8",
+    "track": "#F2D2C4",
+    "chartPrimary": "#B8452F",
+    "chartSecondary": "#287959"
+  },
+  "shape": {
+    "radiusWindow": 22,
+    "radiusSmall": 12,
+    "radiusInput": 999,
+    "radiusButton": 999,
+    "buttonShadow": "0 3px 0 #E39A80",
+    "radiusCard": 18,
+    "radiusDialog": 22
+  },
+  "font": {
+    "ui": "'IBM Plex Sans KR', sans-serif",
+    "display": "'Jua', 'IBM Plex Sans KR', sans-serif",
+    "mono": "'JetBrains Mono', 'IBM Plex Sans KR', monospace"
+  },
+  "terminal": {
+    "xtermOptions": {
+      "minimumContrastRatio": 4.5
+    },
+    "theme": {
+      "background": "#FFFBF8",
+      "foreground": "#3A2C2A",
+      "cursor": "#B8452F",
+      "cursorAccent": "#FFFBF8",
+      "selectionBackground": "#FFDDE0",
+      "black": "#3A2C2A",
+      "red": "#B8452F",
+      "green": "#2E7D5B",
+      "yellow": "#8A6400",
+      "blue": "#3460A0",
+      "magenta": "#A33E6E",
+      "cyan": "#1C7480",
+      "white": "#75625D",
+      "brightBlack": "#8A746E",
+      "brightRed": "#B03530",
+      "brightGreen": "#24704F",
+      "brightYellow": "#845700",
+      "brightBlue": "#3460A0",
+      "brightMagenta": "#8A3F83",
+      "brightCyan": "#166C72",
+      "brightWhite": "#4E3B37"
+    }
+  },
+  "editor": {
+    "monacoBase": "vs",
+    "colors": {
+      "editor.background": "#FFFBF8",
+      "editor.foreground": "#3A2C2A",
+      "editor.lineHighlightBackground": "#FFF2EC",
+      "editor.selectionBackground": "#FFDDE0",
+      "editorCursor.foreground": "#B8452F",
+      "editorLineNumber.foreground": "#A3857E",
+      "editorLineNumber.activeForeground": "#3A2C2A",
+      "editorGutter.background": "#FFFBF8",
+      "minimap.background": "#FFFBF8",
+      "editor.inactiveSelectionBackground": "#FFDDE099",
+      "editorIndentGuide.background1": "#F2D2C4",
+      "editorIndentGuide.activeBackground1": "#B57C69",
+      "editorWhitespace.foreground": "#F2D2C4",
+      "editorBracketMatch.background": "#FFDDE080",
+      "editorBracketMatch.border": "#B57C69",
+      "editor.findMatchBackground": "#94620066",
+      "editor.findMatchHighlightBackground": "#94620033",
+      "editorWidget.background": "#FFFFFF",
+      "editorWidget.border": "#F2D2C4",
+      "editorSuggestWidget.background": "#FFFFFF",
+      "editorSuggestWidget.border": "#F2D2C4",
+      "editorSuggestWidget.foreground": "#3A2C2A",
+      "editorSuggestWidget.selectedBackground": "#FFE0D3",
+      "editorSuggestWidget.highlightForeground": "#B8452F",
+      "editorHoverWidget.background": "#FFFFFF",
+      "editorHoverWidget.border": "#F2D2C4",
+      "scrollbarSlider.background": "#75625D33",
+      "scrollbarSlider.hoverBackground": "#75625D55",
+      "scrollbarSlider.activeBackground": "#75625D77"
+    },
+    "rules": [
+      {
+        "token": "comment",
+        "foreground": "836963",
+        "fontStyle": "italic"
+      },
+      {
+        "token": "keyword",
+        "foreground": "B8452F",
+        "fontStyle": "bold"
+      },
+      {
+        "token": "string",
+        "foreground": "297B5B"
+      },
+      {
+        "token": "number",
+        "foreground": "8D6700"
+      },
+      {
+        "token": "function",
+        "foreground": "C03F65"
+      },
+      {
+        "token": "type",
+        "foreground": "6A5AA0"
+      },
+      {
+        "token": "tag",
+        "foreground": "B8452F"
+      },
+      {
+        "token": "metatag",
+        "foreground": "B8452F"
+      },
+      {
+        "token": "attribute.name",
+        "foreground": "C03F65"
+      },
+      {
+        "token": "attribute.value",
+        "foreground": "297B5B"
+      },
+      {
+        "token": "regexp",
+        "foreground": "8D6700"
+      },
+      {
+        "token": "string.escape",
+        "foreground": "8D6700"
+      },
+      {
+        "token": "predefined",
+        "foreground": "C03F65"
+      },
+      {
+        "token": "key",
+        "foreground": "6A5AA0"
+      }
+    ]
+  },
+  "limited": true,
+  "status": {
+    "connected": "#3A9170",
+    "connecting": "#946200",
+    "disconnected": "#C2413B"
+  },
+  "mascot": {
+    "name": "momo",
+    "assets": {
+      "happy": "assets/mascots/momo-happy.svg",
+      "wait": "assets/mascots/momo-wait.svg",
+      "oops": "assets/mascots/momo-oops.svg"
+    },
+    "moodByStatus": {
+      "connected": "happy",
+      "connecting": "wait",
+      "disconnected": "oops"
+    },
+    "placements": [
+      "타이틀바 로고(28px)",
+      "탐색기 하단 팁 카드(56px)",
+      "빈 에디터 화면(170px)",
+      "상태줄(18px)",
+      "연결 상태 토스트(110px)"
+    ],
+    "assetsMini": {
+      "happy": "assets/mascots/momo-happy-mini.svg",
+      "wait": "assets/mascots/momo-wait-mini.svg",
+      "oops": "assets/mascots/momo-oops-mini.svg"
+    },
+    "miniBelowPx": 32
+  }
+}

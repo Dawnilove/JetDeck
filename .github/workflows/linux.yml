@@ -1,0 +1,60 @@
+name: Linux AppImage
+
+# v1.2.3 같은 태그를 push하면 Linux 설치 파일(AppImage)을 빌드해 이 저장소의 같은 릴리스에 올림 (별도 토큰·Secret 필요 없음, 기본 GITHUB_TOKEN 사용)
+# Windows 설치 파일은 지금처럼 PC에서 빌드해 같은 릴리스에 올림 (latest.yml / latest-linux.yml이 따로라 자동 업데이트가 겹치지 않음)
+# 포크에서는 포크의 저장소 릴리스에 올라감. 태그를 직접 push할 수 있는 사람(관리자)만 릴리스를 만들 수 있음
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch: # 수동 실행: 빌드·실행 확인만 하고 릴리스에는 안 올림 (결과는 Artifacts에서 받기)
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    permissions:
+      contents: write # 릴리스 업로드용 (이 워크플로는 PR에서는 안 돌고 태그·수동 실행만)
+    strategy:
+      fail-fast: false # arm64가 실패해도 x64 결과는 받을 수 있게
+      matrix:
+        include:
+          - { arch: x64, runner: ubuntu-22.04, script: 'dist:linux', artifact: JetDeck-linux }
+          # arm64는 main 바이트코드(V8)가 CPU 종류에 맞아야 해서 arm64 서버에서 직접 빌드 (Jetson 등)
+          - { arch: arm64, runner: ubuntu-22.04-arm, script: 'dist:linux:arm64', artifact: JetDeck-linux-arm64 }
+    # 22.04(glibc 2.35)에서 빌드해야 더 오래된 배포판에서도 실행됨
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # npm 11은 패키지 설치 스크립트를 기본으로 안 돌림 → main 바이트코드 컴파일에 필요한 Electron 실행 파일을 직접 받음
+      - run: node node_modules/electron/install.js
+      - run: npm test
+      - run: npm run typecheck
+      # main 바이트코드 컴파일이 Electron을 띄우므로 가상 화면(xvfb) 안에서 빌드
+      - run: sudo apt-get update && sudo apt-get install -y xvfb
+      - run: xvfb-run -a npm run ${{ matrix.script }}
+
+      - name: 실행 확인 (화면 없이 20초 켜 보기, 그 안에 죽으면 실패)
+        run: |
+          APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run -a timeout 20 ./release/JetDeck-*.AppImage --no-sandbox || [ $? -eq 124 ]
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            release/JetDeck-*.AppImage
+            release/latest-linux*.yml
+
+      - name: 릴리스에 올리기
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" --title "JetDeck ${GITHUB_REF_NAME#v}" --notes ""
+          gh release upload "$GITHUB_REF_NAME" release/JetDeck-*.AppImage release/latest-linux*.yml -R "$GITHUB_REPOSITORY" --clobber

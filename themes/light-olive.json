@@ -1,0 +1,168 @@
+{
+  "id": "light-olive",
+  "label": "라이트 (베이지 · 올리브)",
+  "labelEn": "Light (Beige · Olive)",
+  "kind": "light",
+  "ui": {
+    "bg": "#F2EFE6",
+    "header": "#EAE6DA",
+    "panel": "#F7F5EF",
+    "panel2": "#FBFAF6",
+    "selection": "#DCE5C8",
+    "border": "#D8D2C2",
+    "inputBorder": "#88816F",
+    "track": "#CCC7B9",
+    "text": "#2B2A26",
+    "textMuted": "#625E54",
+    "warningText": "#875D00",
+    "accentFill": "#4E6B2A",
+    "accentFillText": "#FFFFFF",
+    "accentStrong": "#4E6B2A",
+    "secondaryFill": "#F7F5EF",
+    "secondaryText": "#2B2A26",
+    "statusBar": "#E4DFD1",
+    "statusBarText": "#2B2A26",
+    "chartPrimary": "#4E6B2A",
+    "chartSecondary": "#2F6390"
+  },
+  "status": {
+    "connected": "#3F7A1F",
+    "connecting": "#9A6A00",
+    "disconnected": "#B3362F"
+  },
+  "terminal": {
+    "xtermOptions": {
+      "minimumContrastRatio": 4.5
+    },
+    "theme": {
+      "background": "#FBFAF6",
+      "foreground": "#2B2A26",
+      "cursor": "#4E6B2A",
+      "cursorAccent": "#FBFAF6",
+      "selectionBackground": "#DCE5C8",
+      "black": "#2B2A26",
+      "red": "#B3362F",
+      "green": "#3F7A1F",
+      "yellow": "#8A6100",
+      "blue": "#2F6390",
+      "magenta": "#8A3F83",
+      "cyan": "#1C7A80",
+      "white": "#6F6B61",
+      "brightBlack": "#625E54",
+      "brightRed": "#9E2D27",
+      "brightGreen": "#346A18",
+      "brightYellow": "#755200",
+      "brightBlue": "#27547D",
+      "brightMagenta": "#783671",
+      "brightCyan": "#166C72",
+      "brightWhite": "#45423B"
+    }
+  },
+  "editor": {
+    "monacoBase": "vs",
+    "colors": {
+      "editor.background": "#FBFAF6",
+      "editor.foreground": "#2B2A26",
+      "editorLineNumber.foreground": "#8E8877",
+      "editorLineNumber.activeForeground": "#2B2A26",
+      "editor.lineHighlightBackground": "#F2EFE6",
+      "editor.selectionBackground": "#DCE5C8",
+      "editorCursor.foreground": "#4E6B2A",
+      "editorGutter.background": "#FBFAF6",
+      "minimap.background": "#FBFAF6",
+      "editor.inactiveSelectionBackground": "#DCE5C899",
+      "editorIndentGuide.background1": "#D8D2C2",
+      "editorIndentGuide.activeBackground1": "#88816F",
+      "editorWhitespace.foreground": "#D8D2C2",
+      "editorBracketMatch.background": "#DCE5C880",
+      "editorBracketMatch.border": "#88816F",
+      "editor.findMatchBackground": "#9A6A0066",
+      "editor.findMatchHighlightBackground": "#9A6A0033",
+      "editorWidget.background": "#F7F5EF",
+      "editorWidget.border": "#D8D2C2",
+      "editorSuggestWidget.background": "#F7F5EF",
+      "editorSuggestWidget.border": "#D8D2C2",
+      "editorSuggestWidget.foreground": "#2B2A26",
+      "editorSuggestWidget.selectedBackground": "#DCE5C8",
+      "editorSuggestWidget.highlightForeground": "#4E6B2A",
+      "editorHoverWidget.background": "#F7F5EF",
+      "editorHoverWidget.border": "#D8D2C2",
+      "scrollbarSlider.background": "#625E5433",
+      "scrollbarSlider.hoverBackground": "#625E5455",
+      "scrollbarSlider.activeBackground": "#625E5477"
+    },
+    "rules": [
+      {
+        "token": "comment",
+        "foreground": "6F6B61",
+        "fontStyle": "italic"
+      },
+      {
+        "token": "keyword",
+        "foreground": "8A3F83",
+        "fontStyle": "bold"
+      },
+      {
+        "token": "string",
+        "foreground": "3F7A1F"
+      },
+      {
+        "token": "number",
+        "foreground": "8A6100"
+      },
+      {
+        "token": "function",
+        "foreground": "2F6390"
+      },
+      {
+        "token": "type",
+        "foreground": "1C7A80"
+      },
+      {
+        "token": "tag",
+        "foreground": "8A3F83"
+      },
+      {
+        "token": "metatag",
+        "foreground": "8A3F83"
+      },
+      {
+        "token": "attribute.name",
+        "foreground": "2F6390"
+      },
+      {
+        "token": "attribute.value",
+        "foreground": "3F7A1F"
+      },
+      {
+        "token": "regexp",
+        "foreground": "8A6100"
+      },
+      {
+        "token": "string.escape",
+        "foreground": "8A6100"
+      },
+      {
+        "token": "predefined",
+        "foreground": "2F6390"
+      },
+      {
+        "token": "key",
+        "foreground": "1C7A80"
+      }
+    ]
+  },
+  "shape": {
+    "radiusSmall": 8,
+    "radiusInput": 8,
+    "radiusButton": 8,
+    "radiusCard": 12,
+    "radiusDialog": 14,
+    "buttonShadow": "none"
+  },
+  "font": {
+    "ui": "'IBM Plex Sans KR', system-ui, sans-serif",
+    "display": "'IBM Plex Sans KR', system-ui, sans-serif",
+    "mono": "'JetBrains Mono', 'IBM Plex Sans KR', monospace"
+  }
+}
