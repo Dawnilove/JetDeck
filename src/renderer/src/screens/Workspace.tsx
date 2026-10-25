@@ -10,6 +10,7 @@ import Button from '../components/Button'
 import Segment from '../components/Segment'
 import Docker from './Docker'
 import Services from './Services'
+import Manage from './Manage'
 import HealthView, { useHealth } from './Health'
 import Camera from './Camera'
 import Screen from './Screen'
@@ -128,7 +129,7 @@ function loadSnippets(): Snippet[] {
 }
 
 // 작업 공간 위에 덮는 화면들: 왼쪽 활동 막대 버튼과 명령 팔레트 항목을 이 목록 하나로 만듦 (한쪽에만 빠지는 일이 없게)
-type View = 'code' | 'search' | 'build' | 'files' | 'forward' | 'ros' | 'docker' | 'services' | 'health' | 'screen' | 'camera' | 'activity'
+type View = 'code' | 'search' | 'build' | 'files' | 'forward' | 'ros' | 'docker' | 'services' | 'health' | 'manage' | 'screen' | 'camera' | 'activity'
 const VIEWS: { id: Exclude<View, 'code'>; icon: string; label: string; cmd: string }[] = [
   { id: 'search', icon: 'search', label: tr('파일 검색·바꾸기'), cmd: tr('파일 검색·바꾸기 열기') },
   { id: 'build', icon: 'build', label: tr('빌드 도구'), cmd: tr('빌드 도구 열기 (colcon·catkin_make)') },
@@ -137,6 +138,7 @@ const VIEWS: { id: Exclude<View, 'code'>; icon: string; label: string; cmd: stri
   { id: 'activity', icon: 'activity', label: tr('활동 (모니터 기록)'), cmd: tr('활동 (모니터 기록 그래프) 열기') },
   { id: 'services', icon: 'services', label: tr('서비스'), cmd: tr('서비스 (systemd) 열기') },
   { id: 'health', icon: 'health', label: tr('기기 점검'), cmd: tr('기기 점검 (온도·Wi-Fi·디스크) 열기') },
+  { id: 'manage', icon: 'services', label: tr('업데이트·디스크·전원'), cmd: tr('업데이트·디스크·전원 (기기 관리 도구) 열기') },
   { id: 'docker', icon: 'docker', label: 'Docker', cmd: tr('Docker 컨테이너·이미지 열기') },
   { id: 'screen', icon: 'screen', label: tr('Device 화면'), cmd: tr('Device 화면 열기') },
   { id: 'camera', icon: 'camera', label: tr('영상 입력'), cmd: tr('영상 입력 열기') },
@@ -148,7 +150,7 @@ const GROUPS: { id: string; icon: string; label: string; views: Exclude<View, 'c
   { id: 'dev', icon: 'search', label: tr('개발 도구'), views: ['search', 'build'] },
   { id: 'link', icon: 'transfer', label: tr('연결·전송'), views: ['forward', 'files'] },
   { id: 'activity', icon: 'activity', label: tr('활동 (모니터 기록)'), views: ['activity'] },
-  { id: 'manage', icon: 'services', label: tr('기기 관리'), views: ['services', 'health'] },
+  { id: 'manage', icon: 'services', label: tr('기기 관리'), views: ['services', 'health', 'manage'] },
   { id: 'docker', icon: 'docker', label: 'Docker', views: ['docker'] },
   { id: 'media', icon: 'screen', label: tr('화면·영상'), views: ['screen', 'camera'] },
   { id: 'ros', icon: 'ros', label: 'ROS2', views: ['ros'] }
@@ -620,6 +622,11 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
         {view === 'health' && (
           <div className="xf-overlay">
             <HealthView online={online} state={health} />
+          </div>
+        )}
+        {view === 'manage' && (
+          <div className="xf-overlay">
+            <Manage connId={sess.id} online={online} onLaunch={launchInNewTerm} />
           </div>
         )}
         {view === 'docker' && (

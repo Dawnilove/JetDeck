@@ -1,0 +1,57 @@
+{
+  "id": "device",
+  "format": 1,
+  "name": { "ko": "기기 관리", "en": "Device management" },
+  "pages": [
+    {
+      "id": "apt",
+      "title": { "ko": "apt 업데이트", "en": "apt updates" },
+      "desc": { "ko": "설치된 패키지 중 새 버전이 있는 것을 보고 업데이트해요. 설치는 확인창을 거쳐요.", "en": "See which installed packages have newer versions and update them. Installing always asks first." },
+      "actions": [
+        {
+          "id": "apt-check",
+          "label": { "ko": "업데이트 확인", "en": "Check for updates" },
+          "desc": { "ko": "지금 받을 수 있는 업데이트 목록이에요. 목록이 오래됐으면 먼저 \"목록 새로고침\"을 하세요.", "en": "Updates available right now. If the list looks stale, refresh it first." },
+          "cmd": "apt list --upgradable 2>/dev/null",
+          "risk": "read",
+          "auto": true,
+          "display": {
+            "type": "table",
+            "match": "^(\\S+)/(\\S+) (\\S+) (\\S+) \\[upgradable from: (.+)\\]$",
+            "columns": [
+              { "ko": "패키지", "en": "Package" },
+              { "ko": "저장소", "en": "Repository" },
+              { "ko": "새 버전", "en": "New version" },
+              { "ko": "구조", "en": "Arch" },
+              { "ko": "현재 버전", "en": "Current version" }
+            ],
+            "empty": { "ko": "업데이트할 패키지가 없어요.", "en": "Everything is up to date." }
+          }
+        },
+        {
+          "id": "apt-update",
+          "label": { "ko": "목록 새로고침 (apt update)", "en": "Refresh lists (apt update)" },
+          "desc": { "ko": "패키지 목록만 새로 받아요. 설치되는 것은 없어요.", "en": "Only downloads fresh package lists. Nothing gets installed." },
+          "cmd": "apt-get update",
+          "sudo": true,
+          "risk": "change",
+          "confirm": { "ko": "패키지 목록을 새로 받아요. 설치되는 것은 없어요.", "en": "This downloads fresh package lists. Nothing gets installed." },
+          "timeout": 300,
+          "display": { "type": "text" }
+        },
+        {
+          "id": "apt-upgrade",
+          "label": { "ko": "모두 업그레이드 (apt upgrade)", "en": "Upgrade all (apt upgrade)" },
+          "desc": { "ko": "목록에 있는 패키지를 모두 새 버전으로 바꿔요. 몇 분 걸릴 수 있어요.", "en": "Replaces every listed package with its newer version. This can take a few minutes." },
+          "cmd": "apt-get -y upgrade",
+          "sudo": true,
+          "risk": "danger",
+          "preview": "apt-get -s upgrade 2>&1 | grep -E '^(Inst|Remv|Conf)' | head -200",
+          "confirm": { "ko": "아래 패키지를 설치·교체해요. 몇 분 걸리고, 드라이버나 커널이 바뀌면 재부팅이 필요할 수 있어요. 끝날 때까지 앱을 닫지 마세요.", "en": "The packages below will be installed or replaced. It takes a few minutes, and a reboot may be needed if drivers or the kernel change. Keep the app open until it finishes." },
+          "timeout": 1800,
+          "display": { "type": "text" }
+        }
+      ]
+    }
+  ]
+}

@@ -429,6 +429,10 @@ button.ros-item:hover { background: var(--panel-2); }
   width: 280px; max-height: min(70vh, 560px); overflow-y: auto; padding: 8px;
   border-radius: var(--r-card, 12px); border: 1px solid var(--border); background: var(--panel); color: var(--text); box-shadow: var(--card-shadow, 0 12px 32px rgba(0, 0, 0, 0.3));
 }
+/* 기기 관리 도구 표 (screens/Manage.tsx) */
+.pk-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.pk-table th { position: sticky; top: 0; background: var(--panel); text-align: left; font-weight: 600; color: var(--text-dim); padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.pk-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
 /* 환경 설정 메뉴 (screens/Main.tsx 머리말) */
 .settings-btn { anchor-name: --settings-btn; white-space: nowrap; }
 .settings-pop {

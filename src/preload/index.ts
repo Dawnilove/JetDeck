@@ -8,6 +8,8 @@ import type { Proc } from '../main/procparse.mts'
 import type { DockerAction, DockerData } from '../main/dockerparse.mts'
 import type { RemoteResult } from '../main/remote'
 import type { Guide } from '../main/vncparse.mts'
+import type { Pack } from '../main/packschema.mts'
+import type { PackResult } from '../main/packrun.mts'
 import type { BuildKind } from '../main/buildparse.mts'
 import type { ActionResult, SvcAction, SvcData } from '../main/svcparse.mts'
 import type { Health } from '../main/healthparse.mts'
@@ -117,6 +119,9 @@ const api = {
   importSettings: (overwrite = false): Promise<ImportResult> => ipcRenderer.invoke('settings:import', overwrite),
   saveDiagnostics: (): Promise<string | null> => ipcRenderer.invoke('diag:save'),
   saveTermLog: (text: string, name: string): Promise<string | null> => ipcRenderer.invoke('termlog:save', text, name),
+  // 기기 관리 팩 (4.5.0): 명령은 main의 팩 데이터에 있고 화면은 id만 보냄. mode 'preview'는 미리보기 명령 실행
+  packList: (): Promise<Pack[]> => ipcRenderer.invoke('pack:list'),
+  packRun: (connId: string, actionId: string, params: Record<string, string>, mode: 'run' | 'preview'): Promise<PackResult> => ipcRenderer.invoke('pack:run', connId, actionId, params, mode),
   // 기기 점검 (읽기 전용). smart=false면 SMART 생략
   healthRead: (connId: string, smart: boolean): Promise<Health> => ipcRenderer.invoke('health:read', connId, smart),
   // Docker 패널 (젯슨의 docker CLI를 SSH로 실행)

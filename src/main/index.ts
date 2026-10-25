@@ -12,6 +12,7 @@ import { registerForwardIpc } from './forward'
 import { registerDockerIpc } from './docker'
 import { registerSvcIpc } from './svc'
 import { registerHealthIpc } from './health'
+import { registerPackIpc } from './pack'
 import { registerSettingsIpc } from './settingsfile'
 import { registerTermLogIpc } from './termlog'
 import { registerDiagIpc } from './diag'
@@ -133,6 +134,7 @@ function startApp(): void {
     registerDockerIpc()
     registerSvcIpc()
     registerHealthIpc()
+    registerPackIpc()
     registerSettingsIpc()
     registerTermLogIpc()
     registerDiagIpc()
