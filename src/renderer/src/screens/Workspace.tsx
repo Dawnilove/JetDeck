@@ -135,7 +135,7 @@ const VIEWS: { id: Exclude<View, 'code'>; icon: string; label: string; cmd: stri
   { id: 'health', icon: 'health', label: tr('기기 점검'), cmd: tr('기기 점검 (온도·Wi-Fi·디스크) 열기') },
   { id: 'docker', icon: 'docker', label: 'Docker', cmd: tr('Docker 컨테이너·이미지 열기') },
   { id: 'screen', icon: 'screen', label: tr('Device 화면'), cmd: tr('Device 화면 열기') },
-  { id: 'camera', icon: 'camera', label: tr('카메라'), cmd: tr('카메라 열기') },
+  { id: 'camera', icon: 'camera', label: tr('영상 입력'), cmd: tr('영상 입력 열기') },
   { id: 'ros', icon: 'ros', label: 'ROS2', cmd: tr('ROS2 도구 열기 (토픽·노드·launch)') }
 ]
 

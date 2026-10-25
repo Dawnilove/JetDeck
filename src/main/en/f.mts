@@ -9,7 +9,7 @@ export const EN_F: Record<string, string> = {
 
   // 작업 공간·화면
   'Device 화면 열기': 'Open device screen',
-  '카메라 열기': 'Open camera',
+  '영상 입력 열기': 'Open video input',
   '스니펫 편집: {0}': 'Edit snippet: {0}',
   '왼쪽 탐색기에서 파일을 열면 여기에 표시돼요. 저장은 {0}': 'Open a file from the explorer on the left and it will show up here. Save with {0}',
   'PC 뷰어로 열기 ({0})': 'Open in PC viewer ({0})',

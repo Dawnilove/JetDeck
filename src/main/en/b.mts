@@ -12,7 +12,7 @@ export const EN_B: Record<string, string> = {
   '키를 등록하는 중...': 'Registering the key...',
   '{0}. 인증 방식을 SSH 키로 바꿨어요. 저장 후 연결하세요.': '{0}. Authentication switched to SSH key. Save and connect.',
   "'{0}' 호스트를 삭제할까요?": "Delete host '{0}'?",
-  'Jetson에 특화된 SSH 클라이언트': 'An SSH client built for Jetson',
+  'Jetson에 특화된, 모든 리눅스 기기를 위한 SSH 클라이언트': 'An SSH client built for Jetson, for any Linux device',
   '{0} 연결됨': '{0} connected',
   'Claude·Cursor·Codex 등 AI에서 JetDeck을 쓰도록 설정 (아직 연결된 AI 없음)': 'Set up AI tools like Claude, Cursor, and Codex to use JetDeck (no AI connected yet)',
   'MCP 연결': 'MCP',
@@ -104,7 +104,7 @@ export const EN_B: Record<string, string> = {
 
   // Camera.tsx
   '카메라': 'Camera',
-  'Device에 연결된 카메라(USB 등)를 SSH로 미리 봐요. Device에 따로 설치하는 것은 없어요.': 'Preview a camera (USB, etc.) connected to the device over SSH. Nothing extra is installed on the device.',
+  'Device에 연결된 카메라(USB 등) 영상을 SSH로 미리 봐요. Device에 따로 설치하는 것은 없어요.': 'Preview video from a camera (USB, etc.) connected to the device over SSH. Nothing extra is installed on the device.',
   '목록 새로고침': 'Refresh list',
   '연결되면 카메라를 찾아요.': 'Cameras are detected once connected.',
   '카메라를 찾지 못했어요': 'No camera found',
@@ -114,7 +114,8 @@ export const EN_B: Record<string, string> = {
   '해상도': 'Resolution',
   '초당 프레임': 'Frames per second',
   '프레임 {0}': 'Frames {0}',
-  '카메라 미리보기': 'Camera preview',
+  '영상 입력 미리보기': 'Video input preview',
+  '영상 입력': 'Video input',
 
   // Dashboard.tsx
   '대시보드': 'Dashboard',

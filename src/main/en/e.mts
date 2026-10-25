@@ -75,7 +75,7 @@ export const EN_E: Record<string, string> = {
   ': 토픽·노드·launch·서비스·파라미터·bag을 화면에서 다뤄요.': ': Work with topics, nodes, launch, services, parameters, and bags from the UI.',
   ': 컨테이너와 이미지를 보고 시작·정지해요.': ': View containers and images, and start or stop them.',
   ': Device 데스크톱을 앱 안에서 봐요 (VNC).': ': View the device desktop inside the app (VNC).',
-  ': Device에 연결한 카메라를 미리 봐요.': ': Preview a camera connected to the device.',
+  ': Device에 연결한 카메라 등의 영상을 미리 봐요.': ': Preview video from a camera connected to the device.',
   ': 연결 관리 화면에서 여러 Device 상태를 한눈에 봐요.': ': See the status of several devices at a glance on the Connections screen.',
   ': 호스트 설정에서 켜면 rviz·rqt 같은 창을 이 PC에 띄워요 (X 서버 필요).': ': Turn it on in host settings to show windows like rviz and rqt on this PC (needs an X server).',
   ': 모니터 기록 그래프, 프로세스, AI 활동을 봐요.': ': See monitor history graphs, processes, and AI activity.',

@@ -87,7 +87,7 @@ export default function Camera({ connId, online }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <PanelHead title={tr('카메라')} desc={<Desc>{tr('Device에 연결된 카메라(USB 등)를 SSH로 미리 봐요. Device에 따로 설치하는 것은 없어요.')}</Desc>}>
+      <PanelHead title={tr('영상 입력 미리보기')} desc={<Desc>{tr('Device에 연결된 카메라(USB 등) 영상을 SSH로 미리 봐요. Device에 따로 설치하는 것은 없어요.')}</Desc>}>
         <Button size={36} onClick={load} disabled={!online || running}>{tr('목록 새로고침')}</Button>
       </PanelHead>
       {!online && <Note>{tr('연결되면 카메라를 찾아요.')}</Note>}
@@ -121,7 +121,7 @@ export default function Camera({ connId, online }: Props) {
       )}
       {error && <Note err>{error}</Note>}
       <div style={{ flex: 1, minHeight: 0, background: '#000', display: running || count ? 'block' : 'none', position: 'relative' }}>
-        <img ref={img} alt={tr('카메라 미리보기')} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+        <img ref={img} alt={tr('영상 입력 미리보기')} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
       </div>
     </div>
   )

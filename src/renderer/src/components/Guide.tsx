@@ -95,7 +95,7 @@ const PAGES: { title: string; body: ReactNode }[] = [
         <li><b>ROS2</b>{tr(': 토픽·노드·launch·서비스·파라미터·bag을 화면에서 다뤄요.')}</li>
         <li><b>Docker</b>{tr(': 컨테이너와 이미지를 보고 시작·정지해요.')}</li>
         <li><b>{tr('Device 화면')}</b>{tr(': Device 데스크톱을 앱 안에서 봐요 (VNC).')}</li>
-        <li><b>{tr('카메라')}</b>{tr(': Device에 연결한 카메라를 미리 봐요.')}</li>
+        <li><b>{tr('영상 입력')}</b>{tr(': Device에 연결한 카메라 등의 영상을 미리 봐요.')}</li>
         <li><b>{tr('대시보드')}</b>{tr(': 연결 관리 화면에서 여러 Device 상태를 한눈에 봐요.')}</li>
         <li><b>X11</b>{tr(': 호스트 설정에서 켜면 rviz·rqt 같은 창을 이 PC에 띄워요 (X 서버 필요).')}</li>
         <li><b>{tr('활동')}</b>{tr(': 모니터 기록 그래프, 프로세스, AI 활동을 봐요.')}</li>
