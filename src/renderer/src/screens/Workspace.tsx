@@ -20,6 +20,8 @@ import Forward, { type FwdRule } from './Forward'
 import Mascot, { MascotOr, MascotTip, MascotToast } from '../components/Mascot'
 import Monitor, { SUSPEND_ASK, suspendCommand } from '../components/Monitor'
 import Terminal, { terms as xterms } from '../components/Terminal'
+import TermSearch from '../components/TermSearch'
+import { toLog } from './termsearch.mts'
 import Logo from '../components/Logo'
 import { useMcpClients } from '../components/McpDialogs'
 import Palette, { type PaletteItem } from '../components/Palette'
@@ -308,6 +310,18 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
     sync()
   }
 
+  // 터미널 출력 검색·로그 저장 (4.4.0): 지금 선택한 터미널이 대상
+  const [termFind, setTermFind] = useState(false)
+  const saveTermLog = async () => {
+    const t = xterms.get(sess.activeTerm)
+    if (!t) return
+    const b = t.buffer.active
+    const rows = Array.from({ length: b.length }, (_, i) => b.getLine(i)).map((l) => ({ text: l?.translateToString(true) ?? '', wrapped: !!l?.isWrapped }))
+    const path = await window.api.saveTermLog(toLog(rows), host.name)
+    if (path) t.write(`
+[33m[${tr('터미널 로그를 저장했어요')}: ${path}][0m
+`)
+  }
   const newTerm = (split = false) => {
     const termId = crypto.randomUUID()
     const size = sizes[sess.activeTerm] ?? { cols: 80, rows: 24 }
@@ -416,6 +430,7 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
     return [
       ...(online ? needLink : []),
       { id: 'toggle-term', title: tr('터미널 패널 접기/펴기'), shortcut: 'Ctrl+`', run: () => toggle(terminalRef.current) },
+      ...(sess.activeTerm ? [{ id: 'term-find', title: tr('터미널 출력 검색'), run: () => setTermFind(true) }, { id: 'term-log', title: tr('터미널 로그 저장…'), run: saveTermLog }] : []),
       { id: 'full', title: open.full ? tr('작업 공간으로 돌아가기') : tr('터미널만 크게'), run: toggleFull },
       ...views.map((v) => ({ id: v.id, title: view === v.id ? tr('작업 공간으로 돌아가기') : v.cmd, run: () => setView(view === v.id ? 'code' : v.id) })),
       { id: 'proc', title: view === 'activity' && actTab === 'proc' ? tr('작업 공간으로 돌아가기') : tr('프로세스 목록 열기'), run: () => openActivity('proc') },
@@ -690,6 +705,17 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
                   </div>
                   <div style={{ display: 'flex', gap: 2 }}>
                     <button type="button" className="ws-icon-btn" aria-label={tr('새 터미널')} title={tr('새 터미널 (Ctrl+Shift+`)')} disabled={!online} onClick={() => newTerm()}>+</button>
+                    <button type="button" className="ws-icon-btn" aria-label={tr('터미널 출력 검색')} title={tr('터미널 출력 검색')} disabled={!sess.activeTerm} onClick={() => setTermFind((v) => !v)}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <circle cx="11" cy="11" r="6" />
+                        <line x1="16" y1="16" x2="21" y2="21" />
+                      </svg>
+                    </button>
+                    <button type="button" className="ws-icon-btn" aria-label={tr('터미널 로그 저장')} title={tr('터미널 로그 저장…')} disabled={!sess.activeTerm} onClick={saveTermLog}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <path d="M12 4v11M7 11l5 5 5-5M5 20h14" />
+                      </svg>
+                    </button>
                     <button type="button" className="ws-icon-btn" aria-label={tr('터미널 분할')} title={tr('터미널 분할')} disabled={!online || !!sess.splitTerm || !sess.activeTerm} onClick={() => newTerm(true)}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                         <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -710,6 +736,7 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
                       onResize={(cols, rows) => setSizes((s) => ({ ...s, [t]: { cols, rows } }))}
                     />
                   ))}
+                  {termFind && sess.activeTerm && <TermSearch key={sess.activeTerm} id={sess.activeTerm} onClose={() => setTermFind(false)} />}
                   {sess.status === 'connecting' && sess.terms.length > 0 && <div className="ws-connecting" role="status">{tr('{0}에 연결 중…', host.name)}</div>}
                   {sess.terms.length === 0 && (
                     <div className="ws-welcome">

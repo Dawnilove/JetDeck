@@ -13,6 +13,7 @@ import { registerDockerIpc } from './docker'
 import { registerSvcIpc } from './svc'
 import { registerHealthIpc } from './health'
 import { registerSettingsIpc } from './settingsfile'
+import { registerTermLogIpc } from './termlog'
 import { registerBuildIpc } from './build'
 import { registerGitIpc } from './git'
 import { registerSearchIpc } from './search'
@@ -130,6 +131,7 @@ function startApp(): void {
     registerSvcIpc()
     registerHealthIpc()
     registerSettingsIpc()
+    registerTermLogIpc()
     registerBuildIpc()
     registerGitIpc()
     registerSearchIpc()

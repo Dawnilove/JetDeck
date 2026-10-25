@@ -117,6 +117,17 @@ export const EN_B: Record<string, string> = {
   '영상 입력 미리보기': 'Video input preview',
   '영상 입력': 'Video input',
   '바로가기': 'Shortcuts',
+  '터미널 출력에서 찾기': 'Find in terminal output',
+  '터미널 출력 검색': 'Search terminal output',
+  '터미널 로그 저장': 'Save terminal log',
+  '터미널 로그 저장…': 'Save terminal log…',
+  '터미널 로그를 저장했어요': 'Terminal log saved',
+  '없음': 'None',
+  '이전 일치': 'Previous match',
+  '다음 일치': 'Next match',
+  '이전 (Shift+Enter)': 'Previous (Shift+Enter)',
+  '다음 (Enter)': 'Next (Enter)',
+  '닫기 (Esc)': 'Close (Esc)',
 
   // Dashboard.tsx
   '대시보드': 'Dashboard',
