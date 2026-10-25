@@ -131,7 +131,7 @@ export const EN_G: Record<string, string> = {
   '문제 신고용 정보(버전·OS·호스트 개수·최근 오류)를 파일로 저장. 이름·주소·비밀은 빼요': 'Save info for bug reports (version, OS, host count, recent errors) to a file. Names, addresses and secrets are left out',
   '덮어쓴 것: 호스트 {0}개, 스니펫 {1}개.': 'Overwritten: {0} host(s), {1} snippet(s).',
   '비밀이 가려진 스니펫 {0}개는 원래 것을 그대로 뒀어요.': 'Kept the original {0} snippet(s) whose secrets were masked in the file.',
-  '개발 도구': 'Dev tools',
+  '개발·실행 환경': 'Dev & runtime',
   '연결·전송': 'Connect & transfer',
   '기기 관리': 'Device management',
   '화면·영상': 'Display & video',

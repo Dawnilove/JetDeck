@@ -147,13 +147,11 @@ const VIEWS: { id: Exclude<View, 'code'>; icon: string; label: string; cmd: stri
 
 // 왼쪽 활동 막대는 묶음 단위. 묶음 안 화면은 화면 위쪽 탭으로 오가고, 화면이 하나뿐인 묶음은 탭 줄이 없음
 const GROUPS: { id: string; icon: string; label: string; views: Exclude<View, 'code'>[] }[] = [
-  { id: 'dev', icon: 'search', label: tr('개발 도구'), views: ['search', 'build'] },
+  { id: 'dev', icon: 'build', label: tr('개발·실행 환경'), views: ['search', 'build', 'ros', 'docker'] },
   { id: 'link', icon: 'transfer', label: tr('연결·전송'), views: ['forward', 'files'] },
   { id: 'activity', icon: 'activity', label: tr('활동 (모니터 기록)'), views: ['activity'] },
   { id: 'manage', icon: 'services', label: tr('기기 관리'), views: ['services', 'health', 'manage'] },
-  { id: 'docker', icon: 'docker', label: 'Docker', views: ['docker'] },
-  { id: 'media', icon: 'screen', label: tr('화면·영상'), views: ['screen', 'camera'] },
-  { id: 'ros', icon: 'ros', label: 'ROS2', views: ['ros'] }
+  { id: 'media', icon: 'screen', label: tr('화면·영상'), views: ['screen', 'camera'] }
 ]
 
 // 접힌 패널은 펴고, 펴진 패널은 접기
@@ -553,6 +551,7 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
               <span className="dot connecting" style={{ width: 7, height: 7 }} aria-hidden />{tr('AI 작업 중')}
             </button>
           )}
+          <button type="button" className="ws-mini" onClick={onHosts} title={tr('연결 관리 열기')}>{tr('연결 관리')}</button>
           <button type="button" className="ws-mini" onClick={onMcp}style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} title={mcp.length ? tr('{0} 연결됨', mcp.join(', ')) : tr('연결된 AI 없음 (눌러서 연결 방법 보기)')}>
             <span className={mcp.length ? 'dot' : 'dot offline'} style={{ width: 7, height: 7 }} aria-hidden />MCP
           </button>
@@ -565,7 +564,6 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
         <nav className="ws-activity" aria-label={tr('활동')}>
           {/* 파일 전송 화면에 있을 때 탐색기를 누르면 작업 공간으로 돌아옴 */}
           <ActBtn icon="explorer" label={tr('탐색기')} selected={view === 'code' && open.explorer} onClick={() => (view !== 'code' ? setView('code') : toggleSide(explorerRef))} />
-          <ActBtn icon="hosts" label={tr('연결 관리')} onClick={onHosts} />
           <ActBtn icon="monitor" label={tr('시스템 모니터')} toggle selected={open.monitor} onClick={() => toggleSide(monitorRef)} />
           {groups.map((g) => (
             <ActBtn key={g.id} icon={g.icon} label={g.label} selected={curGroup?.id === g.id} onClick={() => openGroup(g)} />
