@@ -184,6 +184,14 @@ export default function Main({ onConnect, theme, onTheme, onGuide, onNews, onMcp
       setMsg({ text: errText(e), ok: false })
     }
   }
+  const saveDiag = async () => {
+    try {
+      const p = await window.api.saveDiagnostics()
+      if (p) setMsg({ text: tr('진단 정보를 저장했어요: {0}. 기기 이름·주소·비밀번호는 들어 있지 않아서 문제 신고에 붙여도 돼요.', p), ok: true })
+    } catch (e) {
+      setMsg({ text: errText(e), ok: false })
+    }
+  }
   const [overwriteCfg, setOverwriteCfg] = useState(false) // 가져올 때 같은 기기·스니펫을 덮어쓸지 (기본은 새 것만 추가)
   const importCfg = async () => {
     try {
@@ -234,6 +242,7 @@ export default function Main({ onConnect, theme, onTheme, onGuide, onNews, onMcp
           <input type="checkbox" checked={overwriteCfg} onChange={(e) => setOverwriteCfg(e.target.checked)} />
           {tr('같은 것은 덮어쓰기')}
         </label>
+        <Button size={40} onClick={saveDiag} title={tr('문제 신고용 정보(버전·OS·호스트 개수·최근 오류)를 파일로 저장. 이름·주소·비밀은 빼요')}>{tr('진단 정보 저장')}</Button>
         <span className="field" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {tr('테마')}
           <ThemePicker value={theme} onChange={onTheme} />

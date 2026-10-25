@@ -14,6 +14,8 @@ import { registerSvcIpc } from './svc'
 import { registerHealthIpc } from './health'
 import { registerSettingsIpc } from './settingsfile'
 import { registerTermLogIpc } from './termlog'
+import { registerDiagIpc } from './diag'
+import { captureConsole } from './diagbundle.mts'
 import { registerBuildIpc } from './build'
 import { registerGitIpc } from './git'
 import { registerSearchIpc } from './search'
@@ -116,6 +118,7 @@ function startApp(): void {
     if (win?.isMinimized()) win.restore()
     win?.focus()
   })
+  captureConsole()
   app.whenReady().then(() => {
     // 배포판은 기본 메뉴(개발자 도구 Ctrl+Shift+I 등)를 없앰. 개발 중(npm run dev)엔 그대로
     if (app.isPackaged) Menu.setApplicationMenu(null)
@@ -132,6 +135,7 @@ function startApp(): void {
     registerHealthIpc()
     registerSettingsIpc()
     registerTermLogIpc()
+    registerDiagIpc()
     registerBuildIpc()
     registerGitIpc()
     registerSearchIpc()

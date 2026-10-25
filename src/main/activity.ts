@@ -37,6 +37,8 @@ export async function track(wc: WebContents | null, meta: { tool: string; args: 
   }
 }
 
+export const recentActs = (): ActLite[] => list.slice(-50).map(lite)
+
 export function registerActivityIpc(): void {
   ipcMain.handle('activity:list', (): ActLite[] => list.map(lite))
   ipcMain.handle('activity:detail', (_e, id: number) => list.find((a) => a.id === Number(id))?.detail ?? '')
