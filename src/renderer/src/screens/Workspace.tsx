@@ -318,9 +318,7 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
     const b = t.buffer.active
     const rows = Array.from({ length: b.length }, (_, i) => b.getLine(i)).map((l) => ({ text: l?.translateToString(true) ?? '', wrapped: !!l?.isWrapped }))
     const path = await window.api.saveTermLog(toLog(rows), host.name)
-    if (path) t.write(`
-[33m[${tr('터미널 로그를 저장했어요')}: ${path}][0m
-`)
+    if (path) t.write(`\r\n\x1b[33m[${tr('터미널 로그를 저장했어요')}: ${path}]\x1b[0m\r\n`)
   }
   const newTerm = (split = false) => {
     const termId = crypto.randomUUID()
