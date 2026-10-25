@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>JetDeck — Jetson SSH 작업 공간</title>
-<meta name="description" content="터미널·원격 편집·시스템 모니터·ROS2·파일 전송·시리얼이 한 창에. 젯슨에는 SSH 서버 말고 아무것도 설치하지 않아요.">
-<meta property="og:title" content="JetDeck — Jetson SSH 작업 공간">
+<title>JetDeck — Jetson에 특화된 SSH 작업 공간</title>
+<meta name="description" content="터미널·원격 편집·시스템 모니터·ROS2·파일 전송·시리얼이 한 창에. Jetson에 특화됐지만 SSH가 되는 리눅스 기기는 모두 연결돼요. 기기에는 SSH 서버 말고 아무것도 설치하지 않아요.">
+<meta property="og:title" content="JetDeck — Jetson에 특화된 SSH 작업 공간">
 <meta property="og:description" content="젯슨 하나 다루는데 창 다섯 개 띄우지 마세요.">
 <meta property="og:image" content="banner.png">
 <link rel="icon" href="icon.png">
@@ -169,7 +169,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
   <div class="wrap">
     <span class="ver" id="ver">최신 버전</span>
     <h1>젯슨 하나 다루는데<br><em>창 다섯 개</em> 띄우지 마세요.</h1>
-    <p class="lead">터미널·코드 편집·시스템 모니터·ROS2·파일 전송을 <b>한 창</b>에 모았어요.<br>젯슨에는 <b>SSH 서버 말고 아무것도 설치하지 않아요.</b></p>
+    <p class="lead">터미널·코드 편집·시스템 모니터·ROS2·파일 전송을 <b>한 창</b>에 모았어요.<br>기기에는 <b>SSH 서버 말고 아무것도 설치하지 않아요.</b></p>
     <div class="cta">
       <a class="btn main" data-dl="win" href="https://github.com/Dawnilove/JetDeck/releases/latest">⬇ Windows용 무료 다운로드</a>
       <a class="btn" href="#screens">화면 둘러보기</a>
@@ -179,7 +179,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
       <a data-dl="linux" href="https://github.com/Dawnilove/JetDeck/releases/latest">Linux AppImage</a> ·
       <a data-dl="linux-arm" href="https://github.com/Dawnilove/JetDeck/releases/latest">Linux arm64 (Jetson)</a></p>
     <ul class="facts">
-      <li><b>설치 0개</b>젯슨 쪽 준비물</li>
+      <li><b>설치 0개</b>Device 쪽 준비물</li>
       <li><b>한 창</b>터미널·편집·모니터·ROS2</li>
       <li><b>Windows · Linux</b>arm64(젯슨 본체)도</li>
       <li><b>무료</b>개인·교육 목적</li>
@@ -195,9 +195,9 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
       <h2>젯슨 작업, 이제 앱 하나로 끝내세요</h2>
       <p class="sec-lead">PuTTY, WinSCP, VS Code 원격, jtop… 젯슨 하나에 쓰던 도구들을 한곳에 모았어요.</p>
       <div class="grid why">
-        <div class="card"><span class="ico">🧩</span><h3>젯슨에 깔 게 없어요</h3><p>JetPack 기본 상태 그대로, SSH만 켜져 있으면 바로 연결. VS Code 원격처럼 젯슨에 서버를 설치하지 않아요.</p></div>
+        <div class="card"><span class="ico">🧩</span><h3>기기에 깔 게 없어요</h3><p>SSH만 켜져 있으면 바로 연결 (JetPack 기본 상태도 OK). VS Code 원격처럼 기기에 서버를 설치하지 않아요.</p></div>
         <div class="card"><span class="ico">🪟</span><h3>창을 오갈 필요가 없어요</h3><p>왼쪽에서 파일 열고, 아래에서 명령 실행, 오른쪽에서 CPU·GPU·온도 확인. 끊기면 자동으로 다시 연결돼요.</p></div>
-        <div class="card"><span class="ico">🤖</span><h3>AI에게 맡길 수 있어요</h3><p>Claude·Cursor 같은 AI가 젯슨에서 명령을 실행하고 파일을 고쳐요. 위험한 명령은 내가 허용해야만 실행돼요.</p></div>
+        <div class="card"><span class="ico">🤖</span><h3>AI에게 맡길 수 있어요</h3><p>Claude·Cursor 같은 AI가 기기에서 명령을 실행하고 파일을 고쳐요. 위험한 명령은 내가 허용해야만 실행돼요.</p></div>
       </div>
     </section>
 
@@ -207,7 +207,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
       <div class="vs" role="table" aria-label="보통 방법과 JetDeck 비교">
         <div class="vs-row vs-head" role="row"><span role="columnheader">하고 싶은 일</span><span class="old" role="columnheader">보통은</span><span></span><span class="new" role="columnheader">JetDeck이면</span></div>
         <div class="vs-row" role="row"><span class="task" role="cell">명령 실행</span><span class="old" role="cell">PuTTY · Windows 터미널</span><span class="arrow" aria-hidden="true">→</span><span class="new" role="cell">탭·분할 터미널</span></div>
-        <div class="vs-row" role="row"><span class="task" role="cell">코드 편집</span><span class="old" role="cell">VS Code 원격 (젯슨에 서버 설치)</span><span class="arrow" aria-hidden="true">→</span><span class="new" role="cell">탐색기 + 편집기, 젯슨에 설치 없음</span></div>
+        <div class="vs-row" role="row"><span class="task" role="cell">코드 편집</span><span class="old" role="cell">VS Code 원격 (기기에 서버 설치)</span><span class="arrow" aria-hidden="true">→</span><span class="new" role="cell">탐색기 + 편집기, 기기에 설치 없음</span></div>
         <div class="vs-row" role="row"><span class="task" role="cell">상태 확인</span><span class="old" role="cell"><code>jtop</code> 설치, <code>tegrastats</code> 해석</span><span class="arrow" aria-hidden="true">→</span><span class="new" role="cell">CPU 코어·GPU·온도·전력 그래프</span></div>
         <div class="vs-row" role="row"><span class="task" role="cell">파일 주고받기</span><span class="old" role="cell">WinSCP · <code>scp</code></span><span class="arrow" aria-hidden="true">→</span><span class="new" role="cell">끌어다 놓기</span></div>
         <div class="vs-row" role="row"><span class="task" role="cell">Jupyter·대시보드</span><span class="old" role="cell"><code>ssh -L 8888:…</code> 외우기</span><span class="arrow" aria-hidden="true">→</span><span class="new" role="cell">버튼 한 번 포트 포워딩</span></div>
@@ -222,15 +222,15 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
       <div class="spot">
         <figure><img class="shot" loading="lazy" src="images/hosts.png" width="1264" height="761" alt="연결 관리 화면"></figure>
         <div><h3>🔌 연결 관리</h3><ul>
-          <li>젯슨을 저장해 두고 클릭 한 번으로 접속</li>
+          <li>기기를 저장해 두고 클릭 한 번으로 접속</li>
           <li>지금 켜져 있는 기기는 온라인 표시</li>
-          <li>IP를 몰라도 <b>주변 Jetson 찾기</b>로 자동 검색</li>
+          <li>IP를 몰라도 <b>주변 Device 찾기</b>로 자동 검색</li>
         </ul></div>
       </div>
       <div class="spot">
         <figure><img class="shot" loading="lazy" src="images/files.png" width="1264" height="761" alt="파일 전송 화면"></figure>
         <div><h3>📁 파일 전송</h3><ul>
-          <li>내 PC ↔ 젯슨 양쪽 목록을 나란히</li>
+          <li>내 PC ↔ 기기 양쪽 목록을 나란히</li>
           <li>끌어다 놓으면 끝, 폴더도 통째로</li>
           <li>진행률·속도 표시, 전송 대기열과 취소</li>
         </ul></div>
@@ -277,10 +277,10 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
       </div>
       <div class="spot">
         <figure><img class="shot" loading="lazy" src="images/camera.png" width="1264" height="761" alt="카메라 미리보기 화면"></figure>
-        <div><h3>📷 카메라 미리보기</h3><ul>
-          <li>젯슨에 꽂은 USB 카메라 영상을 앱 안에서 바로 확인</li>
+        <div><h3>📷 영상 입력 미리보기</h3><ul>
+          <li>기기에 꽂은 USB 카메라 등 영상 입력을 앱 안에서 바로 확인</li>
           <li>장치·해상도·fps를 고르고 시작</li>
-          <li>정지하면 젯슨 쪽 실행도 함께 종료</li>
+          <li>정지하면 기기 쪽 실행도 함께 종료</li>
         </ul></div>
       </div>
       <div class="spot">
@@ -288,13 +288,13 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
         <div><h3>🌿 Git 상태 표시</h3><ul>
           <li>탐색기에서 브랜치와 바뀐 파일을 한눈에 (M·U 표시)</li>
           <li>바뀐 파일이 들어 있는 폴더에도 점 표시</li>
-          <li>젯슨에 git만 있으면 되고, 따로 설치할 것 없음</li>
+          <li>기기에 git만 있으면 되고, 따로 설치할 것 없음</li>
         </ul></div>
       </div>
       <div class="spot">
         <figure><img class="shot" loading="lazy" src="images/search.png" width="1264" height="761" alt="파일 검색·바꾸기 화면"></figure>
         <div><h3>🔎 파일 검색·바꾸기</h3><ul>
-          <li>젯슨 폴더 안의 글자를 찾고, 결과를 누르면 그 줄로 이동</li>
+          <li>기기 폴더 안의 글자를 찾고, 결과를 누르면 그 줄로 이동</li>
           <li>정규식·대소문자 구분, 체크한 파일만 전체 바꾸기</li>
           <li>바꾸기 전에 확인 창, 읽은 뒤 파일이 바뀌었으면 건너뜀</li>
         </ul></div>
@@ -312,7 +312,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
         <div><h3>🩺 기기 점검</h3><ul>
           <li>온도·Wi-Fi 신호·디스크 SMART·실패한 서비스를 읽기만 해서 보여줘요</li>
           <li>연결된 동안 1분마다 확인하고 문제가 생기면 알림</li>
-          <li>SMART는 젯슨에 smartmontools가 있을 때만</li>
+          <li>SMART는 기기에 smartmontools가 있을 때만</li>
         </ul></div>
       </div>
       <div class="spot">
@@ -337,8 +337,8 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
           <h3>💻 매일 쓰는 기본 <span>터미널·편집·파일</span></h3>
           <div class="grid">
             <div class="card"><span class="ico">⌨️</span><h3>터미널</h3><p>여러 탭·분할·터미널만 크게. 끊기면 자동 재연결하고 탭은 그대로.</p></div>
-            <div class="card"><span class="ico">📝</span><h3>원격 편집</h3><p>VS Code와 같은 Monaco 편집기. 젯슨에서 바뀐 파일은 덮어쓰기 전에 알려 줘요.</p></div>
-            <div class="card"><span class="ico">📁</span><h3>파일·폴더 전송</h3><p>내 PC ↔ 젯슨 끌어다 놓기, 폴더 통째 올리기·내려받기, 동시 4개 전송.</p></div>
+            <div class="card"><span class="ico">📝</span><h3>원격 편집</h3><p>VS Code와 같은 Monaco 편집기. 기기에서 바뀐 파일은 덮어쓰기 전에 알려 줘요.</p></div>
+            <div class="card"><span class="ico">📁</span><h3>파일·폴더 전송</h3><p>내 PC ↔ 기기 끌어다 놓기, 폴더 통째 올리기·내려받기, 동시 4개 전송.</p></div>
             <div class="card"><span class="ico">▦</span><h3>분할 화면</h3><p>연결을 최대 4개까지 한 화면에 나란히(좌우) 또는 바둑판으로.</p></div>
             <div class="card"><span class="ico">🔨</span><h3>빌드·검색·Git</h3><p>colcon·catkin_make 실행과 오류 줄 → 파일 이동, 폴더 안 글자 찾기·바꾸기(<kbd>Ctrl+Shift+F</kbd>), 탐색기에 Git 상태 표시.</p></div>
             <div class="card"><span class="ico">💾</span><h3>설정 내보내기·가져오기</h3><p>호스트 목록·스니펫·테마를 파일 하나로. 비밀번호는 들어가지 않아요.</p></div>
@@ -365,7 +365,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
           <div class="grid">
             <div class="card"><span class="ico">🤖</span><h3>ROS2 도구</h3><p>토픽·노드 목록과 info, echo·hz 실시간, launch 바로 실행. 서비스 호출, 파라미터 읽기·설정, bag 정보·재생·녹화.</p></div>
             <div class="card"><span class="ico">🔧</span><h3>시리얼 콘솔</h3><p>SSH가 안 될 때의 비상구. 포트와 속도만 고르면 끝.</p></div>
-            <div class="card"><span class="ico">📷</span><h3>카메라 미리보기</h3><p>기기의 USB 카메라를 장치·해상도·fps를 골라 앱 안에서 실시간으로.</p></div>
+            <div class="card"><span class="ico">📷</span><h3>영상 입력 미리보기</h3><p>기기의 USB 카메라 등 영상 장치를 장치·해상도·fps를 골라 앱 안에서 실시간으로.</p></div>
             <div class="card"><span class="ico">🖥</span><h3>기기 화면 보기</h3><p>VNC 데스크톱을 앱 안에서 바로(SSH 터널). VNC·RDP 뷰어 열기, rviz·rqt 같은 X11 창은 PC의 X 서버로.</p></div>
           </div>
         </div>
@@ -373,7 +373,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
         <div class="group">
           <h3>✨ AI·편의 <span>MCP·테마·언어</span></h3>
           <div class="grid">
-            <div class="card"><span class="ico">✳️</span><h3>MCP 연결</h3><p>Claude·Cursor·Codex 등 AI가 젯슨에서 명령 실행·파일 편집. 연결되면 버튼에 불이 켜져요.</p></div>
+            <div class="card"><span class="ico">✳️</span><h3>MCP 연결</h3><p>Claude·Cursor·Codex 등 AI가 기기에서 명령 실행·파일 편집. 연결되면 버튼에 불이 켜져요.</p></div>
             <div class="card"><span class="ico">🎨</span><h3>테마 17종</h3><p>기본 다크·라이트부터 네온, 마스코트 테마까지. 다시 시작 없이 바로 바뀌어요.</p></div>
             <div class="card"><span class="ico">🌐</span><h3>영어 화면</h3><p>위쪽 언어 버튼으로 한국어 ↔ English.</p></div>
             <div class="card"><span class="ico">🆕</span><h3>업데이트 내용</h3><p>업데이트하면 바뀐 점을 앱에서 바로 보여 줘요. 도움말 옆 버튼으로 다시 볼 수도 있어요.</p></div>
@@ -386,8 +386,8 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
   <div class="wrap">
     <section id="mcp">
       <span class="eyebrow">AI에 연결하기 (MCP)</span>
-      <h2>"젯슨 온도 확인해 줘"라고 말하세요</h2>
-      <p class="sec-lead">MCP를 지원하는 AI(Claude·Cursor·VS Code·Codex CLI·Gemini CLI 등)에게 말하면 JetDeck을 통해 젯슨에서 바로 실행해요.</p>
+      <h2>"보드 온도 확인해 줘"라고 말하세요</h2>
+      <p class="sec-lead">MCP를 지원하는 AI(Claude·Cursor·VS Code·Codex CLI·Gemini CLI 등)에게 말하면 JetDeck을 통해 기기에서 바로 실행해요.</p>
       <div class="chat">
         <div class="bubble">orin에 연결해서 GPU 온도 알려 줘</div>
         <div class="bubble">~/ros2_ws 빌드하고 오류 고쳐 줘</div>
@@ -402,7 +402,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
         <summary>AI가 쓸 수 있는 도구 보기</summary>
         <div class="table"><table>
           <tr><th>도구</th><th>하는 일</th></tr>
-          <tr><td><code>list_hosts</code> · <code>connect</code></td><td>저장된 젯슨 목록·연결 (JetDeck에 탭이 열림)</td></tr>
+          <tr><td><code>list_hosts</code> · <code>connect</code></td><td>저장된 기기 목록·연결 (JetDeck에 탭이 열림)</td></tr>
           <tr><td><code>run_command</code></td><td>명령 실행 후 출력·종료 코드</td></tr>
           <tr><td><code>read_file</code> · <code>write_file</code> · <code>list_dir</code></td><td>파일 읽기·쓰기, 폴더 목록</td></tr>
           <tr><td><code>get_status</code></td><td>CPU·GPU·메모리·온도·전력·전원 모드·ROS 버전</td></tr>
@@ -458,7 +458,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
       <div class="grid">
         <div class="card"><span class="ico">🔒</span><h3>비밀번호는 이 PC에만</h3><p>OS 암호화로 저장해요 (Windows: DPAPI, Linux: 키링). 다른 PC로 복사해도 못 풀어요.</p></div>
         <div class="card"><span class="ico">🛡️</span><h3>호스트 키 확인</h3><p>처음 접속 때 확인하고, 바뀌면 경고해요. <code>~/.ssh/known_hosts</code>도 함께 읽어요 (쓰지 않음).</p></div>
-        <div class="card"><span class="ico">📡</span><h3>밖으로 보내는 건 두 가지뿐</h3><p><b>젯슨과의 SSH 연결</b>과 <b>업데이트 확인(GitHub Releases)</b>.</p></div>
+        <div class="card"><span class="ico">📡</span><h3>밖으로 보내는 건 두 가지뿐</h3><p><b>기기와의 SSH 연결</b>과 <b>업데이트 확인(GitHub Releases)</b>.</p></div>
       </div>
       <p class="note">저장 위치: Windows <code>%APPDATA%\nanoterm\</code>, Linux <code>~/.config/nanoterm/</code></p>
     </section>
@@ -466,7 +466,8 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
     <section id="install">
       <span class="eyebrow">설치</span>
       <h2>내 컴퓨터에 맞는 걸 받으세요</h2>
-      <p class="sec-lead">젯슨 쪽 준비물은 <b>SSH 서버</b> 하나뿐이에요 (JetPack 기본 상태 그대로 OK).</p>
+      <p class="sec-lead">Device 쪽 준비물은 <b>SSH 서버</b> 하나뿐이에요 (JetPack 기본 상태 그대로 OK).</p>
+      <p class="sec-lead"><b>지원 기기</b> — <b>NVIDIA Jetson</b>은 전체 기능(<code>tegrastats</code> 모니터·전원 모드·JetPack·CUDA 버전), <b>라즈베리 파이·우분투 등 일반 리눅스</b>는 터미널·편집·파일 전송·포트 포워딩·모니터(CPU·메모리·온도)를 쓸 수 있어요.</p>
       <div class="grid">
         <div class="card os"><span class="ico">🪟</span><h3>Windows 10 / 11</h3>
           <p>설치 파일을 받아 실행하세요. 설치 없이 쓰려면 포터블. 새 버전이 나오면 앱이 알아서 받아 두고 알려 줘요.</p>
@@ -495,8 +496,8 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
       <span class="eyebrow">3분 시작</span>
       <h2>세 단계면 연결돼요</h2>
       <ol class="steps">
-        <li><b>새 연결</b>에 젯슨 IP·사용자 이름·비밀번호를 넣고 <b>저장 후 연결</b>
-          <ul><li>USB 케이블로 직접 연결했다면 <code>192.168.55.1</code></li><li>IP를 모르면 오른쪽 <b>주변 Jetson 찾기</b></li></ul></li>
+        <li><b>새 연결</b>에 기기 IP·사용자 이름·비밀번호를 넣고 <b>저장 후 연결</b>
+          <ul><li>USB 케이블로 직접 연결했다면 <code>192.168.55.1</code></li><li>IP를 모르면 오른쪽 <b>주변 Device 찾기</b></li></ul></li>
         <li>처음 접속 때 뜨는 <b>호스트 키 확인</b>에서 지문을 보고 <b>신뢰하고 연결</b></li>
         <li>왼쪽에서 파일 열기 · 아래에서 명령 실행 · 오른쪽에서 상태 확인. 모든 기능은 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd></li>
       </ol>
@@ -504,13 +505,13 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
       <h3 style="margin-top:36px">기능별 사용법</h3>
       <details>
         <summary>🤖 ROS2 도구</summary>
-        <p>왼쪽 활동 바의 <b>ROS2</b> 버튼. 젯슨의 <code>ros2</code> 명령을 SSH로 실행해 보여 줘요.</p>
+        <p>왼쪽 활동 바의 <b>ROS2</b> 버튼. 기기의 <code>ros2</code> 명령을 SSH로 실행해 보여 줘요.</p>
         <ul>
-          <li><b>토픽</b> — 발행·구독 노드, 메시지 보기(echo), 주기 측정(hz). 멈추거나 화면을 닫으면 젯슨 쪽 명령도 끝나요.</li>
+          <li><b>토픽</b> — 발행·구독 노드, 메시지 보기(echo), 주기 측정(hz). 멈추거나 화면을 닫으면 기기 쪽 명령도 끝나요.</li>
           <li><b>노드</b> — 연결된 토픽·서비스</li>
           <li><b>launch</b> — 내 워크스페이스와 설치된 패키지의 launch 파일을 찾아, 확인 후 새 터미널 탭에서 <code>ros2 launch</code></li>
         </ul>
-        <p class="note">ROS 환경은 젯슨 <code>~/.bashrc</code>의 <code>source /opt/ros/&lt;배포판&gt;/setup.bash</code>를 따라요.</p>
+        <p class="note">ROS 환경은 기기 <code>~/.bashrc</code>의 <code>source /opt/ros/&lt;배포판&gt;/setup.bash</code>를 따라요.</p>
       </details>
       <details>
         <summary>🔧 시리얼 콘솔</summary>
@@ -526,7 +527,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
         <ul>
           <li><b>기기 화면 보기</b> — 기기에 VNC 서버가 켜져 있어야 해요(없으면 앱이 켜는 방법을 안내). 연결 설정의 원격 화면 종류를 VNC로 두고 작업 공간의 <b>원격 화면</b>을 누르면 앱 안에서 열려요.</li>
           <li><b>X11 화면</b> — 연결 설정에서 "X11 화면"을 켜고 PC에서 X 서버(<code>winget install marha.VcXsrv</code>, XLaunch에서 <i>Disable access control</i>)를 실행한 뒤 터미널에서 <code>rviz2</code> 등을 실행하면 PC 창으로 떠요.</li>
-          <li><b>카메라</b> — 활동 버튼의 <b>카메라</b>에서 장치·해상도·fps를 고르고 시작. 기기에 <code>v4l2-ctl</code>·<code>gst-launch-1.0</code>이 있어야 해요.</li>
+          <li><b>영상 입력</b> — 활동 버튼의 <b>카메라</b>에서 장치·해상도·fps를 고르고 시작. 기기에 <code>v4l2-ctl</code>·<code>gst-launch-1.0</code>이 있어야 해요.</li>
           <li><b>언어</b> — 위쪽 언어 버튼. 바꾸면 화면을 다시 불러와서 열린 연결이 닫혀요(바꾸기 전에 확인).</li>
         </ul>
       </details>
@@ -551,7 +552,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
         <summary>증상별 확인할 것</summary>
         <div class="table"><table>
           <tr><th>증상</th><th>확인할 것</th></tr>
-          <tr><td>"응답이 없어요"</td><td>젯슨 전원·네트워크, 같은 공유기인지, IP가 바뀌지 않았는지</td></tr>
+          <tr><td>"응답이 없어요"</td><td>기기 전원·네트워크, 같은 공유기인지, IP가 바뀌지 않았는지</td></tr>
           <tr><td>"인증 실패"</td><td>사용자 이름·비밀번호. 키 인증이면 키 파일 경로</td></tr>
           <tr><td>"비밀번호 로그인을 막아 두었어요"</td><td>그 기기는 SSH 키로만 접속돼요. ① 등록된 키가 있으면 인증 방식을 "SSH 키"로 ② 없으면 <code>ssh-keygen -t ed25519</code>로 만든 뒤 <code>id_ed25519.pub</code>를 젯슨 <code>~/.ssh/authorized_keys</code>에 추가 ③ 본인 젯슨이면 <code>/etc/ssh/sshd_config.d/</code>의 <code>PasswordAuthentication no</code>를 <code>yes</code>로 바꾸고 <code>sudo systemctl restart ssh</code></td></tr>
           <tr><td>암호 걸린 SSH 키</td><td><code>ssh-add</code>로 ssh-agent에 등록한 뒤 연결</td></tr>
@@ -577,7 +578,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
       <h2>로드맵</h2>
       <div class="table"><table>
         <tr><th>버전</th><th>계획</th></tr>
-        <tr><td>4.0 (출시)</td><td>폴더 전송·스니펫 · ROS2 서비스·파라미터·bag · VNC·RDP · Docker · 모니터 기록·프로세스·AI 활동 · 기기 화면 · 대시보드 · 카메라 · X11 · 영어 화면</td></tr>
+        <tr><td>4.0 (출시)</td><td>폴더 전송·스니펫 · ROS2 서비스·파라미터·bag · VNC·RDP · Docker · 모니터 기록·프로세스·AI 활동 · 기기 화면 · 대시보드 · 영상 입력 미리보기 · X11 · 영어 화면</td></tr>
         <tr><td>4.0.x</td><td>설치판에서 나온 불편 수정 · 새 기능 화면 사진 보강 · 영어 화면 다듬기</td></tr>
         <tr><td>4.1 · 4.2 · 4.3 (출시)</td><td>시작 화면 · 빌드 도구(colcon·catkin_make, 오류 줄 → 파일 이동) · 원격 파일 검색·전체 바꾸기 · Git 상태 / systemd 서비스 시작·정지·journalctl 실시간 · 기기 점검(온도·Wi-Fi·SMART·실패한 서비스 알림) / 설정 내보내기·가져오기 · AI가 터미널 읽기(승인·비밀 가리기)</td></tr>
         <tr><td colspan="2">순서는 바뀔 수 있어요. 바라는 기능은 <a href="https://github.com/Dawnilove/JetDeck/issues">Issues</a>에 남겨 주세요.</td></tr>
