@@ -32,14 +32,20 @@ const extColor = (p: string) => (/\.py$/.test(p) ? 'var(--chart-2)' : /\.ya?ml$/
 export default function Editor({ connId, home, onStatus, onOpened, children, ref }: Props) {
   const box = useRef<HTMLDivElement>(null)
   const ed = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+  const diffBox = useRef<HTMLDivElement>(null)
+  const dd = useRef<monaco.editor.IStandaloneDiffEditor | null>(null)
+  const diffOrig = useRef<monaco.editor.ITextModel | null>(null) // 비교 화면 왼쪽(Device의 저장된 내용)
   const views = useRef(new Map<monaco.editor.ITextModel, monaco.editor.ICodeEditorViewState | null>())
   const [files, setFiles] = useState<File[]>([])
   const [active, setActive] = useState('')
+  const [diff, setDiff] = useState<{ path: string; conflict: boolean } | null>(null)
   const [notice, setNotice] = useState<{ text: string; ok: boolean } | null>(null)
   // monaco 콜백(Ctrl+S 등)은 한 번만 등록되므로 최신 상태는 ref로 읽음
   const filesRef = useRef(files)
   filesRef.current = files
   const activeRef = useRef(active)
+  const diffRef = useRef(diff)
+  diffRef.current = diff
   const statusRef = useRef(onStatus)
   statusRef.current = onStatus
 
@@ -51,7 +57,18 @@ export default function Editor({ connId, home, onStatus, onOpened, children, ref
     statusRef.current(m && pos ? { ln: pos.lineNumber, col: pos.column, eol: m.getEOL() === '\r\n' ? 'CRLF' : 'LF' } : null)
   }
 
+  const closeDiff = () => {
+    if (!diffRef.current) return
+    dd.current?.setModel(null)
+    diffOrig.current?.dispose()
+    diffOrig.current = null
+    diffRef.current = null
+    setDiff(null)
+    setTimeout(() => ed.current?.layout(), 0) // 숨겼던 편집기를 다시 보이게 한 뒤 크기를 다시 잼
+  }
+
   const activate = (path: string) => {
+    closeDiff()
     const e = ed.current
     if (!e) return // 아직 편집기를 만들기 전 (열린 파일 없음)
     const cur = e.getModel()
@@ -64,20 +81,21 @@ export default function Editor({ connId, home, onStatus, onOpened, children, ref
     report()
   }
 
+  const editorOptions = () => ({
+    theme: 'nanoterm',
+    automaticLayout: true, // 패널 크기 조절·탭 전환 시 자동으로 다시 그림
+    fontFamily: getComputedStyle(document.documentElement).getPropertyValue('--mono'),
+    fontSize: 13,
+    lineHeight: 21,
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false
+  })
+
   // 처음 열 때 한 번만 편집기를 만듦
   const ensureEditor = async () => {
     const m = await loadMonaco()
     if (!ed.current && box.current) {
-      const e = m.monaco.editor.create(box.current, {
-        model: null,
-        theme: 'nanoterm',
-        automaticLayout: true, // 패널 크기 조절·탭 전환 시 자동으로 다시 그림
-        fontFamily: getComputedStyle(document.documentElement).getPropertyValue('--mono'),
-        fontSize: 13,
-        lineHeight: 21,
-        minimap: { enabled: false },
-        scrollBeyondLastLine: false
-      })
+      const e = m.monaco.editor.create(box.current, { model: null, ...editorOptions() })
       ed.current = e
       e.addCommand(m.monaco.KeyMod.CtrlCmd | m.monaco.KeyCode.KeyS, () => activeRef.current && saveRef.current(activeRef.current))
       e.onDidChangeCursorPosition(report)
@@ -93,11 +111,12 @@ export default function Editor({ connId, home, onStatus, onOpened, children, ref
       ed.current?.revealLineInCenter(line)
     }, 60)
   }
-  const open = async (path: string, line?: number) => {
-    if (fileOf(path)) return activate(path), goto(line), onOpened?.(path)
+  // restore=true: 탭 복원 중 — 최근 파일에 넣지 않고, 사라진 파일 오류도 조용히 건너뜀
+  const open = async (path: string, line?: number, restore = false) => {
+    if (fileOf(path)) return activate(path), goto(line), restore || onOpened?.(path)
     try {
       const [{ text, mtime }, m] = await Promise.all([window.api.fsRead(connId, path), ensureEditor()])
-      if (fileOf(path)) return activate(path), goto(line), onOpened?.(path) // 빠르게 두 번 클릭한 경우
+      if (fileOf(path)) return activate(path), goto(line), restore || onOpened?.(path) // 빠르게 두 번 클릭한 경우
       const model = m.monaco.editor.createModel(text, m.languageOf(path))
       const file: File = { path, mtime, saved: model.getAlternativeVersionId(), dirty: false, model }
       model.onDidChangeContent(() =>
@@ -107,7 +126,36 @@ export default function Editor({ connId, home, onStatus, onOpened, children, ref
       setFiles(filesRef.current)
       activate(path)
       goto(line)
-      onOpened?.(path)
+      if (!restore) onOpened?.(path)
+    } catch (e) {
+      if (!restore) setNotice({ text: `${baseOf(path)}: ${errText(e)}`, ok: false })
+    }
+  }
+
+  // Device에 저장된 내용과 지금 편집 중인 내용을 나란히 비교 (왼쪽 = Device, 오른쪽 = 내 편집 내용, 오른쪽은 수정 가능)
+  const openDiff = async (path: string, conflict = false) => {
+    const f = fileOf(path)
+    if (!f) return
+    try {
+      const [{ text }, m] = await Promise.all([window.api.fsRead(connId, path), ensureEditor()])
+      if (fileOf(path) !== f || activeRef.current !== path) return // 읽는 사이 탭을 바꾼 경우
+      const same = (a: string, b: string) => a.replace(/\r\n/g, '\n') === b.replace(/\r\n/g, '\n')
+      if (same(text, f.model.getValue())) {
+        if (conflict) return void saveRef.current(path, true) // 내용이 같으면 충돌이 아님 → 시간표만 맞춰 저장
+        return setNotice({ text: tr('차이가 없어요: Device의 파일과 같아요'), ok: true })
+      }
+      if (!dd.current && diffBox.current) {
+        const d = m.monaco.editor.createDiffEditor(diffBox.current, { ...editorOptions(), originalEditable: false, renderSideBySide: true })
+        dd.current = d
+        d.getModifiedEditor().addCommand(m.monaco.KeyMod.CtrlCmd | m.monaco.KeyCode.KeyS, () => activeRef.current && saveRef.current(activeRef.current))
+      }
+      if (!dd.current) return
+      diffOrig.current?.dispose()
+      diffOrig.current = m.monaco.editor.createModel(text, m.languageOf(path))
+      dd.current.setModel({ original: diffOrig.current, modified: f.model })
+      diffRef.current = { path, conflict }
+      setDiff(diffRef.current)
+      setTimeout(() => dd.current?.layout(), 0)
     } catch (e) {
       setNotice({ text: `${baseOf(path)}: ${errText(e)}`, ok: false })
     }
@@ -123,9 +171,11 @@ export default function Editor({ connId, home, onStatus, onOpened, children, ref
     try {
       const r = await window.api.fsWrite(connId, path, f.model.getValue(), f.mtime, force)
       if ('conflict' in r) {
-        if (confirm(tr("'{0}'이(가) Device에서 열어둔 뒤에 바뀌었어요.\n내 내용으로 덮어쓸까요?", baseOf(path)))) return save(path, true)
-        return setNotice({ text: tr('저장 취소: 원격 파일이 바뀌었어요'), ok: false })
+        // 바로 덮어쓰기를 묻지 않고, 달라진 부분을 보여 준 뒤 '덮어쓰기'를 고르게 함
+        setNotice({ text: tr("'{0}'이(가) Device에서 열어둔 뒤에 바뀌었어요. 비교한 뒤 덮어쓰기를 눌러 주세요", baseOf(path)), ok: false })
+        return void (await openDiff(path, true))
       }
+      closeDiff()
       setFiles((fs) => fs.map((x) => (x.model === f.model ? { ...x, mtime: r.mtime, saved: version, dirty: f.model.getAlternativeVersionId() !== version } : x)))
       setNotice({ text: tr('저장했어요 · {0}', baseOf(path)), ok: true })
     } catch (e) {
@@ -141,6 +191,7 @@ export default function Editor({ connId, home, onStatus, onOpened, children, ref
     const f = fileOf(path)
     if (!f) return
     if (ask && f.dirty && !confirm(tr("'{0}'에 저장하지 않은 변경이 있어요. 닫을까요?", baseOf(path)))) return
+    if (diffRef.current?.path === path) closeDiff() // 모델을 버리기 전에 비교 화면부터 풂
     filesRef.current = filesRef.current.filter((x) => x !== f)
     setFiles(filesRef.current)
     if (activeRef.current === path) activate(filesRef.current.at(-1)?.path ?? '')
@@ -172,6 +223,8 @@ export default function Editor({ connId, home, onStatus, onOpened, children, ref
 
   useEffect(
     () => () => {
+      dd.current?.dispose() // 모델은 아래에서 따로 버림 (diff 편집기는 모델을 안 버림)
+      diffOrig.current?.dispose()
       ed.current?.dispose()
       filesRef.current.forEach((f) => f.model.dispose())
     },
@@ -211,11 +264,22 @@ export default function Editor({ connId, home, onStatus, onOpened, children, ref
       </div>}
       {(active || notice) && (
         <div className="ed-crumb" role="status">
-          {active && crumb(active)}
-          {notice && <span className={notice.ok ? 'msg-ok' : 'msg-err'}>{active ? ' · ' : ''}{notice.text}</span>}
+          <span className="ed-crumb-text">
+            {active && crumb(active)}
+            {notice && <span className={notice.ok ? 'msg-ok' : 'msg-err'}>{active ? ' · ' : ''}{notice.text}</span>}
+          </span>
+          {active && (
+            <>
+              {diff?.conflict && <button type="button" className="ed-act" onClick={() => void save(active, true)}>{tr('덮어쓰기')}</button>}
+              <button type="button" className="ed-act" title={tr('Device에 저장된 파일과 지금 내용을 나란히 비교해요')} onClick={() => (diff ? closeDiff() : void openDiff(active))}>
+                {diff ? tr('비교 닫기') : tr('Device와 비교')}
+              </button>
+            </>
+          )}
         </div>
       )}
-      <div ref={box} className="ed-box" style={{ display: active ? undefined : 'none' }} />
+      <div ref={box} className="ed-box" style={{ display: active && !diff ? undefined : 'none' }} />
+      <div ref={diffBox} className="ed-box" style={{ display: diff ? undefined : 'none' }} />
       {!active && children}
     </>
   )

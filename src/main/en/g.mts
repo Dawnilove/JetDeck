@@ -157,5 +157,11 @@ export const EN_G: Record<string, string> = {
   '가져오기': 'Import',
   '같은 것은 덮어쓰기':'Overwrite existing',
   '같은 주소·사용자의 호스트와 이름이 같은 스니펫을 가져온 것으로 바꿔요 (저장된 비밀번호는 그대로)': 'Replace hosts with the same address and user, and snippets with the same name, by the imported ones (saved passwords are kept)',
-  '가져왔어요: 호스트 {0}개 추가 (이미 있어서 {1}개 건너뜀, 올바르지 않은 {2}개), 스니펫 {3}개 추가. 비밀번호 방식 호스트는 호스트를 눌러 비밀번호를 다시 입력하세요.': 'Imported: {0} host(s) added ({1} skipped as already present, {2} invalid), {3} snippet(s) added. For password-based hosts, select the host and enter the password again.'
+  '가져왔어요: 호스트 {0}개 추가 (이미 있어서 {1}개 건너뜀, 올바르지 않은 {2}개), 스니펫 {3}개 추가. 비밀번호 방식 호스트는 호스트를 눌러 비밀번호를 다시 입력하세요.': 'Imported: {0} host(s) added ({1} skipped as already present, {2} invalid), {3} snippet(s) added. For password-based hosts, select the host and enter the password again.',
+  '차이가 없어요: Device의 파일과 같아요': 'No differences: same as the file on the device',
+  "'{0}'이(가) Device에서 열어둔 뒤에 바뀌었어요. 비교한 뒤 덮어쓰기를 눌러 주세요": "'{0}' changed on the device after you opened it. Compare, then press Overwrite",
+  '덮어쓰기': 'Overwrite',
+  'Device에 저장된 파일과 지금 내용을 나란히 비교해요': 'Compare the saved file on the device with what you have now, side by side',
+  '비교 닫기': 'Close compare',
+  'Device와 비교': 'Compare with device'
 }

@@ -215,8 +215,6 @@ export const EN_B: Record<string, string> = {
   '저장': 'Save',
 
   // Editor.tsx
-  "'{0}'이(가) Device에서 열어둔 뒤에 바뀌었어요.\n내 내용으로 덮어쓸까요?": "'{0}' changed on the device after you opened it.\nOverwrite it with your version?",
-  '저장 취소: 원격 파일이 바뀌었어요': 'Save canceled: the remote file has changed',
   '저장했어요 · {0}': 'Saved · {0}',
   '저장 실패: {0}': 'Save failed: {0}',
   "'{0}'에 저장하지 않은 변경이 있어요. 닫을까요?": "'{0}' has unsaved changes. Close it anyway?",
