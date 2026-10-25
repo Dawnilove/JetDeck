@@ -307,7 +307,8 @@ button.ws-term-tab.ws-link { padding: 0 14px; border: 0; background: none; }
 .card h2 { font-size: 16px; font-weight: 600; }
 
 /* 파일 전송 화면 (design/Files.dc.html) — 작업 공간 위에 덮어 표시 */
-.xf-overlay { position: absolute; inset: 0 0 0 52px; z-index: 5; overflow: auto; background: var(--bg); }
+.xf-overlay { position: absolute; inset: var(--xf-top, 0px) 0 0 52px; z-index: 5; overflow: auto; background: var(--bg); }
+.xf-tabs { position: absolute; inset: 0 0 auto 52px; height: 56px; z-index: 6; display: flex; align-items: center; padding: 0 20px; background: var(--bg); border-bottom: 1px solid var(--border); overflow-x: auto; }
 .xf { display: flex; flex-direction: column; gap: 16px; min-height: 100%; padding: 16px 20px; }
 .xf-panes { display: flex; flex-wrap: wrap; gap: 16px; }
 .xf-pane { flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; border-radius: var(--r-card); border: 1px solid var(--border); background: var(--panel); }

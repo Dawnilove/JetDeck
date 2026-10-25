@@ -250,9 +250,11 @@ export default function Main({ onConnect, theme, onTheme, onGuide, onNews, onMcp
           {currentMascot() && (
             <label className="check"><input type="checkbox" checked={mascotHidden()} onChange={(e) => setMascotHidden(e.target.checked)} />{tr('마스코트 숨기기')}</label>
           )}
-          <span className="caption">{tr('설정 파일')}</span>
-          <Button size={36} onClick={() => { settingsPop.current?.hidePopover(); exportCfg() }} title={tr('호스트 목록·스니펫·테마를 파일로 저장 (비밀번호 제외)')}>{tr('설정 내보내기')}</Button>
-          <Button size={36} onClick={() => { settingsPop.current?.hidePopover(); importCfg() }} title={tr('내보낸 설정 파일에서 호스트·스니펫·테마를 가져와요')}>{tr('설정 가져오기')}</Button>
+          <span className="caption">{tr('설정 내보내기/가져오기')}</span>
+          <div className="settings-row">
+            <Button size={36} style={{ flex: 1 }} onClick={() => { settingsPop.current?.hidePopover(); exportCfg() }} title={tr('호스트 목록·스니펫·테마를 파일로 저장 (비밀번호 제외)')}>{tr('내보내기')}</Button>
+            <Button size={36} style={{ flex: 1 }} onClick={() => { settingsPop.current?.hidePopover(); importCfg() }} title={tr('내보낸 설정 파일에서 호스트·스니펫·테마를 가져와요')}>{tr('가져오기')}</Button>
+          </div>
           <label className="check dim" title={tr('같은 주소·사용자의 호스트와 이름이 같은 스니펫을 가져온 것으로 바꿔요 (저장된 비밀번호는 그대로)')}>
             <input type="checkbox" checked={overwriteCfg} onChange={(e) => setOverwriteCfg(e.target.checked)} />
             {tr('같은 것은 덮어쓰기')}

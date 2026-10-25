@@ -7,6 +7,7 @@ import Editor, { type EditorApi, type EditorStatus } from '../components/Editor'
 import Explorer from '../components/Explorer'
 import Activity, { type ActTab } from './Activity'
 import Button from '../components/Button'
+import Segment from '../components/Segment'
 import Docker from './Docker'
 import Services from './Services'
 import HealthView, { useHealth } from './Health'
@@ -140,6 +141,17 @@ const VIEWS: { id: Exclude<View, 'code'>; icon: string; label: string; cmd: stri
   { id: 'screen', icon: 'screen', label: tr('Device 화면'), cmd: tr('Device 화면 열기') },
   { id: 'camera', icon: 'camera', label: tr('영상 입력'), cmd: tr('영상 입력 열기') },
   { id: 'ros', icon: 'ros', label: 'ROS2', cmd: tr('ROS2 도구 열기 (토픽·노드·launch)') }
+]
+
+// 왼쪽 활동 막대는 묶음 단위. 묶음 안 화면은 화면 위쪽 탭으로 오가고, 화면이 하나뿐인 묶음은 탭 줄이 없음
+const GROUPS: { id: string; icon: string; label: string; views: Exclude<View, 'code'>[] }[] = [
+  { id: 'dev', icon: 'search', label: tr('개발 도구'), views: ['search', 'build'] },
+  { id: 'link', icon: 'transfer', label: tr('연결·전송'), views: ['forward', 'files'] },
+  { id: 'activity', icon: 'activity', label: tr('활동 (모니터 기록)'), views: ['activity'] },
+  { id: 'manage', icon: 'services', label: tr('기기 관리'), views: ['services', 'health'] },
+  { id: 'docker', icon: 'docker', label: 'Docker', views: ['docker'] },
+  { id: 'media', icon: 'screen', label: tr('화면·영상'), views: ['screen', 'camera'] },
+  { id: 'ros', icon: 'ros', label: 'ROS2', views: ['ros'] }
 ]
 
 // 접힌 패널은 펴고, 펴진 패널은 접기
@@ -374,6 +386,12 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
   const [centerScreen, setCenterScreen] = useState(false) // 열린 파일이 없을 때 가운데 영역에 Device 화면 표시 (파일을 열면 파일이 가려 줌)
   const [view, setView] = useState<View>('code') // 작업 공간 위에 덮는 화면 (VIEWS)
   const views = VIEWS.filter((v) => v.id !== 'screen' || host.remote === 'vnc') // 앱 안 뷰어는 VNC만 되므로 VNC 연결에만 Device 화면 탭
+  const groups = GROUPS.map((g) => ({ ...g, views: g.views.filter((id) => views.some((v) => v.id === id)) })).filter((g) => g.views.length)
+  const curGroup = groups.find((g) => g.views.includes(view as never))
+  const tabGroup = curGroup && curGroup.views.length > 1 ? curGroup : null // 탭 줄은 화면이 둘 이상인 묶음에서만
+  const lastIn = useRef<Record<string, View>>({}) // 묶음을 다시 누르면 마지막에 보던 화면으로
+  if (curGroup) lastIn.current[curGroup.id] = view
+  const openGroup = (g: (typeof groups)[number]) => setView(curGroup?.id === g.id ? 'code' : (lastIn.current[g.id] ?? g.views[0]))
   const openPalette = (mode: 'cmd' | 'file', query?: string) => {
     setPalette({ mode, query })
     if (mode === 'file' && !files && home) window.api.fsFind(sess.id, home).then(setFiles, () => setFiles([]))
@@ -541,16 +559,21 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
         </div>
       </header>
 
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', position: 'relative' }}>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', position: 'relative', ['--xf-top' as string]: tabGroup ? '56px' : '0px' }}>
         <nav className="ws-activity" aria-label={tr('활동')}>
           {/* 파일 전송 화면에 있을 때 탐색기를 누르면 작업 공간으로 돌아옴 */}
           <ActBtn icon="explorer" label={tr('탐색기')} selected={view === 'code' && open.explorer} onClick={() => (view !== 'code' ? setView('code') : toggleSide(explorerRef))} />
           <ActBtn icon="hosts" label={tr('연결 관리')} onClick={onHosts} />
           <ActBtn icon="monitor" label={tr('시스템 모니터')} toggle selected={open.monitor} onClick={() => toggleSide(monitorRef)} />
-          {views.map((v) => (
-            <ActBtn key={v.id} icon={v.icon} label={v.label} selected={view === v.id} onClick={() => setView(view === v.id ? 'code' : v.id)} />
+          {groups.map((g) => (
+            <ActBtn key={g.id} icon={g.icon} label={g.label} selected={curGroup?.id === g.id} onClick={() => openGroup(g)} />
           ))}
         </nav>
+        {tabGroup && (
+          <div className="xf-tabs">
+            <Segment label={tabGroup.label} value={view} onChange={(v) => setView(v)} options={tabGroup.views.map((id) => ({ value: id, label: views.find((x) => x.id === id)!.label }))} />
+          </div>
+        )}
 
         {/* 파일 전송 화면은 작업 공간 위에 덮어서 표시 → 터미널·편집기 상태와 패널 크기가 그대로 유지됨 */}
         <div className="xf-overlay" style={{ display: view === 'forward' ? undefined : 'none' }}>
