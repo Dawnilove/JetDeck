@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Found } from '../../../main/discover'
 import type { PortInfo } from '../../../main/serial'
 import type { RemoteKind } from '../../../main/remotecfg.mts'
@@ -192,7 +192,8 @@ export default function Main({ onConnect, theme, onTheme, onGuide, onNews, onMcp
       setMsg({ text: errText(e), ok: false })
     }
   }
-  const [overwriteCfg, setOverwriteCfg] = useState(false) // 가져올 때 같은 기기·스니펫을 덮어쓸지 (기본은 새 것만 추가)
+  const settingsPop = useRef<HTMLDivElement>(null)
+  const [overwriteCfg, setOverwriteCfg] = useState(false) //가져올 때 같은 기기·스니펫을 덮어쓸지 (기본은 새 것만 추가)
   const importCfg = async () => {
     try {
       const r = await window.api.importSettings(overwriteCfg)
@@ -233,23 +234,31 @@ export default function Main({ onConnect, theme, onTheme, onGuide, onNews, onMcp
           <span className={mcp.length ? 'dot' : 'dot offline'} aria-hidden />
           {tr('MCP 연결')}
         </Button>
-        <Button size={40} onClick={onLang} title="English / 한국어">{getLang() === 'ko' ? 'English' : '한국어'}</Button>
         <Button size={40} onClick={onGuide}>{tr('도움말')}</Button>
         <Button size={40} onClick={onNews}>{tr('업데이트 내용')}</Button>
-        <Button size={40} onClick={exportCfg} title={tr('호스트 목록·스니펫·테마를 파일로 저장 (비밀번호 제외)')}>{tr('설정 내보내기')}</Button>
-        <Button size={40} onClick={importCfg} title={tr('내보낸 설정 파일에서 호스트·스니펫·테마를 가져와요')}>{tr('설정 가져오기')}</Button>
-        <label className="dim" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }} title={tr('같은 주소·사용자의 호스트와 이름이 같은 스니펫을 가져온 것으로 바꿔요 (저장된 비밀번호는 그대로)')}>
-          <input type="checkbox" checked={overwriteCfg} onChange={(e) => setOverwriteCfg(e.target.checked)} />
-          {tr('같은 것은 덮어쓰기')}
-        </label>
-        <Button size={40} onClick={saveDiag} title={tr('문제 신고용 정보(버전·OS·호스트 개수·최근 오류)를 파일로 저장. 이름·주소·비밀은 빼요')}>{tr('진단 정보 저장')}</Button>
-        <span className="field" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          {tr('테마')}
-          <ThemePicker value={theme} onChange={onTheme} />
-        </span>
-        {currentMascot() && (
-          <label className="check"><input type="checkbox" checked={mascotHidden()} onChange={(e) => setMascotHidden(e.target.checked)} />{tr('마스코트 숨기기')}</label>
-        )}
+        {/* 언어·테마·설정 파일·진단은 설정 메뉴 하나로 (바깥 클릭·Esc로 닫힘) */}
+        <Button size={40} className="settings-btn" popoverTarget="settings-pop" aria-haspopup="dialog">{tr('환경 설정')} <span aria-hidden="true">▾</span></Button>
+        <div id="settings-pop" ref={settingsPop} popover="auto" className="settings-pop" role="dialog" aria-label={tr('환경 설정')}>
+          <div className="settings-row">
+            <span>{tr('언어')}</span>
+            <Button size={36} onClick={onLang} title="English / 한국어">{getLang() === 'ko' ? 'English' : '한국어'}</Button>
+          </div>
+          <div className="settings-row">
+            <span>{tr('테마')}</span>
+            <ThemePicker value={theme} onChange={onTheme} />
+          </div>
+          {currentMascot() && (
+            <label className="check"><input type="checkbox" checked={mascotHidden()} onChange={(e) => setMascotHidden(e.target.checked)} />{tr('마스코트 숨기기')}</label>
+          )}
+          <span className="caption">{tr('설정 파일')}</span>
+          <Button size={36} onClick={() => { settingsPop.current?.hidePopover(); exportCfg() }} title={tr('호스트 목록·스니펫·테마를 파일로 저장 (비밀번호 제외)')}>{tr('설정 내보내기')}</Button>
+          <Button size={36} onClick={() => { settingsPop.current?.hidePopover(); importCfg() }} title={tr('내보낸 설정 파일에서 호스트·스니펫·테마를 가져와요')}>{tr('설정 가져오기')}</Button>
+          <label className="check dim" title={tr('같은 주소·사용자의 호스트와 이름이 같은 스니펫을 가져온 것으로 바꿔요 (저장된 비밀번호는 그대로)')}>
+            <input type="checkbox" checked={overwriteCfg} onChange={(e) => setOverwriteCfg(e.target.checked)} />
+            {tr('같은 것은 덮어쓰기')}
+          </label>
+          <Button size={36} onClick={() => { settingsPop.current?.hidePopover(); saveDiag() }} title={tr('문제 신고용 정보(버전·OS·호스트 개수·최근 오류)를 파일로 저장. 이름·주소·비밀은 빼요')}>{tr('진단 정보 저장')}</Button>
+        </div>
         </div>
       </header>
       {top?.(hosts)}

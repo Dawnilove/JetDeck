@@ -428,6 +428,15 @@ button.ros-item:hover { background: var(--panel-2); }
   width: 280px; max-height: min(70vh, 560px); overflow-y: auto; padding: 8px;
   border-radius: var(--r-card, 12px); border: 1px solid var(--border); background: var(--panel); color: var(--text); box-shadow: var(--card-shadow, 0 12px 32px rgba(0, 0, 0, 0.3));
 }
+/* 환경 설정 메뉴 (screens/Main.tsx 머리말) */
+.settings-btn { anchor-name: --settings-btn; white-space: nowrap; }
+.settings-pop {
+  position-anchor: --settings-btn; inset: auto; top: anchor(bottom); right: anchor(right); margin: 6px 0 0;
+  width: 280px; max-height: 80vh; overflow-y: auto; padding: 12px; display: none; flex-direction: column; gap: 10px;
+  border-radius: var(--r-card, 12px); border: 1px solid var(--border); background: var(--panel); color: var(--text); box-shadow: var(--card-shadow, 0 12px 32px rgba(0, 0, 0, 0.3));
+}
+.settings-pop:popover-open { display: flex; }
+.settings-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; }
 .theme-group { display: flex; flex-direction: column; padding: 4px 0; }
 .theme-group + .theme-group { border-top: 1px solid var(--border); }
 .theme-group summary { padding: 8px 10px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
