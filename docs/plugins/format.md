@@ -10,14 +10,15 @@ Add `"$schema": "https://dawnilove.github.io/JetDeck/plugins/jdpack.schema.json"
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `id` | string | yes | `a-z`, digits, `-`; starts with a letter; max 40. Reserved: `device ros2 ros2-live monitor perf examples jetdeck official app core snippets`, and anything starting with `jetdeck-`. |
+| `id` | string | yes | `a-z`, digits, `-`; starts with a letter; max 40. Reserved: `device ros2 ros2-live monitor perf devtools examples jetdeck official app core snippets`, and anything starting with `jetdeck-`. |
 | `format` | `1` | yes | Always `1` in 5.x. |
 | `version` | string | yes | `1.2.3` (a `-suffix` is allowed). |
 | `name` | text | yes | Max 60 chars. |
 | `desc` | text | no | Max 300 chars. |
 | `author`, `license`, `homepage` | string | no | Display only. JetDeck never opens `homepage` by itself. |
 | `minApp` | string | no | Lowest JetDeck version, `1.2.3`. An older app refuses the pack. |
-| `plugins` | array | yes | Max 20. |
+| `plugins` | array | yes | Max 20. May be empty `[]` when the pack has `badges`. |
+| `badges` | array | no | [Explorer badges](#explorer-badges-530). Max 2 (official packs 4). Needs `minApp` 5.3.0. |
 
 **Text** is a plain string, or `{ "ko": "…", "en": "…" }`. A missing language falls back to the other one.
 
@@ -200,6 +201,67 @@ A chart action runs a **read-only** command again and again and draws the number
 }
 ```
 
+## Explorer badges (5.3.0)
+
+Put `"minApp": "5.3.0"` in a pack that uses badges. An older app then refuses the whole pack.
+
+A badge puts small marks next to files and folders in the **Explorer**. When you open a folder, JetDeck runs the badge command on the Device **by itself** (no click) and reads the output. Badges are a **top-level** field of the pack (`badges`, not inside a plugin). A pack may have badges only (`"plugins": []`).
+
+* The command must be **proven read-only by the app**, both when the pack loads and again just before each run with the real folder filled in. If the app cannot prove it, the badge is dropped (when loading) or skipped without a message (at run time; for example in `~/.ssh`).
+* The only input slot is `{dir}`: the folder you opened, as an absolute path. Write it as a bare word (not inside quotes, not as the command name). JetDeck quotes it.
+* Marks: at most 2 per item. Colors come from the app (`tone`), never from the pack. Hover shows the `text`. A folder gets a dot `●` when something inside it has a mark (turn off with `"folderDot": false`).
+* **Off switch.** In the plugin manager each pack with badges has an **Explorer badges** switch. It stops the automatic runs and keeps the pack on. `--safe-mode` ignores external packs and their badges.
+* The built-in Git marks are unchanged. When the official `devtools` pack's `git` badge is on, the Explorer skips the built-in Git call, so nothing is drawn or run twice.
+
+| Field | Required | Notes |
+|---|---|---|
+| `id` | yes | Unique in the pack. |
+| `label` | yes | Text. Name in the manager and the allow dialog. |
+| `cmd` | yes | Read-only command with exactly one `{dir}`. Max 2000 chars. |
+| `shell` | no | `sh` (default) or `bash-i`. |
+| `separator` | no | `line` (default) or `nul`: how output records are split. |
+| `root` | no | `dir` (default): paths in the output are relative to the opened folder. `line1`: the first output line is the absolute base folder (for example a Git top folder) and the rest is relative to it. Inside a base folder JetDeck does not ask again for its sub-folders. |
+| `match` | yes | Regular expression applied to each record (same limits as a table). |
+| `code`, `path` | yes | Two different capture group numbers of `match`: the status code and the file path. |
+| `codes` | yes | `{ "<code>": { "show", "text", "tone" } }`, 1–30 entries. A code is 1–2 characters. `show` is 1–2 visible characters. `tone` is `info`, `ok`, `warn`, `bad` or `dim`. **Only listed codes are shown.** |
+| `tag` | no | `{ "match": "regex" }` with one group. The group of the first matching record (max 40 chars) is shown beside the base folder name, for example the branch. |
+| `folderDot` | no | Default true. |
+| `ttl` | no | Seconds before the same base folder is read again. 3–300, default 5. |
+| `timeout` | no | Longest one run, 1–15 s, default 10. |
+
+Rules at run time: one badge run at a time per connection (a newer request replaces a waiting one); results are cached for `ttl`; 3 time-outs in a row stop the badge for the rest of the connection ("stopped because it was slow"); at most 5000 records, 1 MB of output, 4096 characters per record; paths with `..` or control characters are dropped. Limits: 2 badges per pack (official packs 4).
+
+Git repositories get one extra guard: **JetDeck does not run Git in a repository whose own settings can run programs** (the folder shows a ⚠ mark with the reason), and it turns off hooks, signature programs and pagers. See [security.md](security.md). This guard also applies to every pack item that runs `git`.
+
+Example (the official Git status badge):
+
+```json
+{
+  "id": "git",
+  "label": { "ko": "Git 상태", "en": "Git status" },
+  "cmd": "git --no-optional-locks -C {dir} rev-parse --show-toplevel && git --no-optional-locks -C {dir} status --porcelain=v1 -b -z --no-renames",
+  "separator": "nul", "root": "line1",
+  "tag": { "match": "^## (.+?)(?:\\.\\.\\.|$)" },
+  "match": "^(.{2}) (.+)$", "code": 1, "path": 2,
+  "codes": {
+    " M": { "show": "M", "text": { "ko": "수정됨", "en": "Modified" }, "tone": "warn" },
+    "??": { "show": "U", "text": { "ko": "새 파일", "en": "Untracked" }, "tone": "info" }
+  }
+}
+```
+
+A smaller one, without Git (marks `.py` and `.sh` files in the opened folder):
+
+```json
+{
+  "id": "script-files",
+  "label": "Mark script files",
+  "cmd": "ls -1A {dir}",
+  "match": "^(.+\\.(py|sh))$", "code": 2, "path": 1,
+  "codes": { "py": { "show": "py", "text": "Python file", "tone": "info" }, "sh": { "show": "sh", "text": "Shell script", "tone": "dim" } }
+}
+```
+
 ## Risk
 
 JetDeck does **not** trust the `risk` you write. It analyzes every command (all choice combinations) and uses the **higher** of the two:
@@ -224,10 +286,11 @@ If you write `read` but the app computes more, the action stays, the app uses th
 | Stream output | stops above 1 MB/s (5 s average) or 20 MB; the screen keeps 100–5000 lines |
 | Auto-run actions (`auto`, `from`, auto-start charts) | 5 per pack, counted together |
 | Chart interval / points / lines | 1–60 s (official 0.5–60) / 10–3600 / 8 |
+| Badges per pack / records / output / run time | 2 (official 4) / 5000 / 1 MB / 1–15 s, at least 3 s between runs of one folder |
 | Chart: one read | 30 s, 256 KB and 1000 lines of output read, 5 running per pack, 10 in the app |
 
 ## Compatibility
 
 `format: 1` is fixed for 5.x. New 5.x versions only **add** fields. Use `minApp` when you need one of them.
 
-A 5.0.0 app that opens a 5.1 pack hides actions that use `stream`, `log` or `fields` ("needs a newer app"), or refuses the whole pack when `minApp` is higher. The same holds for a 5.1 app and a 5.2 pack with `chart`. It never runs them in a riskier way. 5.0 and 5.1 packs run unchanged in 5.2.
+A 5.0.0 app that opens a 5.1 pack hides actions that use `stream`, `log` or `fields` ("needs a newer app"), or refuses the whole pack when `minApp` is higher. The same holds for a 5.1 app and a 5.2 pack with `chart`. It never runs them in a riskier way. 5.0 and 5.1 packs run unchanged in 5.2. Likewise a 5.2 app refuses a pack that sets `minApp` 5.3.0, and ignores `badges` in a pack without `minApp` (no marks, no risk). 5.0–5.2 packs run unchanged in 5.3.

@@ -3,8 +3,8 @@
   "$comment": "Example pack: copy this file, change the id (the name examples is reserved), the paths (~/my-project) and names, and install the copy. 예제 팩: 이 파일을 복사해 id(examples는 예약어), 경로(~/my-project)와 이름을 바꿔 쓰세요.",
   "id": "examples",
   "format": 1,
-  "version": "5.2.0",
-  "minApp": "5.2.0",
+  "version": "5.3.0",
+  "minApp": "5.3.0",
   "name": { "ko": "예제 모음", "en": "Examples" },
   "desc": { "ko": "복사해서 고쳐 쓰는 템플릿이에요. 경로는 ~/my-project 처럼 내 것으로 바꾸세요.", "en": "Templates to copy and edit. Change paths such as ~/my-project to your own." },
   "author": "JetDeck",
@@ -225,6 +225,21 @@
           "confirm": { "ko": "train.py 를 실행 중인 프로세스를 모두 끝내요. 저장하지 않은 학습 결과는 사라져요.", "en": "Ends every process running train.py. Unsaved training progress is lost." }
         }
       ]
+    }
+  ],
+  "badges": [
+    {
+      "id": "script-files",
+      "label": { "ko": "스크립트 파일 표시", "en": "Mark script files" },
+      "cmd": "ls -1A {dir}",
+      "match": "^(.+\\.(py|sh))$",
+      "code": 2,
+      "path": 1,
+      "codes": {
+        "py": { "show": "py", "text": { "ko": "파이썬 파일", "en": "Python file" }, "tone": "info" },
+        "sh": { "show": "sh", "text": { "ko": "셸 스크립트", "en": "Shell script" }, "tone": "dim" }
+      },
+      "folderDot": false
     }
   ]
 }
