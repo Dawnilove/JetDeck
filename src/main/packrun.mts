@@ -31,7 +31,14 @@ export const fillDir = (cmd: string, dir: string) => cmd.replace(/\{dir\}/g, () 
 const DEFAULT_TIMEOUT = 60
 // git은 저장소 설정(core.fsmonitor, 외부 diff·textconv)이 코드를 실행할 수 있어서, 명령에 git이 보이면 앱이 함수로 감싸 그 기능을 끄고 실행함 (팩 글자는 그대로, 터미널 입력 모드는 해당 없음).
 // risk.mts가 git 앞 옵션을 -C·--no-pager·--no-optional-locks로만 허용하므로 그 셋만 처리하면 됨
-export const GIT_GUARD = `git() { case "$1" in -C) _d=$2; shift 2; (cd "$_d" && git "$@");; --no-pager|--no-optional-locks) shift; git "$@";; diff|log|show) _s=$1; shift; command git -c core.fsmonitor=false "$_s" --no-ext-diff --no-textconv "$@";; *) command git -c core.fsmonitor=false "$@";; esac; }; unset GIT_EXTERNAL_DIFF
+export const GIT_GUARD = `git() { case "$1" in -C) _d=$2; shift 2; (cd "$_d" && git "$@");; --no-pager) shift; git "$@";; --no-optional-locks) shift; GIT_OPTIONAL_LOCKS=0; export GIT_OPTIONAL_LOCKS; git "$@";; diff|log|show) _s=$1; shift; command git -c core.fsmonitor=false "$_s" --no-ext-diff --no-textconv "$@";; *) command git -c core.fsmonitor=false "$@";; esac; }; unset GIT_EXTERNAL_DIFF
+`
+// 탐색기 배지(폴더를 열면 저절로 실행)용 엄격한 git 보호. 위 GIT_GUARD에 더해 (1) 저장소 자신의 설정이 코드를 실행할 길을 막음:
+// filter.*.clean/process(git status가 바뀐 듯한 파일에 실행함)·include(설정을 다른 파일로 숨김)·worktree 설정이 있으면 git을 실행하지 않고 UNSAFE_MARK만 출력, (2) status는 서브모듈 안을 보지 않음(서브모듈 설정의 필터),
+// (3) 항상 GIT_OPTIONAL_LOCKS=0(인덱스를 쓰지 않으므로 post-index-change 훅도 안 돎)·core.hooksPath 끔. git config가 1(찾는 설정 없음)·128(저장소가 아니거나 설정 파일이 깨짐 — 이어서 도는 git도 같은 오류로 끝남)이 아니면 모두 거부(옛 git 등 알 수 없는 실패는 닫힘)
+export const UNSAFE_MARK = 'JETDECK_UNSAFE_REPO'
+const SAFE = "-c core.fsmonitor=false -c core.hooksPath=/dev/null"
+export const BADGE_GIT_GUARD = `git() { case "$1" in -C) _d=$2; shift 2; (cd "$_d" && git "$@");; --no-pager|--no-optional-locks) shift; git "$@";; *) command git config --local --get-regexp '^(filter\\..*\\.(clean|process)|include\\.|includeif\\.|extensions\\.worktreeconfig)' >/dev/null 2>&1; case $? in 1|128) ;; *) echo ${UNSAFE_MARK}; return 1;; esac; GIT_OPTIONAL_LOCKS=0; export GIT_OPTIONAL_LOCKS; case "$1" in diff|log|show) _s=$1; shift; command git ${SAFE} "$_s" --no-ext-diff --no-textconv "$@";; status) shift; command git ${SAFE} status --ignore-submodules=all "$@";; *) command git ${SAFE} "$@";; esac;; esac; }; unset GIT_EXTERNAL_DIFF
 `
 // 끝에 종료 코드를 붙여 성공·실패를 구분. { …; } 로 묶어 stderr도 함께 받음 (run()은 stderr를 버림)
 const wrap = (inner: string, timeout: number, shell: 'sh' | 'bash-i' = 'sh') => `timeout ${timeout} ${shell === 'bash-i' ? 'bash -ic' : 'sh -c'} ${shq(`${/\bgit\b/.test(inner) ? GIT_GUARD : ''}{ ${inner}\n} 2>&1; echo __EXIT__$?`)}` // bash-i: ~/.bashrc 환경(ROS2)
@@ -51,6 +58,12 @@ export const buildStream = (a: PackAction, values: Record<string, string>): stri
 
 // 그래프(display.type:'chart') 되풀이 실행에 쓰는 한 번의 명령: 매번 끝나는 모양(timeout)이고 끝에 종료 코드가 붙음. 읽기로 증명된 명령만 오도록 packschema가 거른 항목에만 씀
 export const buildPoll = (a: PackAction): string => wrap(a.cmd, a.timeout ?? 10, a.shell)
+
+// 탐색기 배지 한 번의 실행 (5.3.0): {dir}은 항상 따옴표 처리, 매번 끝나는 모양(timeout)이고 끝에 종료 코드. 오류 출력은 버림(-z·NUL 출력에 섞이지 않게). git이 보이면 엄격한 보호 함수로 감쌈
+export const buildBadge = (b: { cmd: string; shell: 'sh' | 'bash-i'; timeout: number }, dir: string): string => {
+  const inner = fillDir(b.cmd, dir)
+  return `timeout ${b.timeout} ${b.shell === 'bash-i' ? 'bash -ic' : 'sh -c'} ${shq(`${/\bgit\b/.test(inner) ? BADGE_GIT_GUARD : ''}{ ${inner}\n} 2>/dev/null; echo __EXIT__$?`)}`
+}
 
 // from 목록 명령 (읽기로 증명된 것): 오류 출력은 버리고 표준 출력만 받음 → 선택지로 오해될 글자가 섞이지 않게
 export const buildFrom = (f: { cmd: string; shell: 'sh' | 'bash-i'; timeout: number }): string => `timeout ${f.timeout} ${f.shell === 'bash-i' ? 'bash -ic' : 'sh -c'} ${shq(f.cmd)} 2>/dev/null`

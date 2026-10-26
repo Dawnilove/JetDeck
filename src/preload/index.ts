@@ -12,6 +12,7 @@ import type { Catalog as PackCatalog, Prepared as PackPrepared } from '../main/p
 import type { Pack, Reason, Risk } from '../main/packschema.mts'
 import type { Inspect as PackInspect } from '../main/packstore.mts'
 import type { PackResult } from '../main/packrun.mts'
+import type { BadgeResult } from '../main/packbadgecore.mts'
 import type { PollEndReason, Sample as PollSample } from '../main/packpollcore.mts'
 import type { EndReason as StreamEndReason } from '../main/packstreamcore.mts'
 type PackTerminal = { text: string; enter: boolean; risk: Risk; reasons: Reason[]; understated: boolean }
@@ -148,6 +149,8 @@ const api = {
   packPollStart: (connId: string, packId: string, pluginId: string, actionId: string, pollId: string): Promise<void> => ipcRenderer.invoke('pack:poll-start', connId, packId, pluginId, actionId, pollId),
   packPollStop: (pollId: string): Promise<void> => ipcRenderer.invoke('pack:poll-stop', pollId),
   onPackPollData: (cb: (id: string, t: number, samples: PollSample[], every: number, hint?: string) => void) => on('pack:poll-data', cb),
+  packBadges: (connId: string, dir: string): Promise<BadgeResult[] | null> => ipcRenderer.invoke('pack:badges', connId, dir),
+  packBadgesOff: (packId: string, ids: string[]): Promise<PackCatalog> => ipcRenderer.invoke('pack:badges-off', packId, ids),
   onPackPollEnd: (cb: (id: string, reason: PollEndReason, detail?: string) => void) => on('pack:poll-end', cb),
   // 기기 점검 (읽기 전용). smart=false면 SMART 생략
   healthRead: (connId: string, smart: boolean): Promise<Health> => ipcRenderer.invoke('health:read', connId, smart),

@@ -19,6 +19,7 @@ export type PackState = {
   approvedVersion?: string
   approvedAt?: string
   approvedCmds?: Record<string, string> // '플러그인/항목' → 허용한 명령 (다음에 파일이 바뀌면 "바뀐 명령"을 보여 주려고)
+  badgesOff?: string[] // 5.3.0: 팩은 켠 채 탐색기 배지(자동 실행)만 끈 배지 id
 }
 export type StateFile = { version: 1; packs: Record<string, PackState> }
 const ID = /^[a-z][a-z0-9-]{0,39}$/
@@ -39,6 +40,10 @@ export function readState(file: string): StateFile {
         const cmds: Record<string, string> = Object.create(null)
         for (const [k, c] of Object.entries(v.approvedCmds)) if (typeof c === 'string' && k !== '__proto__') cmds[k] = c
         s.approvedCmds = cmds
+      }
+      if (Array.isArray(v.badgesOff)) {
+        const ids = [...new Set(v.badgesOff.filter((x): x is string => typeof x === 'string' && ID.test(x)))].slice(0, 20)
+        if (ids.length) s.badgesOff = ids
       }
       out.packs[id] = s
     }
@@ -95,6 +100,7 @@ export type PackEntry = {
   approvedVersion?: string
   approvedAt?: string
   changes?: CommandDiff // approval이 changed일 때: 허용했던 명령 대비
+  badgesOff: string[] // 5.3.0: 꺼 둔 탐색기 배지 id (팩이 켜져 있어도 이 배지는 실행 안 함)
 }
 
 // 사용자 폴더 안 팩 파일 읽기: 이 폴더 바로 아래의 *.jdpack.json 일반 파일만 (하위 폴더·심볼릭 링크 제외), 512KB 초과는 읽지 않음
@@ -138,11 +144,11 @@ export function buildCatalog(inp: CatalogInput): PackEntry[] {
     const id = r.pack?.id ?? `file:${o.fileName}`
     if (r.pack) officialIds.add(r.pack.id)
     const want = inp.state.packs[id]?.enabled ?? !OFFICIAL_DEFAULT_OFF.has(id)
-    entries.push({ id, source: 'official', fileName: o.fileName, hash: sha256(text), size: text.length, pack: r.pack, errors: r.errors, warnings: r.warnings, status: r.pack ? 'ok' : 'invalid', wantEnabled: want, enabled: want && !!r.pack, approval: 'official' })
+    entries.push({ id, source: 'official', fileName: o.fileName, hash: sha256(text), size: text.length, pack: r.pack, errors: r.errors, warnings: r.warnings, status: r.pack ? 'ok' : 'invalid', wantEnabled: want, enabled: want && !!r.pack, approval: 'official', badgesOff: inp.state.packs[id]?.badgesOff ?? [] })
   }
   const users: PackEntry[] = []
   for (const f of inp.user) {
-    const base = { source: 'user' as const, fileName: f.fileName, file: f.file, wantEnabled: false, enabled: false, approval: 'new' as Approval, warnings: [] as string[] }
+    const base = { source: 'user' as const, fileName: f.fileName, file: f.file, wantEnabled: false, enabled: false, approval: 'new' as Approval, warnings: [] as string[], badgesOff: [] as string[] }
     if (!f.bytes) {
       users.push({ ...base, id: `file:${f.fileName}`, hash: '', size: 0, pack: null, errors: [f.error ?? '읽지 못했어요'], status: f.error?.includes('커요') ? 'too-big' : 'unreadable' })
       continue
@@ -179,6 +185,7 @@ export function buildCatalog(inp: CatalogInput): PackEntry[] {
   for (const u of users) {
     const st = u.pack ? inp.state.packs[u.id] : undefined
     u.wantEnabled = !!st?.enabled
+    u.badgesOff = st?.badgesOff ?? []
     u.approvedVersion = st?.approvedVersion
     u.approvedAt = st?.approvedAt
     if (st?.approvedHash && st.approvedHash === u.hash) u.approval = 'approved'
@@ -200,12 +207,20 @@ export function approveAndEnable(st: StateFile, e: PackEntry, shownHash: string,
   if (e.source !== 'user') throw new Error(tr('공식 팩은 허용이 필요 없어요'))
   if (e.status !== 'ok' || !e.pack) throw new Error(tr('문제가 있는 팩은 켤 수 없어요'))
   if (!shownHash || shownHash !== e.hash) throw new Error(tr('팩 파일이 바뀌었어요. 다시 확인해 주세요'))
-  return { ...st, packs: { ...st.packs, [e.id]: { enabled: true, approvedHash: e.hash, approvedVersion: e.pack.version, approvedAt: now.toISOString(), approvedCmds: commandMap(e.pack) } } }
+  return { ...st, packs: { ...st.packs, [e.id]: { enabled: true, approvedHash: e.hash, approvedVersion: e.pack.version, approvedAt: now.toISOString(), approvedCmds: commandMap(e.pack), badgesOff: st.packs[e.id]?.badgesOff } } }
 }
 export function setEnabled(st: StateFile, e: PackEntry, on: boolean): StateFile {
   if (!e.pack) throw new Error(tr('쓸 수 없는 팩이에요'))
   if (on && e.source === 'user' && !(e.approval === 'approved' && e.status === 'ok')) throw new Error(tr('허용이 필요한 팩이에요')) // 이미 허용한 같은 지문일 때만 허용 창 없이 다시 켬
   return { ...st, packs: { ...st.packs, [e.id]: { ...st.packs[e.id], enabled: on } } }
+}
+// 탐색기 배지 끄기·켜기 (5.3.0): 팩은 그대로 두고 자동 실행만. 이 팩에 없는 id는 버림
+export function setBadgesOff(st: StateFile, e: PackEntry, ids: string[]): StateFile {
+  if (!e.pack) throw new Error(tr('쓸 수 없는 팩이에요'))
+  const known = new Set((e.pack.badges ?? []).map((b) => b.id))
+  const off = [...new Set(ids.map(String))].filter((i) => known.has(i)).slice(0, 20)
+  const cur = st.packs[e.id] ?? { enabled: e.wantEnabled }
+  return { ...st, packs: { ...st.packs, [e.id]: { ...cur, badgesOff: off.length ? off : undefined } } }
 }
 export function forgetPack(st: StateFile, id: string): StateFile {
   const packs = { ...st.packs }

@@ -10,11 +10,13 @@ import perfJson from './packs/perf.json'
 import ros2Json from './packs/ros2.json'
 import ros2LiveJson from './packs/ros2live.json'
 import { parseFromOutput } from './packfields.mts'
+import { dropConn, runBadges } from './packbadge.mts'
+import type { BadgeResult } from './packbadgecore.mts'
 import { startPoll, stopAllPolls, stopPoll } from './packpoll.mts'
 import { sanitizeOutput } from './packsafe.mts'
 import { buildFrom, buildPoll, buildPreview, buildRun, buildStream, buildTerminal, fill, parseResult, resolveParams, type PackResult } from './packrun.mts'
 import { startStream, stopAll, stopStream } from './packstream.mts'
-import { approveAndEnable, buildCatalog, enabledPacks, ensureDir, forgetPack, inspectPackBytes, installPackBytes, readState, readUserDir, setEnabled, writeState, type Inspect, type PackEntry, type StateFile } from './packstore.mts'
+import { approveAndEnable, buildCatalog, enabledPacks, ensureDir, forgetPack, inspectPackBytes, installPackBytes, readState, readUserDir, setBadgesOff, setEnabled, writeState, type Inspect, type PackEntry, type StateFile } from './packstore.mts'
 import { LIMITS, type Pack, type PackAction, type Reason, type Risk } from './packschema.mts'
 import { analyzeWithInput } from './risk.mts'
 import { requireClient as client } from './session'
@@ -204,6 +206,21 @@ export function registerPackIpc(): void {
     startPoll(e.sender, { run: (cmd) => run(c, cmd), onClose: (cb) => (c.once('close', cb), () => void c.off('close', cb)) }, String(pollId), pack.id, buildPoll(a), d, a.timeout ?? LIMITS.chartTimeoutDefault)
   })
   ipcMain.handle('pack:poll-stop', (_e, pollId: string): void => stopPoll(String(pollId)))
+  // 탐색기 배지(5.3.0): 폴더를 열 때 켜진 팩의 배지를 실행. 팩을 켜 둔 채 끈 배지(badgesOff)는 건너뜀. null = 새 요청에 밀렸거나 화면이 사라짐
+  const watched = new Set<string>()
+  ipcMain.handle('pack:badges', (e, connId: string, dir: string): Promise<BadgeResult[] | null> => {
+    const c = client(connId)
+    if (!watched.has(connId)) {
+      watched.add(connId)
+      c.once('close', () => (watched.delete(connId), dropConn(connId)))
+    }
+    const targets = enabledPacks(entries).flatMap((p) => (p.badges ?? []).filter((b) => !state.packs[p.id]?.badgesOff?.includes(b.id)).map((badge) => ({ packId: p.id, badge })))
+    return runBadges(e.sender, connId, { run: (cmd) => run(c, cmd) }, String(dir), targets)
+  })
+  ipcMain.handle('pack:badges-off', (_e, packId: string, ids: string[]): Catalog => {
+    save(setBadgesOff(state, entryOf(packId), Array.isArray(ids) ? ids : []))
+    return rescan()
+  })
   app.on('before-quit', stopAll)
   app.on('before-quit', stopAllPolls)
 }
