@@ -96,6 +96,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
           {e.source === 'official' && <span className="tag">{tr('공식')}</span>}
           {e.pack && summarizePack(e.pack).stream > 0 && <span className="tag">{tr('실시간')}</span>}
           {e.pack && summarizePack(e.pack).form > 0 && <span className="tag">{tr('입력')}</span>}
+          {e.pack && summarizePack(e.pack).chart > 0 && <span className="tag">{tr('그래프')}</span>}
           <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {e.pack && <Button size={36} onClick={() => setSub({ kind: 'view', e })}>{tr('내용 보기')}</Button>}
             {e.source === 'user' && e.file && <Button size={36} onClick={() => setSub({ kind: 'remove', e })}>{tr('제거')}</Button>}

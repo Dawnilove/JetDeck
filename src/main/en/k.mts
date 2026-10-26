@@ -9,5 +9,8 @@ export const EN_K: Record<string, string> = {
   '점 {0}개': '{0} points',
   '마지막 읽음 {0}': 'last read {0}',
   '간격을 {0}초로 늘렸어요': 'Interval raised to {0} s',
-  '읽을 수 있는 숫자가 없어요': 'No readable number found'
+  '읽을 수 있는 숫자가 없어요': 'No readable number found',
+  '그래프 {0}': 'Charts {0}',
+  '그래프 {0}초마다': 'Chart every {0} s',
+  '그래프': 'Chart'
 }

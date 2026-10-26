@@ -61,14 +61,14 @@ export function PackBody({ pack, hash, size, changes }: { pack: Pack; hash: stri
       <p style={{ fontSize: 13 }}>
         {tr('항목 {0}개: 읽기 {1} · 바꿈 {2} · 위험 {3}', s.total, s.read, s.change, s.danger)}
         {s.terminal > 0 && ` · ${tr('터미널 입력 {0}', s.terminal)}`}
-        {(s.stream > 0 || s.form > 0) && ` / ${tr('실시간 {0} · 입력 {1}', s.stream, s.form)}`}
+        {(s.stream > 0 || s.form > 0 || s.chart > 0) && ` / ${[...(s.stream > 0 || s.form > 0 ? [tr('실시간 {0} · 입력 {1}', s.stream, s.form)] : []), ...(s.chart > 0 ? [tr('그래프 {0}', s.chart)] : [])].join(' · ')}`}
         {s.autoRun > 0 && ` / ${tr('자동으로 돌아가는 것 {0}', s.autoRun)}`}
       </p>
       {s.autoRun > 0 && (
         <div data-testid="pk-auto" style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: 10, borderRadius: 8, border: '1px solid var(--warn)' }}>
           <span className="caption">{tr('이 팩은 아래 명령을 누르지 않아도 실행해요')}</span>
           {pack.plugins.flatMap((pl) => pl.actions.flatMap((a) => [
-            ...(a.auto ? [{ key: `${pl.id}/${a.id}`, name: lt(a.label), cmd: cmdOf(a), when: tr('화면을 열 때') }] : []),
+            ...(a.auto ? [{ key: `${pl.id}/${a.id}`, name: lt(a.label), cmd: cmdOf(a), when: a.display?.type === 'chart' ? tr('{0}초마다', a.display.every) : tr('화면을 열 때') }] : []),
             ...(a.fields ?? []).flatMap((f) => (f.type === 'select' && f.from ? [{ key: `${pl.id}/${a.id}#${f.name}`, name: `${lt(a.label)} · ${lt(f.label)}`, cmd: f.from.cmd, when: tr('화면을 열 때') }] : []))
           ])).map((x) => (
             <div key={x.key} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'baseline', fontSize: 12 }}>
@@ -94,6 +94,7 @@ export function PackBody({ pack, hash, size, changes }: { pack: Pack; hash: stri
                   {a.mode === 'terminal' && <span className="tag">{tr('터미널 입력')}</span>}
                   {a.mode === 'stream' && <span className="tag">{tr('실시간')}</span>}
                   {a.fields && <span className="tag">{tr('입력 {0}', a.fields.length)}</span>}
+                  {a.display?.type === 'chart' && <span className="tag">{tr('그래프 {0}초마다', a.display.every)}</span>}
                   {a.auto && <span className="tag">{tr('자동')}</span>}
                   {a.when === 'jetson' && <span className="tag">{tr('Jetson에서만 표시')}</span>}
                   {a.hidden && <span className="tag">{tr('새 버전 앱이 필요해요')}</span>}
