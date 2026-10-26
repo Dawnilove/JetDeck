@@ -3,6 +3,21 @@ export type Release = { version: string; ko: string[]; en: string[] }
 
 export const RELEASES: Release[] = [
   {
+    version: '5.2.0',
+    ko: [
+      '플러그인 시계열 그래프: 팩이 읽기 명령을 되풀이해서 숫자를 선 그래프로 그려 줘요 (시작·멈춤·일시정지·지우기). 화면을 나가거나 연결이 끊기거나 앱을 닫으면 멈추고, 데이터는 앱 메모리에만 있어요',
+      '새 공식 플러그인 "센서 그래프"(모니터·성능 팩): 온도·메모리·부하 평균·GPU 사용률·팬 속도. 모두 읽기 전용이고 시작을 눌러야 돌아요',
+      '그래프는 앱이 읽기로 증명한 명령만 쓸 수 있어요. 간격은 직접 설치하는 팩이면 1초 이상이고, 느리면 간격을 늘리고, 연속 5번 실패하면 멈춰요. 허용 창과 플러그인 관리 창에 그래프 표시와 "N초마다" 구역이 생겼어요',
+      '모니터 기록의 그래프 코드를 함께 쓰도록 정리했어요 (모양은 그대로). 팩 만드는 법(그래프 절·JSON Schema·예제)은 사이트의 plugins 문서에 추가됐어요'
+    ],
+    en: [
+      'Plugin time-series charts: a pack can run a read-only command again and again and draw the numbers as a line chart (start, stop, pause, clear). Leaving the screen, losing the connection or closing the app stops it, and the data stays in the app\'s memory only',
+      'New official plugin "Sensor charts" (Monitor & performance pack): temperature, memory, load average, GPU load and fan speed. All read-only, and they run only after you press Start',
+      'A chart can use only commands the app proves read-only. For packs you install yourself the interval is at least 1 s, a slow command makes the interval longer, and 5 failures in a row stop it. The allow dialog and the plugin manager now mark charts and list "every N s" items',
+      'The chart code of the monitor history is now shared (the look is unchanged). Writing charts (chapter, JSON Schema, examples) is covered in the plugins docs on the website'
+    ]
+  },
+  {
     version: '5.1.0',
     ko: [
       '플러그인 2단계: 팩이 끝나지 않는 출력을 실시간 로그 카드로 보여 줘요 (시작·멈춤·지우기·복사·찾기·일시정지·따라가기). 화면을 나가거나 연결이 끊기거나 앱을 닫으면 기기의 명령도 같이 끝나요',
