@@ -25,31 +25,44 @@ export const fill = (cmd: string, values: Record<string, string>) => cmd.replace
 
 const DEFAULT_TIMEOUT = 60
 // 끝에 종료 코드를 붙여 성공·실패를 구분. { …; } 로 묶어 stderr도 함께 받음 (run()은 stderr를 버림)
-const wrap = (inner: string, timeout: number) => `timeout ${timeout} sh -c ${shq(`{ ${inner}\n} 2>&1; echo __EXIT__$?`)}`
+const wrap = (inner: string, timeout: number, shell: 'sh' | 'bash-i' = 'sh') => `timeout ${timeout} ${shell === 'bash-i' ? 'bash -ic' : 'sh -c'} ${shq(`{ ${inner}\n} 2>&1; echo __EXIT__$?`)}` // bash-i: ~/.bashrc 환경(ROS2)
 
 export function buildRun(a: PackAction, values: Record<string, string>): { command: string; termCmd: string } {
   const cmd = fill(a.cmd, values)
-  return { command: wrap(a.sudo ? `sudo -n ${cmd}` : cmd, a.timeout ?? DEFAULT_TIMEOUT), termCmd: `sudo ${cmd}` }
+  return { command: wrap(a.sudo ? `sudo -n ${cmd}` : cmd, a.timeout ?? DEFAULT_TIMEOUT, a.shell), termCmd: `sudo ${cmd}` }
 }
-export const buildPreview = (a: PackAction, values: Record<string, string>) => wrap(fill(a.preview ?? a.cmd, values), Math.min(a.timeout ?? DEFAULT_TIMEOUT, 120)) // 미리보기는 짧게
+export const buildPreview = (a: PackAction, values: Record<string, string>) => wrap(fill(a.preview ?? a.cmd, values), Math.min(a.timeout ?? DEFAULT_TIMEOUT, 120), a.shell) // 미리보기는 짧게
 
-// 출력을 표로: match(정규식, 묶음 = 열) 또는 split 'ws'(공백으로 나눔, 머리말 줄 skip). 안 맞는 줄은 건너뜀
+// 터미널 입력 모드(mode:'terminal'): 결과를 받지 않고 터미널에 입력할 글자. enter는 확인을 통과했을 때만 화면이 씀
+export const buildTerminal = (a: PackAction, values: Record<string, string>): { text: string; enter: boolean } => ({ text: fill(a.cmd, values), enter: a.enter !== false })
+
+export const MAX_ROWS = 500
+export const MAX_LINE = 1000 // 표로 읽을 한 줄의 최대 글자 (넘으면 자름 — 정규식 시간도 묶어 둠)
+// 출력을 표로: match(정규식, 묶음 = 열) 또는 split 'ws'(공백)·'tab'(탭)으로 나눔(머리말 줄 skip). 안 맞는 줄은 건너뜀. 최대 500행
 export function toRows(d: Display, text: string): string[][] | undefined {
   if (d.type !== 'table') return undefined
-  const lines = text.split('\n').map((l) => l.replace(/\r$/, '')).filter((l) => l.trim())
+  const lines = text.split('\n').map((l) => l.replace(/\r$/, '').slice(0, MAX_LINE)).filter((l) => l.trim())
+  let rows: string[][]
   if (d.match) {
     const re = new RegExp(d.match)
-    return lines.flatMap((l) => {
+    rows = []
+    for (const l of lines) {
       const m = l.match(re)
-      return m ? [m.slice(1).map((x) => x ?? '')] : []
-    })
+      if (m) rows.push(m.slice(1).map((x) => x ?? ''))
+      if (rows.length >= MAX_ROWS) break
+    }
+    return rows
   }
   const n = d.columns.length
-  return lines.slice(d.skip ?? 0).flatMap((l) => {
-    const parts = l.trim().split(/\s+/)
-    if (parts.length < n) return []
-    return [[...parts.slice(0, n - 1), parts.slice(n - 1).join(' ')]] // 마지막 열은 남은 것 전부 (경로에 공백)
-  })
+  const sep = d.split === 'tab' ? '\t' : null
+  rows = []
+  for (const l of lines.slice(d.skip ?? 0)) {
+    const parts = sep ? l.split(sep) : l.trim().split(/\s+/)
+    if (parts.length < n) continue
+    rows.push([...parts.slice(0, n - 1), parts.slice(n - 1).join(sep ?? ' ')]) // 마지막 열은 남은 것 전부 (경로에 공백)
+    if (rows.length >= MAX_ROWS) break
+  }
+  return rows
 }
 
 export function parseResult(a: PackAction, out: string, termCmd: string): PackResult {

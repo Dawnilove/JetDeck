@@ -37,9 +37,22 @@ for (const f of fs.readdirSync(dir).filter((x) => /^[a-z]\.mts$/.test(x)).sort()
     else seen.set(k, f)
   }
 }
+// 동봉 팩(src/main/packs/*.json)의 글자쌍: {ko, en} 둘 다 있고 비어 있지 않아야 함 (공식·예제 팩은 한·영 필수)
+let packBad = 0
+const packDir = path.resolve('src/main/packs')
+const walkPack = (v, where) => {
+  if (Array.isArray(v)) v.forEach((x, i) => walkPack(x, `${where}[${i}]`))
+  else if (v && typeof v === 'object') {
+    if ('ko' in v || 'en' in v) {
+      if (!(typeof v.ko === 'string' && v.ko.trim() && typeof v.en === 'string' && v.en.trim())) (packBad++, console.log(`팩 글자쌍 누락 ${where}`))
+    } else for (const [k, x] of Object.entries(v)) walkPack(x, `${where}.${k}`)
+  }
+}
+for (const f of fs.existsSync(packDir) ? fs.readdirSync(packDir).filter((x) => x.endsWith('.json')) : []) walkPack(JSON.parse(fs.readFileSync(path.join(packDir, f), 'utf8').replace(/^﻿/, '')), f)
+
 // 전체 검사(src)일 때만: 코드에서 안 쓰는 사전 키 (알림만, 실패로 치지 않음)
 const unused = roots.length === 1 && roots[0] === 'src' ? Object.keys(EN).filter((k) => !used.has(k)) : []
 unused.forEach((k) => console.log(`안 쓰는 사전 키: ${k.replace(/\n/g, '\\n').slice(0, 100)}`))
 
-console.log(`사전 없음 ${missing}건, 사전 겹침 ${dup}건, 안 쓰는 사전 키 ${unused.length}개, 한글 남음 ${raw}줄`)
-process.exit(missing || dup ? 1 : 0)
+console.log(`사전 없음 ${missing}건, 사전 겹침 ${dup}건, 안 쓰는 사전 키 ${unused.length}개, 한글 남음 ${raw}줄, 팩 글자쌍 누락 ${packBad}건`)
+process.exit(missing || dup || packBad ? 1 : 0)

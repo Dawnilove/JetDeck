@@ -24,14 +24,14 @@ export default function Manage({ connId, online, onLaunch }: Props) {
   const [cells, setCells] = useState<Record<string, Cell>>({})
   const [params, setParams] = useState<Record<string, Record<string, string>>>({}) // 항목 id → 고른 선택값
   const [ask, setAsk] = useState<Ask | null>(null)
-  const pages = packs.flatMap((p) => p.pages)
+  const pages = packs.flatMap((p) => p.plugins)
   const page = pages.find((p) => p.id === pageId) ?? pages[0]
   const started = useRef(new Set<string>()) // 자동 실행은 연결·페이지마다 한 번
 
   useEffect(() => {
     window.api.packList().then((p) => {
       setPacks(p)
-      setPageId(p[0]?.pages[0]?.id ?? '')
+      setPageId(p[0]?.plugins[0]?.id ?? '')
     })
   }, [])
   useEffect(() => {

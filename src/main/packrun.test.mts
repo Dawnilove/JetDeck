@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { buildPreview, buildRun, fill, parseResult, resolveParams, toRows } from './packrun.mts'
+import { buildPreview, buildRun, buildTerminal, fill, parseResult, resolveParams, toRows } from './packrun.mts'
 import type { PackAction } from './packschema.mts'
 
 const L = (s: string) => ({ ko: s, en: s })
-const A = (o: Partial<PackAction>): PackAction => ({ id: 'a', label: L('a'), cmd: 'ls', risk: 'read', ...o })
+const A = (o: Partial<PackAction>): PackAction => ({ id: 'a', label: L('a'), cmd: 'ls', risk: 'read', declared: 'read', computed: 'read', reasons: [], understated: false, mode: 'exec', shell: 'sh', ...o })
 
 test('명령 만들기: sudo -n, 선택값 채우기, 종료 코드 붙이기', () => {
   const a = A({ risk: 'change', sudo: true, cmd: 'shutdown -r +{min}', confirm: L('x'), params: [{ name: 'min', label: L('m'), choices: [{ value: '5', label: L('5') }, { value: '30', label: L('30') }] }] })
@@ -42,4 +42,17 @@ test('결과 해석: 성공 · 비밀번호 필요 · 실패 · 연결 끊김', 
   assert.ok(!fail.ok && !fail.needPassword && fail.text === 'E: Could not get lock')
   assert.ok(parseResult(A({ disconnects: true }), '', 't').ok) // 재부팅: 종료 코드 없이 끊김은 정상
   assert.ok(!parseResult(A({}), 'partial', 't').ok) // 시간 초과·끊김
+})
+
+test('bash-i 셸 · 터미널 입력 · 탭 분리 · 표 상한', () => {
+  assert.ok(buildRun(A({ shell: 'bash-i', cmd: 'ros2 topic list' }), {}).command.startsWith('timeout 60 bash -ic '))
+  assert.ok(buildPreview(A({ shell: 'bash-i', preview: 'ls' }), {}).includes('bash -ic'))
+  assert.deepEqual(buildTerminal(A({ mode: 'terminal', cmd: 'cd {d}' }), { d: '~/x' }), { text: 'cd ~/x', enter: true })
+  assert.equal(buildTerminal(A({ mode: 'terminal', enter: false }), {}).enter, false)
+  const du = toRows({ type: 'table', split: 'tab', columns: [L('a'), L('b')] }, '1.2G\t/home/a b\n4K\t/tmp\nbad line\n')
+  assert.deepEqual(du, [['1.2G', '/home/a b'], ['4K', '/tmp']])
+  const many = Array.from({ length: 800 }, (_, i) => `r${i} x`).join('\n')
+  assert.equal(toRows({ type: 'table', split: 'ws', columns: [L('a'), L('b')] }, many)!.length, 500)
+  assert.equal(toRows({ type: 'table', match: '^(.*)$', columns: [L('a')] }, many)!.length, 500)
+  assert.equal(toRows({ type: 'table', match: '^(.*)$', columns: [L('a')] }, 'x'.repeat(5000))![0][0].length, 1000)
 })

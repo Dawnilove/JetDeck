@@ -1,10 +1,14 @@
 {
   "id": "device",
   "format": 1,
+  "version": "5.0.0",
   "name": { "ko": "기기 관리", "en": "Device management" },
-  "pages": [
+  "author": "JetDeck",
+  "license": "Apache-2.0",
+  "plugins": [
     {
       "id": "apt",
+      "group": "manage",
       "title": { "ko": "apt 업데이트", "en": "apt updates" },
       "desc": { "ko": "설치된 패키지 중 새 버전이 있는 것을 보고 업데이트해요. 설치는 확인창을 거쳐요.", "en": "See which installed packages have newer versions and update them. Installing always asks first." },
       "actions": [
@@ -55,6 +59,7 @@
     },
     {
       "id": "disk",
+      "group": "manage",
       "title": { "ko": "디스크", "en": "Disk" },
       "desc": { "ko": "어디에 공간이 쓰였는지 보고, 안전하게 줄일 수 있는 것만 정리해요. 정리는 미리보기를 본 뒤에만 실행돼요.", "en": "See where space is used and clean up only what is safe to remove. Cleanup runs only after you have seen the preview." },
       "actions": [
@@ -144,6 +149,7 @@
     },
     {
       "id": "power",
+      "group": "manage",
       "title": { "ko": "전원·부팅", "en": "Power and boot" },
       "desc": { "ko": "부팅 방식과 재부팅·종료 예약을 다뤄요. 예약은 언제든 취소할 수 있고, 부팅 방식은 다시 바꿀 수 있어요.", "en": "Manage how the Device boots and schedule a reboot or shutdown. Schedules can be cancelled and the boot mode can be changed back anytime." },
       "actions": [
@@ -191,7 +197,7 @@
           "label": { "ko": "재부팅 예약", "en": "Schedule reboot" },
           "cmd": "shutdown -r +{min}",
           "sudo": true,
-          "risk": "change",
+          "risk": "danger",
           "params": [
             {
               "name": "min",
@@ -211,7 +217,7 @@
           "label": { "ko": "종료 예약", "en": "Schedule shutdown" },
           "cmd": "shutdown -P +{min}",
           "sudo": true,
-          "risk": "change",
+          "risk": "danger",
           "params": [
             {
               "name": "min",
