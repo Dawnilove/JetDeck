@@ -583,7 +583,9 @@ const ros2Check = (a: Args): Verdict => {
   if (sub === 'doctor' || sub === 'wtf') return a.pos.length === 1 && !a.raw.some((x) => x.startsWith('--') && !['--report', '-r', '--report-failed', '-rf', '--include-warning', '-iw'].includes(x)) ? null : UNSAFE
   return sub && ROS2[sub] && verb && ROS2[sub].includes(verb) ? null : UNSAFE
 }
-const GIT_BAD_LONG = /output|ext-diff|exec|pack|pager|dir$|tree|open-files|namespace|config/
+const GIT_BAD_LONG = /output|ext-diff|textconv|exec|pack|pager|dir$|tree|open-files|namespace|config|submodule|signature/
+// 긴 옵션은 약어(--ext-d)도 같은 옵션이므로, 앱이 끄는 기능(외부 diff·textconv·서브모듈 안 보기)을 다시 켜는 옵션은 앞부분만 같아도 막음
+const GIT_BAD_ABBREV = ['--ext-diff', '--textconv', '--ignore-submodules', '--submodule', '--recurse-submodules', '--show-signature', '--paginate']
 const GIT_SUB = new Set(['status', 'log', 'diff', 'show', 'rev-parse', 'describe', 'blame', 'ls-files', 'shortlog', 'rev-list', 'diff-tree', 'ls-tree', 'cat-file', 'show-ref', 'merge-base'])
 const gitCheck = (a: Args): Verdict => {
   const raw = [...a.raw]
@@ -596,7 +598,7 @@ const gitCheck = (a: Args): Verdict => {
   if (!sub) return null
   if (['push', 'clone', 'fetch', 'pull', 'ls-remote', 'submodule', 'remote-ext'].includes(sub)) return ['danger', 'network']
   const rest = parseArgs(raw)
-  if (GIT_SUB.has(sub)) return rest.long.some((l) => GIT_BAD_LONG.test(l)) || rest.short.includes('O') ? UNSAFE : null
+  if (GIT_SUB.has(sub)) return rest.long.some((l) => GIT_BAD_LONG.test(l) || GIT_BAD_ABBREV.some((b) => b.startsWith(l))) || rest.short.includes('O') ? UNSAFE : null
   if (sub === 'branch') return raw.every((x) => ['-a', '-r', '-v', '-vv', '--list', '-l', '--show-current', '--all', '--remotes', '--verbose'].includes(x)) ? null : ['change', 'write']
   if (sub === 'tag') return raw.every((x) => ['-l', '--list', '-n'].includes(x)) ? null : ['change', 'write']
   if (sub === 'remote') return raw.length === 1 && raw[0] === '-v' ? null : raw.length === 0 ? null : ['danger', 'network']
@@ -701,7 +703,7 @@ const SCAN_NAMES = new Set(['rm', 'rmdir', 'shred', 'unlink', 'dd', 'mkfs', 'wip
 function commandName(head: string): { name: string; pathy: boolean } | null {
   if (!head.includes('/')) return { name: head.startsWith('mkfs.') ? 'mkfs' : head.startsWith('fsck.') ? 'fsck' : head, pathy: false }
   const m = head.match(/^\/(?:usr\/)?(?:local\/)?(?:s?bin)\/([^/]+)$/)
-  if (m) return { name: m[1].startsWith('mkfs.') ? 'mkfs' : m[1], pathy: false }
+  if (m) return { name: m[1].startsWith('mkfs.') ? 'mkfs' : m[1], pathy: m[1] === 'git' } // /usr/bin/git 는 앱이 git 앞에 씌우는 보호 함수(packrun)를 지나지 않으므로 읽기로 안 믿음
   return { name: head.slice(head.lastIndexOf('/') + 1), pathy: true } // ./rm ~/bin/ls : 경로 명령은 읽기로 못 믿음
 }
 

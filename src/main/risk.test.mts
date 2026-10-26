@@ -111,6 +111,7 @@ test('우회 시도: systemctl·apt·dpkg·git·ros2·awk·sed', () => {
     'nvpmodel -m 0', 'nvpmodel', 'jetson_clocks', 'jetson_clocks --store', 'jetson_clocks --restore', 'i2cdetect -y 1', 'i2cdetect', 'v4l2-ctl --set-ctrl=x=1', 'v4l2-ctl --stream-mmap', 'v4l2-ctl -c x=1',
     'ros2 run a b', 'ros2 launch a b', 'ros2 topic echo /x', 'ros2 topic pub x', 'ros2 topic hz /x', 'ros2 param set /a b c', 'ros2 param dump /n --output-dir x', 'ros2 bag record -a', 'ros2 doctor --foo', 'ros2',
     'git commit -m x', 'git checkout x', 'git reset --hard', 'git diff --output=f', 'git diff --output f', 'git -c core.pager=sh log', 'git branch newbranch', 'git branch -D x', 'git config --global x y', 'git log --ext-diff', 'git --exec-path=x status', 'git stash', 'git tag v1', 'git add .', 'git pull',
+    '/usr/bin/git status', '/usr/local/bin/git log', '/bin/git diff', './git status', 'git log --ext-d', 'git diff --textc', 'git status --ignore-submodules=none', 'git status --ignore-sub=none', 'git log --recurse-submodules', 'git log --show-signature', 'git log --submodule=diff', 'git diff --textconv',
     "awk 'BEGIN{system(\"rm x\")}'", "awk '{print > \"f\"}'", "awk '{print | \"sh\"}'", 'awk -f prog.awk x', "awk 'BEGIN{\"id\" | getline x}'", "awk '{print}' x; awk -i inplace x", "awk -e 'BEGIN{}' x", 'awk',
     'sed -i s/a/b/ f', "sed -n 'w out' f", "sed 's/a/b/w out' f", "sed 'e' f", 'sed -f scr f', "sed '1e id' f", "sed 's/a/b/e' f", 'sed --in-place x f', "sed -i.bak 's/a/b/' f", "sed 's/a/b/;w out' f", "sed 'r /etc/shadow' f", 'sed'
   ])

@@ -4,7 +4,7 @@ import { execSync } from 'node:child_process'
 import { mkdtempSync, writeFileSync, chmodSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { GIT_GUARD, buildPoll, buildPreview, buildRun, buildTerminal, fill, parseResult, resolveParams, toRows } from './packrun.mts'
+import { BADGE_GIT_GUARD, buildFrom, buildPoll, buildPreview, buildRun, buildStream, buildTerminal, fill, parseResult, resolveParams, toRows } from './packrun.mts'
 import type { PackAction } from './packschema.mts'
 
 const L = (s: string) => ({ ko: s, en: s })
@@ -63,7 +63,7 @@ test('bash-i 셸 · 터미널 입력 · 탭 분리 · 표 상한', () => {
 
 test('git 보호: git이 보일 때만 함수로 감싸고, 실제로 옵션이 붙는다', () => {
   assert.ok(buildRun(A({ cmd: 'git status' }), {}).command.includes('core.fsmonitor=false'))
-  assert.ok(buildPreview(A({ cmd: 'x', preview: 'git log -n 3' }), {}).includes(GIT_GUARD.slice(0, 20)))
+  assert.ok(buildPreview(A({ cmd: 'x', preview: 'git log -n 3' }), {}).includes(BADGE_GIT_GUARD.slice(0, 20)))
   assert.ok(!buildRun(A({ cmd: 'ls' }), {}).command.includes('fsmonitor'))
   // 가짜 git(받은 인자를 그대로 찍음)으로 sh에서 실제 실행해 확인. sh·timeout이 없는 환경이면 건너뜀
   try {
@@ -72,15 +72,15 @@ test('git 보호: git이 보일 때만 함수로 감싸고, 실제로 옵션이 
     return
   }
   const dir = mkdtempSync(join(tmpdir(), 'fakegit-'))
-  writeFileSync(join(dir, 'git'), ['#!/bin/sh', 'echo "git $*"', ''].join('\n'))
+  writeFileSync(join(dir, 'git'), ['#!/bin/sh', '[ "$1" = config ] && exit 1', 'echo "git $*"', ''].join('\n')) // config(저장소 설정 검사)에는 "찾는 설정 없음"으로 답함
   chmodSync(join(dir, 'git'), 0o755)
   const PATH = dir + (process.platform === 'win32' ? ';' : ':') + process.env.PATH
   const sh = (cmd: string) => execSync(buildRun(A({ cmd }), {}).command, { env: { ...process.env, PATH, GIT_EXTERNAL_DIFF: 'evil' }, shell: 'sh' }).toString()
-  assert.match(sh('git status -s'), /git -c core.fsmonitor=false status -s/)
-  assert.match(sh('git diff --stat'), /git -c core.fsmonitor=false diff --no-ext-diff --no-textconv --stat/)
-  assert.match(sh('git --no-pager log -n 1'), /git -c core.fsmonitor=false log --no-ext-diff --no-textconv -n 1/)
-  assert.match(sh('git -C /tmp show HEAD'), /git -c core.fsmonitor=false show --no-ext-diff --no-textconv HEAD/)
-  assert.match(sh('echo $(git status) | cat'), /git -c core.fsmonitor=false status/)
+  assert.match(sh('git status -s'), /git -c core.fsmonitor=false .*status --ignore-submodules=all -s/)
+  assert.match(sh('git diff --stat'), /git -c core.fsmonitor=false .* diff --no-ext-diff --no-textconv --stat/)
+  assert.match(sh('git --no-pager log -n 1'), /git -c core.fsmonitor=false .* log --no-ext-diff --no-textconv -n 1/)
+  assert.match(sh('git -C /tmp show HEAD'), /git -c core.fsmonitor=false .* show --no-ext-diff --no-textconv HEAD/)
+  assert.match(sh('echo $(git status) | cat'), /git -c core.fsmonitor=false .*status/)
   assert.match(sh('git status >/dev/null; env | grep -c GIT_EXTERNAL_DIFF; true'), /^0/)
 })
 
@@ -98,4 +98,16 @@ test('buildPoll: 매번 끝나는 모양(timeout 래퍼 + 종료 코드), 기본
   assert.equal(buildPoll(A({ cmd: 'cat /proc/loadavg' })).startsWith('timeout 10 sh -c '), true)
   assert.ok(buildPoll(A({ cmd: 'cat /proc/loadavg' })).includes('__EXIT__$?'))
   assert.ok(buildPoll(A({ cmd: 'git -C /tmp status' })).includes('git()'))
+})
+
+test('git 보호는 팩 항목의 모든 실행 경로에 붙음: 실행·미리보기·실시간·그래프·목록(from)·bash -i', () => {
+  const guard = BADGE_GIT_GUARD.slice(0, 40)
+  const has = (s: string) => assert.ok(s.includes(guard) && s.includes('JETDECK_UNSAFE_REPO'), s.slice(0, 80))
+  has(buildRun(A({ cmd: 'git status' }), {}).command)
+  has(buildRun(A({ cmd: 'git status', shell: 'bash-i' }), {}).command)
+  has(buildPreview(A({ cmd: 'x', preview: 'git log -n 3' }), {}))
+  has(buildStream(A({ mode: 'stream', cmd: 'git log -f' }), {}))
+  has(buildPoll(A({ cmd: 'git rev-list --count HEAD' })))
+  has(buildFrom({ cmd: 'git branch --list', shell: 'sh', timeout: 5 }))
+  assert.ok(!buildFrom({ cmd: 'ls', shell: 'sh', timeout: 5 }).includes('git()')) // git이 없으면 감싸지 않음
 })
