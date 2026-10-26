@@ -124,3 +124,15 @@ test('ros2live.json: 검증 통과, 한·영, 스트림 읽기 증명, 기본 �
   }
   assert.ok(OFFICIAL_DEFAULT_OFF.has('ros2-live'))
 })
+
+test('devtools.json: Git 배지 1개, 검증 통과, 한·영, 기본 꺼짐, 예약 id', () => {
+  const raw = JSON.parse(readFileSync(new URL('./devtools.json', import.meta.url), 'utf8'))
+  const r = validatePack(raw, { official: true })
+  assert.deepEqual(r.errors, [])
+  assert.deepEqual(r.warnings, [])
+  walk(raw, 'devtools')
+  assert.equal(r.pack!.minApp, '5.3.0')
+  assert.deepEqual(r.pack!.badges!.map((b) => b.id), ['git'])
+  assert.ok(OFFICIAL_DEFAULT_OFF.has('devtools'))
+  assert.match(validatePack({ ...raw, version: '1.0.0' }).errors.join('|'), /공식 팩 전용/)
+})

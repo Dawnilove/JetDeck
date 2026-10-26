@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
-import { LIMITS, RESERVED_IDS, validatePack } from './packschema.mts'
+import { BADGE_TONES, LIMITS, RESERVED_IDS, validatePack } from './packschema.mts'
 import { FIELD_LIMITS } from './packfields.mts'
 
 // docs/plugins/jdpack.schema.json (편집기용)과 검사기(packschema.mts)의 규칙이 어긋나지 않는지 대조
@@ -41,6 +41,21 @@ test('schema: 그래프 상수가 검사기(LIMITS)와 같음', () => {
   assert.ok(P.type.enum.includes('chart'))
 })
 
+test('schema: 배지 상수가 검사기(LIMITS)와 같음', () => {
+  const B = D.badge.properties
+  assert.equal(schema.properties.badges.maxItems, LIMITS.badges)
+  assert.equal(B.cmd.maxLength, LIMITS.cmd)
+  assert.equal(B.match.maxLength, LIMITS.matchLen)
+  assert.equal(B.codes.maxProperties, LIMITS.badgeCodes)
+  assert.equal(B.codes.additionalProperties.properties.show.maxLength, LIMITS.badgeShow)
+  assert.equal(B.ttl.minimum, LIMITS.badgeTtlMin)
+  assert.equal(B.ttl.maximum, LIMITS.badgeTtlMax)
+  assert.equal(B.ttl.default, LIMITS.badgeTtlDefault)
+  assert.equal(B.timeout.maximum, LIMITS.badgeTimeoutMax)
+  assert.equal(B.timeout.default, LIMITS.badgeTimeoutDefault)
+  assert.deepEqual(B.codes.additionalProperties.properties.tone.enum, BADGE_TONES)
+})
+
 test('schema: 예약어·id·선택지 값 패턴이 검사기 결과와 같음', () => {
   const idRe = new RegExp(schema.properties.id.pattern)
   const valRe = new RegExp(D.param.properties.choices.items.properties.value.pattern)
@@ -57,7 +72,7 @@ test('schema: 예제·공식 팩이 스키마를 통과함 (ajv가 있을 때; �
     return // ajv는 직접 의존성이 아니라서 없으면 건너뜀
   }
   const validate = new Ajv({ strict: false }).compile(schema)
-  for (const f of ['../../docs/plugins/examples/examples.jdpack.json', './packs/ros2.json', './packs/ros2live.json', './packs/perf.json']) {
+  for (const f of ['../../docs/plugins/examples/examples.jdpack.json', './packs/ros2.json', './packs/ros2live.json', './packs/perf.json', './packs/devtools.json']) {
     assert.ok(validate({ ...JSON.parse(rd(f)), id: 'copy' }), `${f}: ${JSON.stringify(validate.errors)}`)
   }
   // 그래프: match/split, perLine/series는 정확히 하나

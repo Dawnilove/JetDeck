@@ -1,0 +1,33 @@
+{
+  "id": "devtools",
+  "format": 1,
+  "version": "5.3.0",
+  "minApp": "5.3.0",
+  "name": { "ko": "개발 도구 (베타)", "en": "Developer tools (beta)" },
+  "author": "JetDeck",
+  "license": "Apache-2.0",
+  "plugins": [],
+  "badges": [
+    {
+      "id": "git",
+      "label": { "ko": "Git 상태", "en": "Git status" },
+      "cmd": "git --no-optional-locks -C {dir} rev-parse --show-toplevel && git --no-optional-locks -C {dir} status --porcelain=v1 -b -z --no-renames",
+      "separator": "nul",
+      "root": "line1",
+      "tag": { "match": "^## (.+?)(?:\\.\\.\\.|$)" },
+      "match": "^(.{2}) (.+)$",
+      "code": 1,
+      "path": 2,
+      "codes": {
+        " M": { "show": "M", "text": { "ko": "수정됨", "en": "Modified" }, "tone": "warn" },
+        "M ": { "show": "M", "text": { "ko": "수정됨(스테이지)", "en": "Modified (staged)" }, "tone": "warn" },
+        "MM": { "show": "M", "text": { "ko": "수정됨", "en": "Modified" }, "tone": "warn" },
+        "A ": { "show": "A", "text": { "ko": "추가됨(스테이지)", "en": "Added (staged)" }, "tone": "ok" },
+        " D": { "show": "D", "text": { "ko": "삭제됨", "en": "Deleted" }, "tone": "bad" },
+        "D ": { "show": "D", "text": { "ko": "삭제됨(스테이지)", "en": "Deleted (staged)" }, "tone": "bad" },
+        "??": { "show": "U", "text": { "ko": "새 파일", "en": "Untracked" }, "tone": "info" },
+        "UU": { "show": "!", "text": { "ko": "충돌", "en": "Conflict" }, "tone": "bad" }
+      }
+    }
+  ]
+}

@@ -98,7 +98,7 @@ export const LIMITS = { fileBytes: 512 * 1024, plugins: 20, actionsPerPlugin: 50
   badges: 2, badgesOfficial: 4, badgeCodes: 30, badgeShow: 2, badgeTtlMin: 3, badgeTtlMax: 300, badgeTtlDefault: 5, badgeTimeoutMax: 15, badgeTimeoutDefault: 10, badgeRecords: 5000, badgeLineChars: 4096, badgeTag: 40, badgeDir: 1024 }
 export const CHART_MIN_APP = '5.2.0'
 export const BADGE_MIN_APP = '5.3.0'
-export const RESERVED_IDS = ['device', 'ros2', 'monitor', 'perf', 'examples', 'ros2-live', 'jetdeck', 'official', 'app', 'core', 'snippets']
+export const RESERVED_IDS = ['device', 'ros2', 'monitor', 'perf', 'devtools', 'examples', 'ros2-live', 'jetdeck', 'official', 'app', 'core', 'snippets']
 // 공식 팩에서 읽기로 증명되지 않아도 읽기로 인정하는 항목 (팩id/항목id → 고정된 명령). 새 공식 항목을 추가하면 여기와 시험을 고쳐야 함 = 리뷰 강제
 export const OFFICIAL_UNPROVEN_READS = new Map<string, string>([
   ['device/pwr-status', 'echo "target=$(systemctl get-default 2>/dev/null)"; echo "up=$(uptime -p)"; echo "since=$(uptime -s)"; if [ -f /var/run/reboot-required ]; then echo reboot=yes; else echo reboot=no; fi; if [ -f /run/systemd/shutdown/scheduled ]; then s=$(grep -m1 \'^USEC=\' /run/systemd/shutdown/scheduled | cut -d= -f2); echo "scheduled=$(date -d @$((s/1000000)) \'+%F %T\') $(grep -m1 \'^MODE=\' /run/systemd/shutdown/scheduled | cut -d= -f2)"; else echo scheduled=none; fi']

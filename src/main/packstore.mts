@@ -8,7 +8,7 @@ import { compareSemver, LIMITS, validatePack, type ChartDisplay, type Pack } fro
 
 export const PACK_EXT = '.jdpack.json'
 export const MAX_FILES = 100
-export const OFFICIAL_DEFAULT_OFF = new Set(['examples', 'ros2-live']) // 공식이어도 기본 꺼짐인 팩 (예제 팩, 베타 팩)
+export const OFFICIAL_DEFAULT_OFF = new Set(['examples', 'ros2-live', 'devtools']) // 공식이어도 기본 꺼짐인 팩 (예제 팩, 베타 팩)
 
 export const sha256 = (data: string | Uint8Array) => createHash('sha256').update(data).digest('hex')
 

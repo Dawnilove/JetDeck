@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { tr } from './i18n.mts'
 import { run } from './monitor'
 import deviceJson from './packs/device.json'
+import devtoolsJson from './packs/devtools.json'
 import examplesJson from './packs/examples.json'
 import perfJson from './packs/perf.json'
 import ros2Json from './packs/ros2.json'
@@ -28,6 +29,7 @@ const OFFICIAL = [
   { fileName: 'ros2.json', raw: ros2Json as unknown },
   { fileName: 'ros2live.json', raw: ros2LiveJson as unknown }, // 기본 꺼짐(베타)
   { fileName: 'perf.json', raw: perfJson as unknown },
+  { fileName: 'devtools.json', raw: devtoolsJson as unknown }, // 기본 꺼짐(베타), 탐색기 Git 배지
   { fileName: 'examples.json', raw: examplesJson as unknown } // 기본 꺼짐(packstore OFFICIAL_DEFAULT_OFF). 원본: docs/plugins/examples/
 ]
 const userDir = () => join(app.getPath('userData'), 'packs')
