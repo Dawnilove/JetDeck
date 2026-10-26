@@ -877,6 +877,15 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
                       )
                     })}
                     <button type="button" className="btn btn-dashed btn-36" onClick={() => setEditing({ index: null })}>{tr('+ 스니펫 추가')}</button>
+                    <button
+                      type="button"
+                      className="btn btn-dashed btn-36"
+                      disabled={snips.length === 0}
+                      title={tr('스니펫을 플러그인 팩 파일로 저장해요. 스니펫 목록은 그대로예요.')}
+                      onClick={() => void window.api.exportSnippetPack(snips).then((r) => r && alert(tr('{0}개를 팩 파일로 저장했어요 (건너뜀 {1}개, 비밀 가림 {2}개).\n플러그인 관리에서 설치하세요.', String(r.exported), String(r.skipped), String(r.masked))))}
+                    >
+                      {tr('팩으로 내보내기')}
+                    </button>
                   </div>
                 )}
               </Panel>

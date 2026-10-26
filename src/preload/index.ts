@@ -119,6 +119,7 @@ const api = {
   onSvcEnd: (cb: (id: string) => void) => on('svc:end', cb),
   // 설정 내보내기·가져오기 (호스트는 main, 스니펫·테마는 화면이 넘기고 받음)
   exportSettings: (snippets: Snip[], theme: string): Promise<{ path: string; hosts: number; snippets: number; masked: number } | null> => ipcRenderer.invoke('settings:export', snippets, theme),
+  exportSnippetPack: (snippets: Snip[]): Promise<{ path: string; exported: number; skipped: number; masked: number } | null> => ipcRenderer.invoke('settings:export-pack', snippets),
   importSettings: (overwrite = false): Promise<ImportResult> => ipcRenderer.invoke('settings:import', overwrite),
   saveDiagnostics: (): Promise<string | null> => ipcRenderer.invoke('diag:save'),
   saveTermLog: (text: string, name: string): Promise<string | null> => ipcRenderer.invoke('termlog:save', text, name),

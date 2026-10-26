@@ -92,5 +92,8 @@ export const EN_H: Record<string, string> = {
   '입력': 'Type',
   '{0} 열기': 'Open {0}',
   '플러그인 열기': 'Open plugins',
-  '…잘렸어요 (출력이 너무 길어서 앞부분만 보여요)': '…truncated (the output is too long, so only the beginning is shown)'
+  '…잘렸어요 (출력이 너무 길어서 앞부분만 보여요)': '…truncated (the output is too long, so only the beginning is shown)',
+  '팩으로 내보내기': 'Export as pack',
+  '스니펫을 플러그인 팩 파일로 저장해요. 스니펫 목록은 그대로예요.': 'Saves your snippets as a plugin pack file. The snippet list stays as it is.',
+  '{0}개를 팩 파일로 저장했어요 (건너뜀 {1}개, 비밀 가림 {2}개).\n플러그인 관리에서 설치하세요.': 'Saved {0} to a pack file ({1} skipped, {2} secrets masked).\nInstall it from Plugin manager.'
 }

@@ -3,6 +3,7 @@ import { readFileSync, statSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { tr } from './i18n.mts'
 import { buildExport, parseImport, type Snip } from './settingsio.mts'
+import { buildSnippetPack } from './snippack.mts'
 import { addHosts, clean, listHosts, type Host } from './store'
 
 export type ImportResult = { canceled: true } | { canceled?: false; added: number; updated: number; skipped: number; invalid: number; snippets: Snip[]; theme: string }
@@ -16,6 +17,15 @@ export function registerSettingsIpc(): void {
     const { text, masked } = buildExport({ hosts, snippets: Array.isArray(snippets) ? snippets : [], theme: String(theme ?? ''), version: app.getVersion() })
     writeFileSync(r.filePath, text, 'utf8')
     return { path: r.filePath, hosts: hosts.length, snippets: (Array.isArray(snippets) ? snippets : []).length, masked }
+  })
+
+  // 스니펫 → 팩 파일 (스니펫 저장소는 건드리지 않음)
+  ipcMain.handle('settings:export-pack', async (e, snippets: Snip[]): Promise<{ path: string; exported: number; skipped: number; masked: number } | null> => {
+    const r = await dialog.showSaveDialog(BrowserWindow.fromWebContents(e.sender)!, { title: tr('팩으로 내보내기'), defaultPath: join(app.getPath('documents'), 'my-snippets.jdpack.json'), filters: [{ name: 'JetDeck pack', extensions: ['json'] }] })
+    if (r.canceled || !r.filePath) return null
+    const b = buildSnippetPack(Array.isArray(snippets) ? snippets : [], app.getVersion())
+    writeFileSync(r.filePath, b.text, 'utf8')
+    return { path: r.filePath, exported: b.exported, skipped: b.skipped, masked: b.masked }
   })
 
   ipcMain.handle('settings:import', async (e, overwrite?: boolean): Promise<ImportResult> => {

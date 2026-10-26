@@ -43,6 +43,19 @@ for (const id of ['ros2', 'perf']) {
   })
 }
 
+test('examples: 앱 동봉본 = 공개 문서 원본, 검증 통과, 선언과 계산이 같음', () => {
+  const src = readFileSync(new URL('../../../docs/plugins/examples/examples.jdpack.json', import.meta.url), 'utf8')
+  assert.equal(readFileSync(new URL('./examples.json', import.meta.url), 'utf8'), src)
+  const r = validatePack(JSON.parse(src), { official: true })
+  assert.deepEqual(r.errors, [])
+  assert.deepEqual(r.warnings, [])
+  walk(JSON.parse(src), 'examples')
+  const all = r.pack!.plugins.flatMap((p) => p.actions)
+  assert.equal(all.find((a) => a.id === 'train-stop')!.risk, 'danger')
+  assert.equal(all.find((a) => a.id === 'train-log')!.risk, 'read')
+  assert.ok(all.some((a) => a.mode === 'terminal'))
+})
+
 test('ros2.json: bash-i, 그룹 dev, 내장 ROS2 탭과 제목이 다름', () => {
   const p = validatePack(JSON.parse(readFileSync(new URL('./ros2.json', import.meta.url), 'utf8')), { official: true }).pack!
   assert.deepEqual(p.plugins.map((x) => x.group), ['dev'])

@@ -1,0 +1,133 @@
+{
+  "$schema": "https://dawnilove.github.io/JetDeck/plugins/jdpack.schema.json",
+  "$comment": "Example pack: copy this file, change the id (the name examples is reserved), the paths (~/my-project) and names, and install the copy. 예제 팩: 이 파일을 복사해 id(examples는 예약어), 경로(~/my-project)와 이름을 바꿔 쓰세요.",
+  "id": "examples",
+  "format": 1,
+  "version": "5.0.0",
+  "name": { "ko": "예제 모음", "en": "Examples" },
+  "desc": { "ko": "복사해서 고쳐 쓰는 템플릿이에요. 경로는 ~/my-project 처럼 내 것으로 바꾸세요.", "en": "Templates to copy and edit. Change paths such as ~/my-project to your own." },
+  "author": "JetDeck",
+  "license": "Apache-2.0",
+  "plugins": [
+    {
+      "id": "my-project",
+      "title": { "ko": "내 프로젝트", "en": "My project" },
+      "desc": { "ko": "터미널에 명령을 입력하는 템플릿이에요. ~/my-project 를 내 프로젝트 폴더로 바꾸세요.", "en": "Templates that type commands into the terminal. Replace ~/my-project with your project folder." },
+      "actions": [
+        {
+          "id": "goto",
+          "$comment": "Change ~/my-project to your folder. 폴더 경로를 내 것으로 바꾸세요.",
+          "label": { "ko": "프로젝트 폴더로 이동", "en": "Go to project folder" },
+          "mode": "terminal",
+          "cmd": "cd ~/my-project",
+          "risk": "change",
+          "confirm": { "ko": "터미널의 현재 폴더를 바꿔요. 파일은 건드리지 않아요.", "en": "Changes the terminal's current folder. No files are touched." }
+        },
+        {
+          "id": "venv",
+          "label": { "ko": "가상환경 켜기", "en": "Activate virtualenv" },
+          "mode": "terminal",
+          "cmd": "source ~/my-project/.venv/bin/activate",
+          "risk": "danger",
+          "confirm": { "ko": "이 터미널에서 가상환경을 켜요.", "en": "Activates the virtualenv in this terminal." }
+        },
+        {
+          "id": "git-status",
+          "label": { "ko": "git 상태 보기", "en": "Show git status" },
+          "mode": "terminal",
+          "cmd": "git -C ~/my-project status",
+          "risk": "read"
+        },
+        {
+          "id": "build",
+          "label": { "ko": "빌드", "en": "Build" },
+          "$comment": "Replace the build command with yours. 빌드 명령을 내 것으로 바꾸세요.",
+          "mode": "terminal",
+          "cmd": "cd ~/my-project && make",
+          "risk": "change",
+          "confirm": { "ko": "프로젝트 폴더에서 make를 실행해요. 파일이 새로 만들어질 수 있어요.", "en": "Runs make in the project folder. New files may be created." }
+        }
+      ]
+    },
+    {
+      "id": "sensors",
+      "title": { "ko": "센서", "en": "Sensors" },
+      "desc": { "ko": "카메라·USB·I2C·시리얼 장치를 확인해요. 모두 보기만 해요.", "en": "Check cameras, USB, I2C and serial devices. View only." },
+      "actions": [
+        {
+          "id": "video-nodes",
+          "label": { "ko": "카메라 장치 파일", "en": "Camera device files" },
+          "cmd": "ls /dev/video*",
+          "risk": "read",
+          "display": { "type": "text" }
+        },
+        {
+          "id": "v4l2-devices",
+          "label": { "ko": "카메라 목록 (v4l2)", "en": "Camera list (v4l2)" },
+          "cmd": "v4l2-ctl --list-devices",
+          "risk": "read",
+          "display": { "type": "text" }
+        },
+        {
+          "id": "usb",
+          "label": { "ko": "USB 장치", "en": "USB devices" },
+          "cmd": "lsusb",
+          "risk": "read",
+          "display": { "type": "text" }
+        },
+        {
+          "id": "i2c-buses",
+          "label": { "ko": "I2C 버스", "en": "I2C buses" },
+          "cmd": "i2cdetect -l",
+          "risk": "read",
+          "display": { "type": "text" }
+        },
+        {
+          "id": "tty",
+          "label": { "ko": "시리얼 장치 (tty)", "en": "Serial devices (tty)" },
+          "cmd": "ls /dev/ttyUSB* /dev/ttyACM*",
+          "risk": "read",
+          "display": { "type": "text" }
+        },
+        {
+          "id": "dmesg",
+          "label": { "ko": "커널 메시지 끝부분", "en": "Kernel messages (tail)" },
+          "desc": { "ko": "장치를 꽂은 직후에 보면 인식 여부를 알 수 있어요.", "en": "Look right after plugging a device in to see whether it was detected." },
+          "cmd": "dmesg | tail -n 30",
+          "risk": "read",
+          "display": { "type": "text" }
+        }
+      ]
+    },
+    {
+      "id": "training",
+      "title": { "ko": "학습 작업", "en": "Training job" },
+      "desc": { "ko": "학습 스크립트 템플릿이에요. train.py 와 ~/my-project 를 내 것으로 바꾸세요.", "en": "Training-script templates. Replace train.py and ~/my-project with your own." },
+      "actions": [
+        {
+          "id": "train-start",
+          "label": { "ko": "학습 시작", "en": "Start training" },
+          "mode": "terminal",
+          "cmd": "cd ~/my-project && python train.py --epochs 10 2>&1 | tee train.log",
+          "risk": "change",
+          "confirm": { "ko": "학습을 시작해요. GPU와 시간을 오래 써요.", "en": "Starts training. This uses the GPU for a long time." }
+        },
+        {
+          "id": "train-log",
+          "label": { "ko": "로그 마지막 50줄", "en": "Last 50 log lines" },
+          "cmd": "tail -n 50 ~/my-project/train.log",
+          "risk": "read",
+          "display": { "type": "text" }
+        },
+        {
+          "id": "train-stop",
+          "label": { "ko": "학습 중단", "en": "Stop training" },
+          "mode": "terminal",
+          "cmd": "pkill -f train.py",
+          "risk": "danger",
+          "confirm": { "ko": "train.py 를 실행 중인 프로세스를 모두 끝내요. 저장하지 않은 학습 결과는 사라져요.", "en": "Ends every process running train.py. Unsaved training progress is lost." }
+        }
+      ]
+    }
+  ]
+}

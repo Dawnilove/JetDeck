@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { tr } from './i18n.mts'
 import { run } from './monitor'
 import deviceJson from './packs/device.json'
+import examplesJson from './packs/examples.json'
 import perfJson from './packs/perf.json'
 import ros2Json from './packs/ros2.json'
 import { sanitizeOutput } from './packsafe.mts'
@@ -17,7 +18,8 @@ import { requireClient as client } from './session'
 const OFFICIAL = [
   { fileName: 'device.json', raw: deviceJson as unknown },
   { fileName: 'ros2.json', raw: ros2Json as unknown },
-  { fileName: 'perf.json', raw: perfJson as unknown }
+  { fileName: 'perf.json', raw: perfJson as unknown },
+  { fileName: 'examples.json', raw: examplesJson as unknown } // 기본 꺼짐(packstore OFFICIAL_DEFAULT_OFF). 원본: docs/plugins/examples/
 ]
 const userDir = () => join(app.getPath('userData'), 'packs')
 const stateFile = () => join(app.getPath('userData'), 'packs-state.json')
