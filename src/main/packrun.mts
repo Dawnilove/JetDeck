@@ -47,6 +47,9 @@ export const buildStream = (a: PackAction, values: Record<string, string>): stri
   return `${a.shell === 'bash-i' ? 'bash -ic' : 'sh -c'} ${shq(`${/\bgit\b/.test(inner) ? GIT_GUARD : ''}${inner}`)}`
 }
 
+// 그래프(display.type:'chart') 되풀이 실행에 쓰는 한 번의 명령: 매번 끝나는 모양(timeout)이고 끝에 종료 코드가 붙음. 읽기로 증명된 명령만 오도록 packschema가 거른 항목에만 씀
+export const buildPoll = (a: PackAction): string => wrap(a.cmd, a.timeout ?? 10, a.shell)
+
 // from 목록 명령 (읽기로 증명된 것): 오류 출력은 버리고 표준 출력만 받음 → 선택지로 오해될 글자가 섞이지 않게
 export const buildFrom = (f: { cmd: string; shell: 'sh' | 'bash-i'; timeout: number }): string => `timeout ${f.timeout} ${f.shell === 'bash-i' ? 'bash -ic' : 'sh -c'} ${shq(f.cmd)} 2>/dev/null`
 

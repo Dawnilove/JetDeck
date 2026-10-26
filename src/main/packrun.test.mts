@@ -4,7 +4,7 @@ import { execSync } from 'node:child_process'
 import { mkdtempSync, writeFileSync, chmodSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { GIT_GUARD, buildPreview, buildRun, buildTerminal, fill, parseResult, resolveParams, toRows } from './packrun.mts'
+import { GIT_GUARD, buildPoll, buildPreview, buildRun, buildTerminal, fill, parseResult, resolveParams, toRows } from './packrun.mts'
 import type { PackAction } from './packschema.mts'
 
 const L = (s: string) => ({ ko: s, en: s })
@@ -91,4 +91,11 @@ test('결과 글자는 ANSI·제어 문자 제거와 비밀 가림을 거친 뒤
   const table = A({ display: { type: 'table', columns: [L('a'), L('b')], split: 'ws' } })
   assert.deepEqual(parseResult(table, 'x\x1b[1m 1‮\n__EXIT__0\n', 't').rows, [['x', '1']])
   assert.ok(parseResult(A({}), 'x'.repeat(300_000) + '\n__EXIT__0\n', 't').text.length < 262_144 + 100)
+})
+
+test('buildPoll: 매번 끝나는 모양(timeout 래퍼 + 종료 코드), 기본 10초, git 보호 함수', () => {
+  assert.equal(buildPoll(A({ cmd: 'cat /proc/loadavg', timeout: 7 })).startsWith('timeout 7 sh -c '), true)
+  assert.equal(buildPoll(A({ cmd: 'cat /proc/loadavg' })).startsWith('timeout 10 sh -c '), true)
+  assert.ok(buildPoll(A({ cmd: 'cat /proc/loadavg' })).includes('__EXIT__$?'))
+  assert.ok(buildPoll(A({ cmd: 'git -C /tmp status' })).includes('git()'))
 })

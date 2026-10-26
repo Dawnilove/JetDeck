@@ -10,8 +10,9 @@ import perfJson from './packs/perf.json'
 import ros2Json from './packs/ros2.json'
 import ros2LiveJson from './packs/ros2live.json'
 import { parseFromOutput } from './packfields.mts'
+import { startPoll, stopAllPolls, stopPoll } from './packpoll.mts'
 import { sanitizeOutput } from './packsafe.mts'
-import { buildFrom, buildPreview, buildRun, buildStream, buildTerminal, fill, parseResult, resolveParams, type PackResult } from './packrun.mts'
+import { buildFrom, buildPoll, buildPreview, buildRun, buildStream, buildTerminal, fill, parseResult, resolveParams, type PackResult } from './packrun.mts'
 import { startStream, stopAll, stopStream } from './packstream.mts'
 import { approveAndEnable, buildCatalog, enabledPacks, ensureDir, forgetPack, inspectPackBytes, installPackBytes, readState, readUserDir, setEnabled, writeState, type Inspect, type PackEntry, type StateFile } from './packstore.mts'
 import { LIMITS, type Pack, type PackAction, type Reason, type Risk } from './packschema.mts'
@@ -192,5 +193,17 @@ export function registerPackIpc(): void {
       running.delete(key)
     }
   })
+  // 그래프(5.2.0): 읽기 명령을 every초마다 main이 실행해 점을 보냄. 멈춤·화면 이탈·연결 끊김·연속 실패는 packpoll이 정리
+  ipcMain.handle('pack:poll-start', (e, connId: string, packId: string, pluginId: string, actionId: string, pollId: string): void => {
+    const { pack, action: a } = find(packId, pluginId, actionId)
+    const d = a.display
+    if (a.mode !== 'exec' || d?.type !== 'chart') throw new Error(tr('이 항목은 그래프 항목이 아니에요'))
+    if (a.risk !== 'read' || a.computed !== 'read' || a.sudo) throw new Error(tr('읽기 명령만 되풀이해서 실행할 수 있어요')) // 로드 때 거른 것을 한 번 더 확인
+    if (!/^[\w-]{1,64}$/.test(String(pollId))) throw new Error(tr('올바르지 않은 요청이에요'))
+    const c = client(connId)
+    startPoll(e.sender, { run: (cmd) => run(c, cmd), onClose: (cb) => (c.once('close', cb), () => void c.off('close', cb)) }, String(pollId), pack.id, buildPoll(a), d, a.timeout ?? LIMITS.chartTimeoutDefault)
+  })
+  ipcMain.handle('pack:poll-stop', (_e, pollId: string): void => stopPoll(String(pollId)))
   app.on('before-quit', stopAll)
+  app.on('before-quit', stopAllPolls)
 }

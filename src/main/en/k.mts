@@ -1,0 +1,7 @@
+// 5.2.0 시계열 그래프 (packpoll)
+export const EN_K: Record<string, string> = {
+  '이 팩은 그래프를 동시에 {0}개까지만 시작할 수 있어요': 'This pack can run only {0} charts at a time',
+  '그래프는 동시에 {0}개까지만 시작할 수 있어요': 'Only {0} charts can run at a time',
+  '이 항목은 그래프 항목이 아니에요': 'This item is not a chart item',
+  '읽기 명령만 되풀이해서 실행할 수 있어요': 'Only read-only commands can be repeated'
+}
