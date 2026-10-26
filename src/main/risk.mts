@@ -4,7 +4,9 @@ export type Risk = 'read' | 'change' | 'danger'
 export type Reason =
   | 'delete' | 'disk' | 'power' | 'privilege' | 'shell' | 'network' | 'package' | 'users' | 'system' // danger 계열
   | 'sensitive' | 'overwrite' | 'write' | 'unknown' | 'unsafe' | 'dynamic' | 'syntax' | 'redirect' | 'newline' | 'background' | 'assign'
+  | 'input' // 5.1.0: 사용자가 입력한 값 때문에 위험도가 올라감
 export type Analysis = { risk: Risk; reasons: Reason[] }
+export type AnalyzeOpts = { stream?: boolean } // stream: 끝나지 않는 읽기 명령(journalctl -f 등)도 읽기로 인정 (mode:'stream' 항목 전용)
 
 // 앱이 확인창·허용 창에 보여 줄 이유 (팩이 쓴 글자가 아니라 앱 글자)
 export const REASON_TEXT: Record<Reason, string> = {
@@ -27,7 +29,8 @@ export const REASON_TEXT: Record<Reason, string> = {
   redirect: '입출력 방향을 바꿔요',
   newline: '여러 줄 명령이에요',
   background: '백그라운드로 실행해요',
-  assign: '변수를 설정하고 실행해요'
+  assign: '변수를 설정하고 실행해요',
+  input: '입력한 값 때문에 위험도가 올라갔어요'
 }
 const RANK: Record<Risk, number> = { read: 0, change: 1, danger: 2 }
 export const maxRisk = (a: Risk, b: Risk): Risk => (RANK[a] >= RANK[b] ? a : b)
@@ -627,6 +630,52 @@ const READ_CMDS: Record<string, Check> = {
   hostnamectl: (a) => (a.pos.length === 0 || a.pos[0] === 'status' ? null : UNSAFE)
 }
 
+// ───────────── 스트림 전용 읽기 목록 (5.1.0) ─────────────
+// analyze(cmd, { stream: true })에서만 READ_CMDS 대신(또는 더해서) 쓴다. 끝나지 않지만 읽기만 하는 명령.
+// 항목을 더하려면 risk.test.mts에 "허용 사례 + 우회 사례" 한 쌍이 필요하다 (리뷰 강제)
+const STREAM_ROS: Record<string, { ok: string[]; valued: string[] }> = {
+  echo: { ok: ['--once', '--no-arr', '--no-str', '--full-length', '-f', '--csv', '--flow-style', '--no-daemon', '--use-sim-time', '--include-message-info', '-i', '--lost-messages', '--raw'], valued: ['--truncate-length', '--field', '--qos-profile', '--qos-depth', '--qos-history', '--qos-reliability', '--qos-durability'] },
+  hz: { ok: ['--wall-time', '--no-daemon', '--use-sim-time'], valued: ['--window', '-w'] },
+  bw: { ok: ['--no-daemon', '--use-sim-time'], valued: ['--window', '-w'] },
+  delay: { ok: ['--no-daemon', '--use-sim-time'], valued: ['--window', '-w'] }
+}
+// ros2 topic echo|hz|bw|delay [옵션] 토픽 [타입]. --filter(Python 식 실행)·--ros-args·파일 옵션은 목록에 없으므로 읽기 아님
+const ros2StreamCheck = (a: Args): Verdict => {
+  const pos: string[] = []
+  let verb: string | undefined
+  let spec: { ok: string[]; valued: string[] } | undefined
+  for (let k = 0; k < a.raw.length; k++) {
+    const x = a.raw[k]
+    if (x === '--') {
+      pos.push(...a.raw.slice(k + 1))
+      break
+    }
+    if (x.startsWith('-') && x.length > 1) {
+      if (pos[0] !== 'topic' || !spec) return ros2Check(a) // 아직 하위 명령을 모름 → 5.0.0 규칙
+      const name = x.startsWith('--') ? x.split('=')[0] : x
+      if (spec.valued.includes(name)) {
+        if (!x.includes('=')) k++
+      } else if (!spec.ok.includes(name)) return UNSAFE
+    } else {
+      pos.push(x)
+      if (pos.length === 2 && pos[0] === 'topic' && Object.hasOwn(STREAM_ROS, pos[1])) (verb = pos[1], (spec = STREAM_ROS[pos[1]]))
+    }
+  }
+  if (!verb || !spec) return ros2Check(a)
+  return pos.length >= 3 && pos.length <= 4 ? null : UNSAFE // 토픽 이름은 꼭 필요, 타입은 선택
+}
+const ipStream = (a: Args): Verdict => (a.raw[0] === 'monitor' ? (a.raw.slice(1).every((x) => ['all', 'link', 'address', 'route', 'neigh', 'rule', 'mroute', 'prefix', 'netconf', 'nsid'].includes(x)) ? null : UNSAFE) : ipCheck(a))
+const udevStream = (a: Args): Verdict => (a.raw[0] === 'monitor' ? only(['--property', '-p', '--kernel', '-k', '--udev', '-u', '--environment', '-e'], ['--subsystem-match', '-s', '--tag-match', '-t'])(parseArgs(a.raw.slice(1))) : UNSAFE)
+const STREAM_READ: Record<string, Check> = {
+  journalctl: simple({ badLong: ['--vacuum-size', '--vacuum-time', '--vacuum-files', '--rotate', '--flush', '--sync', '--relinquish-var', '--smart-relinquish-var', '--setup-keys', '--update-catalog', '--verify', '--interval', '--force', '--cursor-file'] }), // -f·--follow 허용
+  tail: simple({ badLong: ['--pid'] }), // -f -F --follow --retry 허용 (--pid는 다른 프로세스 상태를 봄)
+  dmesg: simple({ badShort: 'cCDEn', badLong: ['--clear', '--read-clear', '--console-off', '--console-on', '--console-level'] }), // -w -W --follow 허용
+  top: (a) => (a.short.includes('b') && a.pos.every((p) => /^[\w%+.,-]+$/.test(p)) ? simple({ badShort: 'k' })(a) : UNSAFE), // -b 없이는 화면을 점유함, -n 없이도 허용(반복)
+  iostat: simple({ maxPos: 3 }), mpstat: simple({ maxPos: 3 }),
+  tegrastats: (a) => (a.raw.length === 0 || (a.raw.length === 2 && a.raw[0] === '--interval' && /^\d{1,6}$/.test(a.raw[1])) ? null : UNSAFE),
+  ros2: ros2StreamCheck, ip: ipStream, udevadm: udevStream
+}
+
 // 이름 자체가 위험한 명령
 const DANGER_CMDS: Record<Reason, string[]> = {
   delete: ['rm', 'rmdir', 'shred', 'unlink', 'wipefs', 'srm'],
@@ -637,7 +686,7 @@ const DANGER_CMDS: Record<Reason, string[]> = {
   network: ['curl', 'wget', 'nc', 'ncat', 'netcat', 'socat', 'telnet', 'ssh', 'scp', 'sftp', 'rsync', 'ftp', 'tftp', 'lftp', 'aria2c', 'openssl', 'nmap', 'ping', 'ping6', 'traceroute', 'tracepath', 'dig', 'nslookup', 'host', 'mtr', 'ssh-keyscan', 'ssh-copy-id', 'sshpass', 'mosh', 'rclone', 'aws', 'gcloud', 'az', 'gh', 'mosquitto_pub', 'mosquitto_sub', 'mail', 'mailx', 'sendmail', 'msmtp', 'ssmtp', 'mutt'],
   users: ['passwd', 'chpasswd', 'useradd', 'userdel', 'usermod', 'groupadd', 'groupdel', 'groupmod', 'adduser', 'deluser', 'visudo', 'chage'],
   system: ['crontab', 'at', 'batch', 'iptables', 'ip6tables', 'nft', 'ufw', 'firewall-cmd', 'modprobe', 'insmod', 'rmmod', 'depmod', 'update-grub', 'grub-install', 'update-initramfs', 'dpkg-reconfigure', 'systemd-run'],
-  package: [], sensitive: [], overwrite: [], write: [], unknown: [], unsafe: [], dynamic: [], syntax: [], redirect: [], newline: [], background: [], assign: []
+  package: [], sensitive: [], overwrite: [], write: [], unknown: [], unsafe: [], dynamic: [], syntax: [], redirect: [], newline: [], background: [], assign: [], input: []
 }
 const DANGER_BY_NAME = new Map<string, Reason>()
 for (const [reason, names] of Object.entries(DANGER_CMDS) as [Reason, string[]][]) for (const n of names) DANGER_BY_NAME.set(n, reason)
@@ -660,6 +709,10 @@ class Acc {
   risk: Risk = 'read'
   reasons: Reason[] = []
   n = 0
+  stream: boolean // 스트림 전용 읽기 목록(STREAM_READ)도 인정
+  constructor(stream = false) {
+    this.stream = stream
+  }
   add(r: Risk, why: Reason): void {
     this.risk = maxRisk(this.risk, r)
     if (!this.reasons.includes(why)) this.reasons.push(why)
@@ -730,7 +783,7 @@ function analyzeCmd(cmd: Cmd, acc: Acc, depth: number): void {
     scanWords(words, acc)
     return
   }
-  const check = Object.hasOwn(READ_CMDS, name) ? READ_CMDS[name] : undefined
+  const check = acc.stream && Object.hasOwn(STREAM_READ, name) ? STREAM_READ[name] : Object.hasOwn(READ_CMDS, name) ? READ_CMDS[name] : undefined
   if (!check || cn.pathy) {
     acc.add('change', 'unknown')
     scanWords(words, acc)
@@ -771,8 +824,8 @@ function analyzeScript(sc: Script, acc: Acc, depth: number): void {
 }
 
 // 명령 하나를 분석해서 앱이 계산한 위험도와 이유를 돌려줌 (읽기로 증명되면 read)
-export function analyze(cmd: string): Analysis {
-  const acc = new Acc()
+export function analyze(cmd: string, opts: AnalyzeOpts = {}): Analysis {
+  const acc = new Acc(opts.stream === true)
   if (cmd.length > MAX_LEN) acc.add('change', 'syntax')
   else analyzeScript(parseScript(cmd, 0, false, 0).script, acc, 0)
   return { risk: acc.risk, reasons: acc.reasons }
@@ -784,6 +837,75 @@ export function effectiveRisk(declared: Risk, cmd: string, opts: { sudo?: boolea
   let risk = maxRisk(declared, a.risk)
   if (opts.sudo) risk = maxRisk(risk, 'change') // sudo 필드는 바꾸는 항목에서만 가능
   return { risk, computed: a.risk, understated: RANK[a.risk] > RANK[declared], reasons: a.reasons }
+}
+
+// ───────────── 입력 슬롯 (5.1.0) ─────────────
+// 입력 폼의 {이름} 자리. 앱이 값을 작은따옴표로 감싸 "글자 하나"로 넣으므로 템플릿에서는 맨 단어 자리에만 쓸 수 있다.
+// 로드 때 slotProblem으로 위치를 검사하고, 실행 직전에는 값을 채운 명령 전체를 analyzeWithInput으로 다시 분석한다
+const SLOT = /\{(\w+)\}/g
+const SLOT_MARK = 'JDSLOT'
+// 다른 명령을 실행하거나 코드를 해석하는 명령: 슬롯을 인자로도 받을 수 없음
+const SLOT_FORBIDDEN_HEADS = new Set([...DANGER_CMDS.shell, 'xargs', 'nohup', 'timeout', 'nice', 'ionice', 'watch', 'stdbuf', 'setsid', 'script', 'python', 'python3', 'perl', 'ruby', 'node', 'php', 'lua', 'env', 'command', 'builtin', 'time', 'tee', 'parallel'])
+
+// 템플릿에서 {이름}이 따옴표·역슬래시 밖에 있는지 (글자 하나씩 따옴표 상태를 따라감)
+function slotsOutsideQuotes(t: string): boolean {
+  let q: '' | "'" | '"' = ''
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i]
+    if (q === "'") {
+      if (c === "'") q = ''
+      else if (c === '{' && /^\{\w+\}/.test(t.slice(i))) return false
+    } else if (c === '\\') {
+      if (t[i + 1] === '{') return false
+      i++
+    } else if (q === '"') {
+      if (c === '"') q = ''
+      else if (c === '{' && /^\{\w+\}/.test(t.slice(i))) return false
+    } else if (c === "'" || c === '"') q = c
+  }
+  return true
+}
+function walkWords(sc: Script, inSub: boolean, visit: (w: Word, cmd: Cmd, index: number, inSub: boolean, redirTarget: boolean) => void): void {
+  for (const cmd of sc.cmds) {
+    cmd.words.forEach((w, k) => {
+      visit(w, cmd, k, inSub, false)
+      for (const s of w.subs) walkWords(s, true, visit)
+    })
+    for (const r of cmd.redirs) if (r.target) {
+      visit(r.target, cmd, -1, inSub, true)
+      for (const s of r.target.subs) walkWords(s, true, visit)
+    }
+  }
+}
+// 슬롯 자리 검사. 문제가 없으면 null, 있으면 사유(한국어 고정 문장). 템플릿에 슬롯이 없으면 null
+export function slotProblem(template: string): string | null {
+  if (!/\{\w+\}/.test(template)) return null
+  if (!slotsOutsideQuotes(template)) return '입력 자리 {이름}은 따옴표 안에 쓸 수 없어요 (앱이 값을 따옴표로 감싸요)'
+  const probe = template.replace(SLOT, (_m, n: string) => SLOT_MARK + n)
+  const sc = parseScript(probe.slice(0, MAX_LEN), 0, false, 0).script
+  let problem: string | null = null
+  walkWords(sc, false, (w, cmd, k, inSub, redir) => {
+    if (problem || !w.text.includes(SLOT_MARK)) return
+    if (inSub) problem = '입력 자리 {이름}은 $( )·백틱·<( ) 안에 쓸 수 없어요'
+    else if (redir) problem = '입력 자리 {이름}은 리다이렉트 대상에 쓸 수 없어요'
+    else if (k === 0) problem = '입력 자리 {이름}은 명령 이름 자리에 쓸 수 없어요'
+    else {
+      const head = commandName(cmd.words[0].text)
+      if (!head || SLOT_FORBIDDEN_HEADS.has(head.name) || head.pathy) problem = '입력 자리 {이름}은 다른 명령을 실행하는 명령의 인자로 쓸 수 없어요'
+      else if (w.dyn && !new RegExp('^[^$`]*' + SLOT_MARK).test(w.text)) problem = '입력 자리 {이름}이 값이 실행 때 정해지는 글자와 섞여 있어요'
+    }
+  })
+  return problem
+}
+
+// 실행 직전 재분석: 값을 채운 명령의 분석 결과를 로드 때 계산한 값(정적, 대표 값 기준)과 합침. 입력 값 때문에 올라갔으면 escalated + 이유 'input'
+export function analyzeWithInput(filled: string, staticResult: Analysis, opts: AnalyzeOpts = {}): { risk: Risk; reasons: Reason[]; escalated: boolean } {
+  const now = analyze(filled, opts)
+  const escalated = RANK[now.risk] > RANK[staticResult.risk]
+  const reasons = [...staticResult.reasons]
+  for (const r of now.reasons) if (!reasons.includes(r)) reasons.push(r)
+  if (escalated && !reasons.includes('input')) reasons.unshift('input')
+  return { risk: maxRisk(staticResult.risk, now.risk), reasons, escalated }
 }
 
 // ───────────── 막힌 경로 ─────────────

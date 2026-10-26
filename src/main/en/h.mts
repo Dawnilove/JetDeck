@@ -21,6 +21,7 @@ export const EN_H: Record<string, string> = {
   '여러 줄 명령이에요': 'This is a multi-line command',
   '백그라운드로 실행해요': 'Runs in the background',
   '변수를 설정하고 실행해요': 'Sets a variable, then runs',
+  '입력한 값 때문에 위험도가 올라갔어요': 'The value you entered raised the risk level',
   // 공통 조각
   '읽기': 'Read',
   '바꿈': 'Change',
