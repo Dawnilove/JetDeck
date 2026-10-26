@@ -3,6 +3,21 @@ export type Release = { version: string; ko: string[]; en: string[] }
 
 export const RELEASES: Release[] = [
   {
+    version: '5.1.0',
+    ko: [
+      '플러그인 2단계: 팩이 끝나지 않는 출력을 실시간 로그 카드로 보여 줘요 (시작·멈춤·지우기·복사·찾기·일시정지·따라가기). 화면을 나가거나 연결이 끊기거나 앱을 닫으면 기기의 명령도 같이 끝나요',
+      '팩에 입력 칸을 넣을 수 있어요 (선택·글자·숫자·경로·체크). 입력한 값은 따옴표로 감싼 단어 하나로만 들어가고, 실행할 때마다 앱이 값을 채운 명령을 다시 분석해요. 값 때문에 위험해지면 확인창이 떠요',
+      '새 항목: 기기 관리 → 로그 보기의 "서비스 로그 따라 보기"(journalctl -f). 새 공식 팩 "ROS2 실시간 보기(베타)"는 토픽 echo·hz를 보여 주고 기본 꺼짐이에요 (내장 ROS2 화면은 그대로)',
+      '허용 창과 플러그인 관리 창에 "누르지 않아도 자동으로 실행되는 것" 구역과 실시간·입력 표시가 생겼어요. 팩 만드는 법은 사이트의 plugins 문서에 추가됐어요'
+    ],
+    en: [
+      'Plugins stage 2: packs can show endless output in a live log card (start, stop, clear, copy, search, pause, follow). Leaving the screen, losing the connection or closing the app also ends the command on the device',
+      'Packs can add input fields (choice, text, number, path, checkbox). A value goes into the command only as one quoted word, and the app re-analyzes the filled command before every run. If the value makes it riskier, a confirmation box appears',
+      'New items: "Follow service log" (journalctl -f) under Device management → Logs. A new official pack "ROS2 live view (beta)" shows topic echo and hz and is off by default (the built-in ROS2 screen is unchanged)',
+      'The allow dialog and the plugin manager now have a section for things that run on their own, plus live and input tags. Writing packs is covered in the plugins docs on the website'
+    ]
+  },
+  {
     version: '5.0.0',
     ko: [
       '플러그인: JSON 팩 파일에 명령·표시 방식(글자·표)·버튼·확인창을 적으면 화면에 기능이 생겨요. 내 PC에서 코드는 실행되지 않고, 읽기로 증명된 명령만 묻지 않고 실행돼요. 환경 설정 → "플러그인 관리…"에서 팩을 설치하고, 명령 전문을 읽은 뒤 허용해야 켜져요',
