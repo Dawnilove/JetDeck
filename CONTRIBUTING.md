@@ -30,6 +30,15 @@ JetDeck에 관심 가져 주셔서 고마워요. 버그 제보, 아이디어, �
 - 같은 폴더에 `foo.ts`와 `foo.mts`를 같이 두지 마세요(빌드가 실패해요).
 - 테스트·샘플 데이터에는 가짜 값만 쓰세요(실제 IP·MAC·호스트·계정 이름 금지).
 
+## 팩 기여 (Contributing packs)
+플러그인 팩(`*.jdpack.json`)은 코드가 아니라 JSON이라 기여하기 쉬워요. 형식은 [docs/plugins](docs/plugins/README.md)를 보세요.
+- 새 팩은 PR로 `docs/plugins/examples/`에 예제로 올려 주세요(앱에 동봉되는 공식 팩은 따로 정해요).
+- `risk`는 명령이 실제로 하는 일대로 적고, 모르겠으면 `change`로 적어요. 앱이 읽기로 증명하지 못하면 어차피 물어봐요.
+- 경로·이름은 `~/my-project`처럼 가짜 값으로 쓰고, 비밀·실제 IP·호스트·계정 이름을 넣지 마세요.
+- 한국어·영어 글자를 `{ "ko": "…", "en": "…" }` 로 둘 다 적어 주세요.
+- 파일을 `docs/plugins/jdpack.schema.json`으로 검사해 보고(VS Code에서 `"$schema"`), 앱의 플러그인 관리에서 설치해 허용 창에 ⚠가 없는지 확인하세요.
+- Contributing a pack: add it under `docs/plugins/examples/` via PR, with bilingual text, fake paths and honest `risk` values (when unsure use `change`).
+
 ## 3. 라이선스와 기여물의 권리
 - JetDeck의 코드는 [Apache License 2.0](LICENSE)이에요.
 - 기여하면 [Apache-2.0 5조](LICENSE)에 따라, 따로 밝히지 않는 한 **기여한 내용이 같은 Apache-2.0 라이선스로 제공되는 것**에 동의한 것으로 봐요. 본인이 만든 것(또는 올릴 권리가 있는 것)만 올려 주세요. 다른 곳에서 복사한 코드는 출처와 라이선스를 PR에 적어 주세요.

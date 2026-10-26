@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://dawnilove.github.io/JetDeck/plugins/jdpack.schema.json",
+  "title": "JetDeck pack (format 1)",
+  "description": "A JetDeck declarative plugin pack. See format.md. JetDeck still validates every pack itself and computes the real risk; this schema is for editor help only.",
+  "type": "object",
+  "required": ["id", "format", "version", "name", "plugins"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "$comment": { "type": "string" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,39}$", "not": { "enum": ["device", "ros2", "monitor", "perf", "examples", "jetdeck", "official", "app", "core", "snippets"] }, "description": "Lower-case letters, digits and '-'. Reserved names and names starting with 'jetdeck-' are refused." },
+    "format": { "const": 1 },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" },
+    "name": { "$ref": "#/definitions/text60" },
+    "desc": { "$ref": "#/definitions/text300" },
+    "author": { "type": "string" },
+    "license": { "type": "string" },
+    "homepage": { "type": "string" },
+    "minApp": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" },
+    "plugins": { "type": "array", "minItems": 1, "maxItems": 20, "items": { "$ref": "#/definitions/plugin" } }
+  },
+  "definitions": {
+    "text": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "object", "properties": { "ko": { "type": "string" }, "en": { "type": "string" } }, "minProperties": 1 }
+      ]
+    },
+    "text60": { "$ref": "#/definitions/text", "description": "Plain text or { ko, en }. Max 60 characters." },
+    "text300": { "$ref": "#/definitions/text", "description": "Plain text or { ko, en }. Max 300 characters." },
+    "text500": { "$ref": "#/definitions/text", "description": "Plain text or { ko, en }. Max 500 characters." },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,39}$" },
+    "plugin": {
+      "type": "object",
+      "required": ["id", "title", "actions"],
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "title": { "$ref": "#/definitions/text60" },
+        "desc": { "$ref": "#/definitions/text300" },
+        "icon": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,29}$" },
+        "actions": { "type": "array", "minItems": 1, "maxItems": 50, "items": { "$ref": "#/definitions/action" } }
+      }
+    },
+    "action": {
+      "type": "object",
+      "required": ["id", "label", "cmd", "risk"],
+      "properties": {
+        "$comment": { "type": "string" },
+        "id": { "$ref": "#/definitions/id" },
+        "label": { "$ref": "#/definitions/text60" },
+        "desc": { "$ref": "#/definitions/text300" },
+        "cmd": { "type": "string", "minLength": 1, "maxLength": 2000, "description": "Do not write sudo; use \"sudo\": true. {name} is replaced by a choice from params." },
+        "risk": { "enum": ["read", "change", "danger"], "description": "What you claim. JetDeck computes the real risk and uses the higher one." },
+        "mode": { "enum": ["exec", "terminal"], "default": "exec" },
+        "enter": { "type": "boolean", "default": true },
+        "sudo": { "type": "boolean" },
+        "confirm": { "$ref": "#/definitions/text500" },
+        "preview": { "type": "string" },
+        "params": { "type": "array", "items": { "$ref": "#/definitions/param" } },
+        "auto": { "type": "boolean" },
+        "display": { "$ref": "#/definitions/display" },
+        "timeout": { "type": "number", "minimum": 1, "maximum": 600 },
+        "disconnects": { "type": "boolean" },
+        "shell": { "enum": ["sh", "bash-i"], "default": "sh" },
+        "when": { "const": "jetson" }
+      }
+    },
+    "param": {
+      "type": "object",
+      "required": ["name", "label", "choices"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^\\w+$" },
+        "label": { "$ref": "#/definitions/text60" },
+        "choices": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 30,
+          "items": {
+            "type": "object",
+            "required": ["value", "label"],
+            "properties": {
+              "value": { "type": "string", "maxLength": 100, "pattern": "^[A-Za-z0-9_.@:~/+][A-Za-z0-9_.@:~/+-]*$" },
+              "label": { "$ref": "#/definitions/text60" }
+            }
+          }
+        }
+      }
+    },
+    "display": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["text", "table"] },
+        "match": { "type": "string", "maxLength": 200 },
+        "split": { "enum": ["ws", "tab"] },
+        "skip": { "type": "integer", "minimum": 0 },
+        "columns": { "type": "array", "maxItems": 20, "items": { "$ref": "#/definitions/text60" } },
+        "empty": { "$ref": "#/definitions/text300" },
+        "labels": { "type": "object", "additionalProperties": { "$ref": "#/definitions/text60" } }
+      }
+    }
+  }
+}
