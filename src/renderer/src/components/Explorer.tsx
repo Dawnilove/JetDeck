@@ -3,7 +3,11 @@ import type { Entry } from '../../../main/sftp'
 import { dirChanged, type GitCode, type GitInfo } from '../../../main/gitparse.mts'
 import type { JobIn } from '../../../main/transfer'
 import { errText } from '../util'
-import { tr } from '../../../main/i18n.mts'
+import { getLang, tr } from '../../../main/i18n.mts'
+import type { Catalog } from '../../../main/pack'
+import type { BadgeResult } from '../../../main/packbadgecore.mts'
+import { PACKS_CHANGED } from '../screens/PluginManager'
+import { activeBadges, applyResults, chipsFor, covered, dotFor, MAX_CHIPS, tagAt, type BadgeSet } from '../screens/badgeview.mts'
 
 type Props = {
   connId: string
@@ -52,12 +56,70 @@ export default function Explorer({ connId, online, home, title, onOpen, onCd, on
     }
   }
 
+  // 팩 배지(5.3.0): 폴더를 읽을 때 켜진 팩의 배지도 물음. 연결당 한 번에 하나씩, 밀려서 null이 오면 한 번 더 물음
+  const [cat, setCat] = useState<Catalog | null>(null)
+  const metas = activeBadges(cat)
+  const metasRef = useRef(metas)
+  metasRef.current = metas
+  const badgeSig = metas.map((m) => m.key).join(',')
+  const [bset, setBset] = useState<BadgeSet>({})
+  const [bnotice, setBnotice] = useState<Record<string, 'unsafe' | 'slow'>>({})
+  const bsetRef = useRef(bset)
+  bsetRef.current = bset
+  const bnone = useRef(new Set<string>())
+  const bqueue = useRef<string[]>([])
+  const bbusy = useRef(false)
+  const alive = useRef(true)
+  useEffect(() => {
+    alive.current = true
+    return () => void (alive.current = false)
+  }, [])
+  const loadCat = () => window.api.packCatalog().then(setCat, () => setCat(null))
+  useEffect(() => {
+    loadCat()
+    window.addEventListener(PACKS_CHANGED, loadCat)
+    return () => window.removeEventListener(PACKS_CHANGED, loadCat)
+  }, [])
+  const pumpBadges = async () => {
+    if (bbusy.current) return
+    bbusy.current = true
+    try {
+      for (let dir = bqueue.current.shift(), retried = false; dir && alive.current; dir = bqueue.current.shift(), retried = false) {
+        const keys = metasRef.current.map((m) => m.key)
+        if (keys.every((k) => covered(bsetRef.current, bnone.current, k, dir!))) continue
+        let rs: BadgeResult[] | null = null
+        try {
+          rs = await window.api.packBadges(connId, dir)
+          if (rs === null && !retried) { // 새 요청에 밀림: 앞 요청이 끝났으니 한 번 더 (엔진 캐시로 바로 답함)
+            retried = true
+            rs = await window.api.packBadges(connId, dir)
+          }
+        } catch {
+          /* 배지는 덤이라 실패해도 조용히 */
+        }
+        if (!rs || !alive.current) continue
+        const a = applyResults(bsetRef.current, bnone.current, dir, rs)
+        bsetRef.current = a.set
+        setBset(a.set)
+        if (a.notice) setBnotice((n) => ({ ...n, ...a.notice }))
+      }
+    } finally {
+      bbusy.current = false
+    }
+  }
+  const loadBadges = (dir: string) => {
+    if (!metasRef.current.length || bqueue.current.includes(dir)) return
+    bqueue.current.push(dir)
+    pumpBadges()
+  }
+
   const load = async (dir: string) => {
     try {
       const list = await window.api.fsList(connId, dir)
       setChildren((c) => ({ ...c, [dir]: list }))
       setError('')
       loadGit(dir)
+      loadBadges(dir)
     } catch (e) {
       setError(errText(e))
     }
@@ -65,12 +127,23 @@ export default function Explorer({ connId, online, home, title, onOpen, onCd, on
   const refresh = () => {
     noGit.current.clear()
     gitAt.current = {}
+    bnone.current.clear()
+    bsetRef.current = {}
+    setBnotice({})
     ;[home, ...expanded].forEach(load)
   }
 
   useEffect(() => {
     if (online && home) load(home)
   }, [online, home])
+  // 켜진 배지가 바뀌면(팩 켬·끔·배지 스위치) 배지 상태를 비우고 열린 폴더를 다시 읽음
+  useEffect(() => {
+    bnone.current.clear()
+    bsetRef.current = {}
+    setBset({})
+    setBnotice({})
+    if (online && home && badgeSig) [home, ...expanded].forEach(loadBadges)
+  }, [badgeSig])
 
   // 메뉴 바깥 클릭·Esc로 닫기. 열리면 첫 항목에 포커스, Esc로 닫으면 원래 행으로 포커스 복귀
   const menuRef = useRef<HTMLDivElement>(null)
@@ -258,6 +331,11 @@ export default function Explorer({ connId, online, home, title, onOpen, onCd, on
                 const g = gitOf(e.path)
                 const code = g?.files[e.path]
                 const mark = code ?? (e.dir && g && dirChanged(g, e.path) ? 'M' : undefined)
+                const chips = chipsFor(bset, e.path, mark ? [code ?? '●'] : []).slice(0, MAX_CHIPS - (mark ? 1 : 0))
+                const tg = tagAt(bset, e.path)
+                const dot = e.dir && !mark && chips.length === 0 && dotFor(bset, metas, e.path)
+                const note = e.dir ? bnotice[e.path] : undefined
+                const label = (k: string) => { const m = metas.find((x) => x.key === k); return m ? m.label[getLang()] : k }
                 return (
                   <>
                     <span className={`tree-name ${mark ? `git-${mark}` : ''}`}>{e.name}</span>
@@ -266,6 +344,10 @@ export default function Explorer({ connId, online, home, title, onOpen, onCd, on
                         ⎇ {g.branch}{g.ahead > 0 && ` ↑${g.ahead}`}{g.behind > 0 && ` ↓${g.behind}`}
                       </span>
                     )}
+                    {tg && <span className="tree-branch" title={`${label(tg.key)}: ${tg.tag}`}>{tg.tag}</span>}
+                    {note && <span className="tree-git badge-dim" title={note === 'unsafe' ? tr('이 저장소의 설정이 위험해서 배지를 건너뛰었어요') : tr('느려서 멈췄어요')}>⚠</span>}
+                    {chips.map((c, i) => <span key={c.key} className={`tree-git badge-${c.tone}`} title={`${label(c.key)}: ${c.text[getLang()]}`}>{c.show}</span>)}
+                    {dot && <span className="tree-git badge-dim" title={tr('안에 배지가 있는 파일이 있어요')}>●</span>}
                     {mark && <span className={`tree-git git-${mark}`} title={code ? GIT_TIP[code] : tr('안에 바뀐 파일이 있어요')}>{code ?? '●'}</span>}
                   </>
                 )

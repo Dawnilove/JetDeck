@@ -14,5 +14,9 @@ export const EN_K: Record<string, string> = {
   '읽을 수 있는 숫자가 없어요': 'No readable number found',
   '그래프 {0}': 'Charts {0}',
   '그래프 {0}초마다': 'Chart every {0} s',
-  '그래프': 'Chart'
+  '그래프': 'Chart',
+  // 5.3.0 탐색기 배지 화면
+  '이 저장소의 설정이 위험해서 배지를 건너뛰었어요': 'Badges were skipped because this repository’s settings are unsafe',
+  '느려서 멈췄어요': 'Stopped because it was slow',
+  '안에 배지가 있는 파일이 있어요': 'Contains files with badges'
 }

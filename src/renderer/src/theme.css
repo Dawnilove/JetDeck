@@ -259,6 +259,12 @@ button.ws-term-tab.ws-link { padding: 0 14px; border: 0; background: none; }
 .git-M { color: var(--status-busy); }
 .git-A, .git-U { color: var(--status-ok); }
 .git-D, .git-\! { color: var(--status-off); }
+.tree-branch ~ .tree-git, .tree-git ~ .tree-git, .tree-git ~ .tree-branch { margin-left: 0; }
+.badge-info { color: var(--accent-text); }
+.badge-ok { color: var(--status-ok); }
+.badge-warn { color: var(--status-busy); }
+.badge-bad { color: var(--status-off); }
+.badge-dim { color: var(--muted); }
 .build-out { flex: 1; min-height: 160px; max-height: calc(100vh - 380px); overflow: auto; margin: 0 20px 16px; padding: 10px 12px; border-radius: 8px; background: var(--bg); font-size: 12px; line-height: 1.5; }
 .build-line { display: block; width: 100%; padding: 0; border: 0; background: transparent; color: var(--text-soft); font: inherit; text-align: left; white-space: pre-wrap; overflow-wrap: anywhere; }
 .build-line.link { cursor: pointer; text-decoration: underline dotted; }
