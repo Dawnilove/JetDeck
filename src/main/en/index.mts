@@ -7,5 +7,6 @@ import { EN_E } from './e.mts'
 import { EN_F } from './f.mts'
 import { EN_G } from './g.mts'
 import { EN_H } from './h.mts'
+import { EN_I } from './i.mts'
 
-export const EN: Record<string, string> = { ...EN_A, ...EN_B, ...EN_C, ...EN_D, ...EN_E, ...EN_F, ...EN_G, ...EN_H }
+export const EN: Record<string, string> = { ...EN_A, ...EN_B, ...EN_C, ...EN_D, ...EN_E, ...EN_F, ...EN_G, ...EN_H, ...EN_I }

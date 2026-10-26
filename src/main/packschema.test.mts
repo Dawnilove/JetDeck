@@ -106,7 +106,7 @@ test('외부 팩 정규식 제한 (공식은 제한 없음)', () => {
 
 test('모르는 display.type·mode는 항목을 숨기고 남김 (조용히 깨지지 않게)', () => {
   assert.equal(get({ display: { type: 'chart', foo: 1 } })!.hidden, 'display')
-  assert.equal(get({ mode: 'stream' })!.hidden, 'mode')
+  assert.equal(get({ mode: 'future' })!.hidden, 'mode')
   assert.equal(get({})!.hidden, undefined)
   assert.equal(get({ display: { type: 'text' } })!.hidden, undefined)
   assert.match(errs({ display: { type: 5 } }), /display/)
@@ -249,7 +249,7 @@ test('공식 팩 신뢰 경로: 목록에 고정된 명령만 읽기로 인정, 
 
 test('요약: 위험도별 개수·부정확 항목', () => {
   const p = validatePack(pack([act({ id: 'r' }), act({ id: 'c', risk: 'change', cmd: 'touch x', confirm: L('x') }), act({ id: 'd', risk: 'danger', cmd: 'reboot', confirm: L('x') }), act({ id: 'u', cmd: 'kill 1' }), act({ id: 't', mode: 'terminal', cmd: 'git status' })])).pack!
-  assert.deepEqual(summarizePack(p), { total: 5, read: 2, change: 2, danger: 1, understated: 1, hidden: 0, terminal: 1 })
+  assert.deepEqual(summarizePack(p), { total: 5, read: 2, change: 2, danger: 1, understated: 1, hidden: 0, terminal: 1, stream: 0, form: 0, autoRun: 0 })
 })
 
 test('cmd·preview에 제어 문자(CR·ESC·BiDi)가 있으면 항목이 빠짐: 확인창에 보인 글자와 실제 입력이 달라지는 것 방지', () => {

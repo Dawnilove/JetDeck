@@ -57,7 +57,7 @@ export function writeState(file: string, st: StateFile): void {
 export type CommandDiff = { added: string[]; changed: string[]; removed: string[] }
 export function commandMap(p: Pack): Record<string, string> {
   const m: Record<string, string> = Object.create(null)
-  for (const pl of p.plugins) for (const a of pl.actions) m[`${pl.id}/${a.id}`] = a.cmd + (a.preview ? `\u0000${a.preview}` : '') + (a.sudo ? '\u0000sudo' : '') + `\u0000${a.mode}`
+  for (const pl of p.plugins) for (const a of pl.actions) m[`${pl.id}/${a.id}`] = a.cmd + (a.preview ? `\u0000${a.preview}` : '') + (a.sudo ? '\u0000sudo' : '') + `\u0000${a.mode}` + (a.fields ? `\u0000fields:${JSON.stringify(a.fields)}` : '')
   return m
 }
 export function diffCommands(before: Record<string, string> | undefined, after: Record<string, string>): CommandDiff {

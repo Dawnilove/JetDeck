@@ -1,13 +1,15 @@
 // 선언형 팩 (4.5.0 → 5.0.0): 명령·표시 방식·확인창을 JSON 데이터로 적고, 코드는 읽어서 실행만 함. 팩 > 플러그인(화면) > 항목(버튼). Electron 없이 시험
 // 위험도는 팩이 적은 값이 아니라 risk.mts가 계산한 값과의 max (내려갈 수 없음)
+import { FIELD_LIMITS, FIELD_TYPES, FLAG_ON, checkValue, sampleCombos, type Field, type FromSpec } from './packfields.mts'
 import { fill } from './packrun.mts'
-import { analyze, destroysBlockedPath, maxRisk, REASON_TEXT, type Reason, type Risk } from './risk.mts'
+import { analyze, destroysBlockedPath, maxRisk, REASON_TEXT, slotProblem, type Reason, type Risk } from './risk.mts'
 
-export type { Risk, Reason }
+export type { Risk, Reason, Field, FromSpec }
 export type L10n = { ko: string; en: string }
 export type Display =
   | { type: 'text' }
   | { type: 'table'; columns: L10n[]; match?: string; split?: 'ws' | 'tab'; skip?: number; empty?: L10n; labels?: Record<string, L10n> } // labels: 첫 열의 값을 사람이 읽는 이름으로 바꿈
+  | { type: 'log'; maxLines: number; wrap: boolean } // 5.1.0: 흐르는 출력(mode:'stream') 전용
 export type Choice = { value: string; label: L10n }
 export type Param = { name: string; label: L10n; choices: Choice[] }
 export type PackAction = {
@@ -24,11 +26,12 @@ export type PackAction = {
   confirm?: L10n
   preview?: string // 실행 전에 보여 줄 읽기 전용 명령 (정리·설치 성격은 필수)
   params?: Param[]
+  fields?: Field[] // 5.1.0 입력 폼 (params와 같이 못 씀)
   auto?: boolean // 화면을 열 때 바로 실행 (실질 위험도가 read일 때만, 팩당 5개)
   display?: Display
   timeout?: number // 초
   disconnects?: boolean // 실행하면 연결이 끊김 (재부팅·종료)
-  mode: 'exec' | 'terminal' // terminal: 결과를 받지 않고 현재 터미널에 명령을 입력 (스니펫 방식)
+  mode: 'exec' | 'terminal' | 'stream' // terminal: 결과를 받지 않고 현재 터미널에 명령을 입력 (스니펫 방식), stream: 끝나지 않는 출력을 실시간으로 받음 (5.1.0)
   enter?: boolean // terminal에서 끝에 Enter (기본 true)
   shell: 'sh' | 'bash-i' // bash-i: ~/.bashrc 환경이 필요할 때 (ROS2)
   when?: 'jetson' // 젯슨일 때만 표시
@@ -51,7 +54,7 @@ export type Pack = {
 export type ValidateOptions = { official?: boolean; appVersion?: string }
 export type ValidateResult = { pack: Pack | null; errors: string[]; warnings: string[] }
 
-export const LIMITS = { fileBytes: 512 * 1024, plugins: 20, actionsPerPlugin: 50, actionsPerPack: 200, cmd: 2000, choices: 30, columns: 20, auto: 5, name: 60, desc: 300, confirm: 500, terminalLines: 20, matchLen: 200, comboMax: 500, timeoutExternal: 600, timeoutOfficial: 1800, timeoutDefault: 60 }
+export const LIMITS = { fileBytes: 512 * 1024, plugins: 20, actionsPerPlugin: 50, actionsPerPack: 200, cmd: 2000, choices: 30, columns: 20, auto: 5, name: 60, desc: 300, confirm: 500, terminalLines: 20, matchLen: 200, comboMax: 500, timeoutExternal: 600, timeoutOfficial: 1800, timeoutDefault: 60, timeoutStreamDefault: 600, timeoutStreamExternal: 3600, timeoutStreamOfficial: 14400, logMin: 100, logMax: 5000, logDefault: 1000 }
 export const RESERVED_IDS = ['device', 'ros2', 'monitor', 'perf', 'examples', 'jetdeck', 'official', 'app', 'core', 'snippets']
 // 공식 팩에서 읽기로 증명되지 않아도 읽기로 인정하는 항목 (팩id/항목id → 고정된 명령). 새 공식 항목을 추가하면 여기와 시험을 고쳐야 함 = 리뷰 강제
 export const OFFICIAL_UNPROVEN_READS = new Map<string, string>([
@@ -118,6 +121,77 @@ export function regexProblem(src: string): string | null {
   return null
 }
 
+// 고정 선택지(params) 조합과 입력 필드 대표 값 조합을 곱함. 너무 많으면 null
+function mergeCombos(a: Record<string, string>[] | null, b: Record<string, string>[] | null): Record<string, string>[] | null {
+  if (!a || !b || a.length * b.length > LIMITS.comboMax) return null
+  return a.flatMap((x) => b.map((y) => ({ ...x, ...y })))
+}
+
+// 입력 필드 하나 읽기 (5.1.0). 팩에 적힌 모양을 검사하고 기본값을 채운 Field로
+function checkField(f: unknown, S: boolean): { field?: Field; error?: string } {
+  if (!isObj(f)) return { error: 'fields 항목이 올바르지 않아요' }
+  if (typeof f.name !== 'string' || !/^\w+$/.test(f.name)) return { error: 'fields의 name이 올바르지 않아요' }
+  const name = f.name
+  const bad = (m: string) => ({ error: `${name}: ${m}` })
+  if (typeof f.type !== 'string' || !FIELD_TYPES.includes(f.type)) return bad('fields의 type이 올바르지 않아요')
+  const label = loc(f.label, S, LIMITS.name)
+  if (!label) return bad('fields의 label이 올바르지 않아요')
+  let desc: L10n | undefined
+  if (f.desc !== undefined && !(desc = loc(f.desc, S, LIMITS.desc, true) ?? undefined)) return bad('fields의 desc가 올바르지 않아요')
+  if (f.required !== undefined && typeof f.required !== 'boolean') return bad('fields의 required는 true/false예요')
+  const required = f.required !== false
+  const base = { name, label, desc, required }
+  const dflt = (v: unknown): string | undefined | null => (v === undefined ? undefined : typeof v === 'string' ? v : null) // null = 형식 오류
+  let field: Field
+  if (f.type === 'select') {
+    if ((f.choices === undefined) === (f.from === undefined)) return bad('select에는 choices 또는 from 중 하나만 있어야 해요')
+    if (f.choices !== undefined) {
+      if (!Array.isArray(f.choices) || !f.choices.length || f.choices.length > LIMITS.choices) return bad('select의 choices가 올바르지 않아요')
+      const choices: Choice[] = []
+      for (const c of f.choices) {
+        const cl = isObj(c) ? loc(c.label, S, LIMITS.name) : null
+        if (!isObj(c) || typeof c.value !== 'string' || !VALUE.test(c.value) || c.value.length > FIELD_LIMITS.valueMax || !cl) return bad(`선택지가 올바르지 않아요: ${JSON.stringify(c).slice(0, 80)}`)
+        choices.push({ value: c.value, label: cl })
+      }
+      field = { ...base, type: 'select', choices }
+    } else {
+      const fr = f.from
+      if (!isObj(fr) || typeof fr.cmd !== 'string' || !fr.cmd.trim() || fr.cmd.length > LIMITS.cmd || fr.cmd.includes('\r') || fr.cmd.search(BAD_TEXT) >= 0) return bad('from이 올바르지 않아요')
+      if (fr.shell !== undefined && fr.shell !== 'sh' && fr.shell !== 'bash-i') return bad("shell은 'sh' 또는 'bash-i'예요")
+      const t = fr.timeout ?? FIELD_LIMITS.fromTimeout
+      const mx = fr.max ?? FIELD_LIMITS.fromItems
+      const cs = fr.charset ?? 'word'
+      if (!(typeof t === 'number' && t >= 1 && t <= FIELD_LIMITS.fromTimeout) || !(Number.isInteger(mx) && (mx as number) >= 1 && (mx as number) <= FIELD_LIMITS.fromItems) || (cs !== 'word' && cs !== 'ros' && cs !== 'path')) return bad('from이 올바르지 않아요')
+      field = { ...base, type: 'select', from: { cmd: fr.cmd, shell: fr.shell === 'bash-i' ? 'bash-i' : 'sh', timeout: t, charset: cs, max: mx as number } }
+    }
+  } else if (f.type === 'text') {
+    const cs = f.charset ?? 'word'
+    if (cs !== 'word' && cs !== 'ros' && cs !== 'free') return bad('text의 charset은 word·ros·free 중 하나예요')
+    const ml = f.maxLen ?? FIELD_LIMITS.textDefault
+    if (!(Number.isInteger(ml) && (ml as number) >= 1 && (ml as number) <= FIELD_LIMITS.textMax)) return bad(`maxLen은 1~${FIELD_LIMITS.textMax}예요`)
+    field = { ...base, type: 'text', charset: cs, maxLen: ml as number }
+  } else if (f.type === 'int') {
+    const mn = f.min ?? 0
+    const mx = f.max ?? FIELD_LIMITS.intMax
+    if (!(Number.isInteger(mn) && Number.isInteger(mx) && (mn as number) >= 0 && (mx as number) <= FIELD_LIMITS.intMax && (mn as number) <= (mx as number))) return bad(`int의 min·max가 올바르지 않아요 (0~${FIELD_LIMITS.intMax})`)
+    field = { ...base, type: 'int', min: mn as number, max: mx as number }
+  } else if (f.type === 'path') {
+    const ml = f.maxLen ?? FIELD_LIMITS.pathMax
+    if (!(Number.isInteger(ml) && (ml as number) >= 1 && (ml as number) <= FIELD_LIMITS.pathMax)) return bad(`maxLen은 1~${FIELD_LIMITS.pathMax}예요`)
+    field = { ...base, type: 'path', maxLen: ml as number }
+  } else {
+    if (typeof f.on !== 'string' || !FLAG_ON.test(f.on)) return bad('flag의 on이 올바르지 않아요')
+    field = { ...base, type: 'flag', on: f.on }
+  }
+  // 기본값: flag는 true/false, 나머지는 글자. 같은 검사를 통과해야 함
+  if (f.default !== undefined) {
+    const d = field.type === 'flag' ? (typeof f.default === 'boolean' ? String(f.default) : null) : dflt(f.default)
+    if (d == null || checkValue(field, d)) return bad('default 값이 올바르지 않아요')
+    field.default = d
+  }
+  return { field }
+}
+
 type Ctx = { official: boolean; packId: string; seen: Set<string>; autoCount: { n: number } }
 
 function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackAction; error?: string } {
@@ -140,8 +214,8 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
   if (a.confirm !== undefined && !(confirm = loc(a.confirm, S, LIMITS.confirm, true) ?? undefined)) return bad(`confirm이 올바르지 않아요 (${LIMITS.confirm}자 이내)`)
   if (a.mode !== undefined && typeof a.mode !== 'string') return bad('mode는 글자예요')
   const modeRaw = a.mode ?? 'exec'
-  const mode: 'exec' | 'terminal' = modeRaw === 'terminal' ? 'terminal' : 'exec'
-  let hidden: PackAction['hidden'] = modeRaw !== 'exec' && modeRaw !== 'terminal' ? 'mode' : undefined // 이 앱이 모르는 실행 방식 → 숨김
+  const mode: 'exec' | 'terminal' | 'stream' = modeRaw === 'terminal' ? 'terminal' : modeRaw === 'stream' ? 'stream' : 'exec'
+  let hidden: PackAction['hidden'] = modeRaw !== 'exec' && modeRaw !== 'terminal' && modeRaw !== 'stream' ? 'mode' : undefined // 이 앱이 모르는 실행 방식 → 숨김
   if (a.shell !== undefined && a.shell !== 'sh' && a.shell !== 'bash-i') return bad("shell은 'sh' 또는 'bash-i'예요")
   if (a.when !== undefined && a.when !== 'jetson') return bad("when은 'jetson'만 돼요")
   if (a.enter !== undefined && typeof a.enter !== 'boolean') return bad('enter는 true/false예요')
@@ -149,10 +223,16 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
   const sudo = a.sudo === true
   const cmd = a.cmd
   const terminal = mode === 'terminal'
+  const stream = mode === 'stream'
+  if (stream) {
+    if (sudo) return bad('stream 항목은 sudo를 쓸 수 없어요')
+    if (a.auto === true) return bad('stream 항목은 auto를 쓸 수 없어요 (사용자가 시작해요)')
+    if (a.preview !== undefined) return bad('stream 항목은 preview를 쓸 수 없어요')
+  }
   if (terminal) {
     if (sudo) return bad('terminal 항목은 sudo 필드를 쓸 수 없어요 (명령에 직접 쓰세요)')
     if (cmd.split('\n').length > LIMITS.terminalLines) return bad(`terminal 명령은 ${LIMITS.terminalLines}줄 이내예요`)
-  } else {
+  } else if (!stream) {
     if (/^\s*sudo\b/.test(cmd)) return bad('cmd에 sudo를 쓰지 마세요 (sudo: true로)')
     if (declared === 'read' && sudo) return bad('읽기 항목은 sudo를 쓸 수 없어요')
     if (sudo && /[;&|<>`$()\\\n]/.test(cmd)) return bad('sudo 명령은 파이프·리다이렉트 없는 단일 명령이어야 해요')
@@ -176,22 +256,46 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
     }
   }
   if (new Set(params.map((p) => p.name)).size !== params.length) return bad('params 이름이 겹쳐요')
+  // 입력 폼 (5.1.0): params와 같이 쓸 수 없음. sudo 항목은 고정 값(select 고정·int·flag)만
+  const fields: Field[] = []
+  if (a.fields !== undefined) {
+    if (!Array.isArray(a.fields)) return bad('fields는 배열이에요')
+    if (a.params !== undefined) return bad('params와 fields는 같이 쓸 수 없어요')
+    if (!a.fields.length || a.fields.length > FIELD_LIMITS.fields) return bad(`fields는 1~${FIELD_LIMITS.fields}개예요`)
+    for (const raw of a.fields) {
+      const r = checkField(raw, S)
+      if (!r.field) return bad(r.error!)
+      if (fields.some((x) => x.name === r.field!.name)) return bad('fields 이름이 겹쳐요')
+      fields.push(r.field)
+    }
+    if (sudo && fields.some((f) => f.type === 'text' || f.type === 'path' || (f.type === 'select' && f.from))) return bad('sudo 항목은 text·path·from 필드를 쓸 수 없어요')
+    for (const f of fields) {
+      if (f.type !== 'select' || !f.from) continue
+      if (/\{\w+\}/.test(f.from.cmd)) return bad('from 목록 명령에는 입력 자리 {이름}을 쓸 수 없어요')
+      const fr = analyze(f.from.cmd)
+      if (fr.risk !== 'read') return bad(`from 목록 명령은 읽기 전용이어야 해요 — ${why(fr.reasons)}`)
+      if (++ctx.autoCount.n > LIMITS.auto) return bad(`자동으로 돌아가는 것(auto·from)은 팩당 ${LIMITS.auto}개까지예요`) // 목록 불러오기는 화면을 열 때 자동으로 실행됨
+    }
+    const slotErr = slotProblem(cmd)
+    if (slotErr) return bad(slotErr)
+  }
   let preview: string | undefined
   if (a.preview !== undefined) {
     if (typeof a.preview !== 'string' || !a.preview.trim() || a.preview.length > LIMITS.cmd || a.preview.includes('\r') || a.preview.search(BAD_TEXT) >= 0) return bad('preview가 올바르지 않아요')
     preview = a.preview
   }
-  const names = new Set(params.map((p) => p.name))
+  const names = new Set([...params.map((p) => p.name), ...fields.map((f) => f.name)])
   for (const n of [...placeholders(cmd), ...(preview ? placeholders(preview) : [])]) if (!names.has(n)) return bad(`{${n}}에 맞는 params가 없어요`)
+  for (const f of fields) if (!placeholders(cmd).includes(f.name)) return bad(`필드 ${f.name}를 cmd에서 쓰지 않아요`)
 
-  // 위험도 계산: 선택지를 채운 모든 명령을 분석해서 가장 높은 값을 씀
-  const all = combos(params)
+  // 위험도 계산: 선택지(고정)와 입력 필드의 대표 값을 채운 모든 명령을 분석해서 가장 높은 값을 씀. 사용자가 실제로 넣는 값은 실행 직전에 다시 분석함
+  const all = mergeCombos(combos(params), sampleCombos(fields, LIMITS.comboMax))
   if (!all) return bad(`선택지 조합이 ${LIMITS.comboMax}개를 넘어요`)
   let computed: Risk = 'read'
   const reasons: Reason[] = []
   for (const v of all) {
     const f = fill(cmd, v)
-    const r = analyze(f)
+    const r = analyze(f, { stream })
     computed = maxRisk(computed, r.risk)
     for (const x of r.reasons) if (!reasons.includes(x)) reasons.push(x)
     const blocked = destroysBlockedPath(f)
@@ -221,7 +325,8 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
     warnings.push(`${id}: auto는 팩당 ${LIMITS.auto}개까지라 꺼요`)
   }
   // 설치·정리·삭제 성격은 미리보기가 있어야 실행됨 (exec 모드)
-  if (!terminal && risk !== 'read' && !preview && (/\b(autoremove|upgrade|dist-upgrade|purge|remove|clean|rm|rmdir|shred|truncate|dd|mkfs)\b|--vacuum-\w+/.test(cmd) || reasons.includes('delete') || reasons.includes('package') || reasons.includes('disk'))) return bad('설치·정리·삭제 항목은 preview가 필요해요')
+  if (stream && (reasons.includes('delete') || reasons.includes('package') || reasons.includes('disk'))) return bad('stream 항목에는 삭제·설치·디스크 명령을 쓸 수 없어요')
+  if (!terminal && !stream && risk !== 'read' && !preview && (/\b(autoremove|upgrade|dist-upgrade|purge|remove|clean|rm|rmdir|shred|truncate|dd|mkfs)\b|--vacuum-\w+/.test(cmd) || reasons.includes('delete') || reasons.includes('package') || reasons.includes('disk'))) return bad('설치·정리·삭제 항목은 preview가 필요해요')
 
   let display: Display | undefined
   if (a.display !== undefined && !terminal) {
@@ -263,14 +368,25 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
         if (new RegExp(re.source + '|').exec('')!.length - 1 !== columns.length) return bad('match의 묶음 개수와 columns 개수가 달라요')
       }
       display = { type: 'table', columns: columns as L10n[], match: d.match as string | undefined, split: d.split as 'ws' | 'tab' | undefined, skip: d.skip as number | undefined, empty, labels }
-    } else hidden ??= 'display' // 모르는 표시 방식 (5.1 이후 추가될 값) → 숨김
+    } else if (d.type === 'log') {
+      if (!stream) return bad('log는 mode가 stream인 항목에서만 쓸 수 있어요')
+      const ml = d.maxLines ?? LIMITS.logDefault
+      if (!(Number.isInteger(ml) && (ml as number) >= LIMITS.logMin && (ml as number) <= LIMITS.logMax)) return bad(`log의 maxLines는 ${LIMITS.logMin}~${LIMITS.logMax}예요`)
+      if (d.wrap !== undefined && typeof d.wrap !== 'boolean') return bad('log의 wrap은 true/false예요')
+      display = { type: 'log', maxLines: ml as number, wrap: d.wrap !== false }
+    } else hidden ??= 'display' // 모르는 표시 방식 (5.2 이후 추가될 값) → 숨김
+  }
+  if (stream && !hidden) {
+    if (display && display.type !== 'log') return bad('stream 항목은 display가 log여야 해요')
+    display ??= { type: 'log', maxLines: LIMITS.logDefault, wrap: true }
   }
   let timeout: number | undefined
   if (a.timeout !== undefined) {
-    const cap = S ? LIMITS.timeoutOfficial : LIMITS.timeoutExternal
+    const cap = stream ? (S ? LIMITS.timeoutStreamOfficial : LIMITS.timeoutStreamExternal) : S ? LIMITS.timeoutOfficial : LIMITS.timeoutExternal
     if (!(typeof a.timeout === 'number' && a.timeout >= 1 && a.timeout <= cap)) return bad(`timeout은 1~${cap}초예요`)
     timeout = a.timeout
   }
+  if (stream) timeout ??= LIMITS.timeoutStreamDefault // 스트림은 항상 최대 실행 시간이 있음
   ctx.seen.add(id)
   return {
     action: {
@@ -278,6 +394,7 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
       sudo: sudo || undefined,
       confirm, preview,
       params: params.length ? params : undefined,
+      fields: fields.length ? fields : undefined,
       auto: auto || undefined,
       display,
       timeout,
@@ -355,14 +472,17 @@ export function validatePack(raw: unknown, opts: ValidateOptions = {}): Validate
 }
 
 // 허용 창·관리 화면용 요약: 위험도별 개수, 적힌 위험도가 부정확한 항목, 숨겨진 항목
-export function summarizePack(p: Pack): { total: number; read: number; change: number; danger: number; understated: number; hidden: number; terminal: number } {
-  const s = { total: 0, read: 0, change: 0, danger: 0, understated: 0, hidden: 0, terminal: 0 }
+export function summarizePack(p: Pack): { total: number; read: number; change: number; danger: number; understated: number; hidden: number; terminal: number; stream: number; form: number; autoRun: number } {
+  const s = { total: 0, read: 0, change: 0, danger: 0, understated: 0, hidden: 0, terminal: 0, stream: 0, form: 0, autoRun: 0 }
   for (const pl of p.plugins) for (const a of pl.actions) {
     s.total++
     s[a.risk]++
     if (a.understated) s.understated++
     if (a.hidden) s.hidden++
     if (a.mode === 'terminal') s.terminal++
+    if (a.mode === 'stream') s.stream++
+    if (a.fields) s.form++
+    if (a.auto || a.fields?.some((f) => f.type === 'select' && f.from)) s.autoRun++ // 누르지 않아도 실행되는 것 (auto, 목록 불러오기)
   }
   return s
 }

@@ -1,4 +1,5 @@
 // 팩 항목을 실행할 명령으로 만들고 출력을 표시용으로 바꿈 (Electron 없이 시험)
+import { resolveFields } from './packfields.mts'
 import { sanitizeOutput } from './packsafe.mts'
 import { shq } from './shq.mts'
 import type { Display, PackAction } from './packschema.mts'
@@ -12,7 +13,8 @@ export type PackResult = {
   termCmd?: string // 비밀번호가 필요하면 새 터미널에서 직접 입력할 sudo 명령
 }
 
-// 화면이 보낸 선택값을 팩에 적힌 선택지 안에서만 인정함 (안 보냈으면 첫 선택지)
+// 화면이 보낸 값을 검사해서 {이름} → 명령에 끼워 넣을 글자 표로. params(고정 선택지)는 팩에 적힌 선택지 안에서만 인정하고(안 보냈으면 첫 선택지),
+// fields(입력 폼, 5.1.0)는 packfields가 형식·글자를 검사하고 필요하면 작은따옴표로 감쌈. 틀린 값이면 Error
 export function resolveParams(a: PackAction, given: Record<string, string> = {}): Record<string, string> {
   const out: Record<string, string> = {}
   for (const p of a.params ?? []) {
@@ -20,7 +22,7 @@ export function resolveParams(a: PackAction, given: Record<string, string> = {})
     if (!p.choices.some((c) => c.value === v)) throw new Error(`선택값이 올바르지 않아요: ${p.name}`)
     out[p.name] = v
   }
-  return out
+  return Object.assign(out, resolveFields(a.fields, given))
 }
 export const fill = (cmd: string, values: Record<string, string>) => cmd.replace(/\{(\w+)\}/g, (_m, n: string) => values[n])
 
@@ -37,6 +39,16 @@ export function buildRun(a: PackAction, values: Record<string, string>): { comma
   return { command: wrap(a.sudo ? `sudo -n ${cmd}` : cmd, a.timeout ?? DEFAULT_TIMEOUT, a.shell), termCmd: `sudo ${cmd}` }
 }
 export const buildPreview = (a: PackAction, values: Record<string, string>) => wrap(fill(a.preview ?? a.cmd, values), Math.min(a.timeout ?? DEFAULT_TIMEOUT, 120), a.shell) // 미리보기는 짧게
+
+// 흐르는 출력(mode:'stream'): pty에서 그대로 실행할 명령. 최대 실행 시간은 앱이 재고(packstream) 끝나면 채널을 닫음.
+// timeout 명령으로 감싸지 않는 이유: timeout은 새 프로세스 그룹을 만들어서, pty를 닫을 때 가는 SIGHUP·Ctrl-C(SIGINT)가 자식에게 안 닿을 수 있음
+export const buildStream = (a: PackAction, values: Record<string, string>): string => {
+  const inner = fill(a.cmd, values)
+  return `${a.shell === 'bash-i' ? 'bash -ic' : 'sh -c'} ${shq(`${/\bgit\b/.test(inner) ? GIT_GUARD : ''}${inner}`)}`
+}
+
+// from 목록 명령 (읽기로 증명된 것): 오류 출력은 버리고 표준 출력만 받음 → 선택지로 오해될 글자가 섞이지 않게
+export const buildFrom = (f: { cmd: string; shell: 'sh' | 'bash-i'; timeout: number }): string => `timeout ${f.timeout} ${f.shell === 'bash-i' ? 'bash -ic' : 'sh -c'} ${shq(f.cmd)} 2>/dev/null`
 
 // 터미널 입력 모드(mode:'terminal'): 결과를 받지 않고 터미널에 입력할 글자. enter는 확인을 통과했을 때만 화면이 씀
 export const buildTerminal = (a: PackAction, values: Record<string, string>): { text: string; enter: boolean } => ({ text: fill(a.cmd, values), enter: a.enter !== false })
