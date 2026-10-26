@@ -41,7 +41,7 @@ test('시작하면 바로 한 번 실행하고, 간격마다 점을 보냄 (시�
   const wc = new FakeWc()
   const { c, pc } = conn(() => '1.5 2\n__EXIT__0\n')
   startPoll(asWc(wc), pc, 'g1', 'pk', 'cmd', D(0.02), 10)
-  await wait(110)
+  await until(() => wc.of('pack:poll-data').length >= 3)
   const data = wc.of('pack:poll-data')
   assert.ok(data.length >= 3, String(data.length))
   const [, id, t, samples, every, hint] = data[0] as [string, string, number, { value: number }[], number, string | undefined]

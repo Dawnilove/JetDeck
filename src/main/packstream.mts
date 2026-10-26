@@ -35,6 +35,8 @@ export function stopStream(id: string, reason: EndReason = 'stopped'): void {
   }
   e.kill ??= setTimeout(() => live.stop(id), STREAM_LIMITS.stopGraceMs)
 }
+// 시험용: 정리가 끝났는지(남은 스트림이 없는지) 확인
+export const activeCount = () => entries.size
 export const stopOwnedBy = (wc: object) => entries.forEach((e) => e.wc === wc && stopStream(e.id))
 export function stopAll(): void {
   for (const e of entries.values()) {

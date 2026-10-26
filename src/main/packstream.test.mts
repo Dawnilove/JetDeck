@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
 import { test } from 'node:test'
-import { startStream, stopAll, stopOwnedBy, stopStream } from './packstream.mts'
+import { activeCount, startStream, stopAll, stopOwnedBy, stopStream } from './packstream.mts'
 import { STREAM_LIMITS } from './packstreamcore.mts'
 
 // 5.1.0: 흐르는 출력 실행기. SSH 채널·화면을 가짜로 만들어 시작·멈춤·정리 순서를 시험 (실제 pty의 SIGHUP/SIGINT 전달은 Device 실기에서 확인)
@@ -44,12 +44,25 @@ const fakeClient = (opened: FakeChannel[], delay = false) => ({
 const asClient = (c: ReturnType<typeof fakeClient>) => c as never
 const asWc = (w: FakeWc) => w as never
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
+// 시험마다 앞 시험이 남긴 스트림을 모두 정리한 뒤 시작 (고정 시간 대기는 CPU가 바쁠 때 흔들려서, 남은 게 없을 때까지 기다림)
+// 조건이 될 때까지 기다림 (고정 시간 대기는 CPU가 바쁠 때 흔들림)
+const until = async (cond: () => boolean) => {
+  for (let t = 0; t < 3000 && !cond(); t += 5) await wait(5)
+}
+const settle = async () => {
+  for (let t = 0; t < 3000 && activeCount() > 0; t += 5) {
+    stopAll()
+    await wait(5)
+  }
+  assert.equal(activeCount(), 0)
+}
 const fast = () => {
   STREAM_LIMITS.batchMs = 10
   STREAM_LIMITS.stopGraceMs = 30
 }
 
 test('데이터가 줄로 모여 화면에 가고, 명령이 끝나면 종료 코드와 함께 end', async () => {
+  await settle()
   fast()
   const wc = new FakeWc()
   const chs: FakeChannel[] = []
@@ -64,6 +77,7 @@ test('데이터가 줄로 모여 화면에 가고, 명령이 끝나면 종료 �
 })
 
 test('연결이 끊겨 종료 코드 없이 닫히면 closed', async () => {
+  await settle()
   fast()
   const wc = new FakeWc()
   const chs: FakeChannel[] = []
@@ -73,6 +87,7 @@ test('연결이 끊겨 종료 코드 없이 닫히면 closed', async () => {
 })
 
 test('멈춤: 먼저 Ctrl-C, 유예 안에 안 끝나면 채널을 닫음, 이유는 stopped', async () => {
+  await settle()
   fast()
   const wc = new FakeWc()
   const chs: FakeChannel[] = []
@@ -88,6 +103,7 @@ test('멈춤: 먼저 Ctrl-C, 유예 안에 안 끝나면 채널을 닫음, 이�
 })
 
 test('멈춤: Ctrl-C로 곧바로 끝나면 채널을 따로 닫지 않아도 end 한 번', async () => {
+  await settle()
   fast()
   const wc = new FakeWc()
   const chs: FakeChannel[] = []
@@ -101,6 +117,7 @@ test('멈춤: Ctrl-C로 곧바로 끝나면 채널을 따로 닫지 않아도 en
 })
 
 test('채널이 열리기 전에 멈춤 요청이 오면 열리자마자 닫음', async () => {
+  await settle()
   fast()
   const wc = new FakeWc()
   const chs: FakeChannel[] = []
@@ -112,27 +129,30 @@ test('채널이 열리기 전에 멈춤 요청이 오면 열리자마자 닫음'
 })
 
 test('최대 실행 시간이 지나면 timeout 으로 멈춤', async () => {
+  await settle()
   fast()
   const wc = new FakeWc()
   const chs: FakeChannel[] = []
   await startStream(asWc(wc), asClient(fakeClient(chs)), 's6', 'pk', 'x', 0.05)
-  await wait(150)
+  await until(() => wc.of('pack:stream-end').length > 0)
   assert.equal(chs[0].closed, true)
   assert.equal(wc.of('pack:stream-end')[0][2], 'timeout')
 })
 
 test('출력이 너무 빠르면 rate 로 자동 정지', async () => {
+  await settle()
   fast()
   const wc = new FakeWc()
   const chs: FakeChannel[] = []
   await startStream(asWc(wc), asClient(fakeClient(chs)), 's7', 'pk', 'x', 60)
   for (let i = 0; i < 7; i++) chs[0].emit('data', Buffer.alloc(1024 * 1024, 'a'))
-  await wait(80)
+  await until(() => wc.of('pack:stream-end').length > 0)
   assert.equal(wc.of('pack:stream-end')[0][2], 'rate')
   assert.equal(chs[0].closed, true)
 })
 
 test('화면이 사라지거나 새로 불러와지면 그 화면의 스트림을 모두 끝냄 (다른 화면 것은 그대로)', async () => {
+  await settle()
   fast()
   const a = new FakeWc()
   const b = new FakeWc()
@@ -155,6 +175,7 @@ test('화면이 사라지거나 새로 불러와지면 그 화면의 스트림�
 })
 
 test('render-process-gone 도 정리', async () => {
+  await settle()
   fast()
   const wc = new FakeWc()
   const chs: FakeChannel[] = []
@@ -165,6 +186,7 @@ test('render-process-gone 도 정리', async () => {
 })
 
 test('동시 실행 한도: 팩당 2개, 앱 전체 4개, 같은 id 중복 금지', async () => {
+  await settle()
   fast()
   const wc = new FakeWc()
   const chs: FakeChannel[] = []
@@ -177,7 +199,7 @@ test('동시 실행 한도: 팩당 2개, 앱 전체 4개, 같은 id 중복 금�
   await startStream(asWc(wc), cl, 'l5', 'p3', 'x', 60)
   assert.throws(() => startStream(asWc(wc), cl, 'l6', 'p4', 'x', 60), /동시에 4개/)
   stopOwnedBy(wc)
-  await wait(60)
+  await until(() => activeCount() === 0)
   assert.equal(chs.every((c) => c.closed), true)
   assert.doesNotThrow(() => startStream(asWc(wc), cl, 'l7', 'p1', 'x', 60)) // 정리되면 다시 시작할 수 있음
   stopAll()
@@ -185,6 +207,7 @@ test('동시 실행 한도: 팩당 2개, 앱 전체 4개, 같은 id 중복 금�
 })
 
 test('앱 종료(stopAll): 유예 없이 바로 채널을 닫음', async () => {
+  await settle()
   fast()
   const wc = new FakeWc()
   const chs: FakeChannel[] = []
@@ -196,6 +219,7 @@ test('앱 종료(stopAll): 유예 없이 바로 채널을 닫음', async () => {
 })
 
 test('exec 가 실패하면 항목을 지우고 오류를 던짐 (다시 시작 가능)', async () => {
+  await settle()
   fast()
   const wc = new FakeWc()
   const bad = { exec: (_c: string, _o: unknown, cb: (e: Error) => void) => (cb(new Error('boom')), true) }
