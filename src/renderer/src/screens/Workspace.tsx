@@ -11,6 +11,7 @@ import Segment from '../components/Segment'
 import Docker from './Docker'
 import Services from './Services'
 import Manage from './Manage'
+import PluginManager from './PluginManager'
 import HealthView, { useHealth } from './Health'
 import Camera from './Camera'
 import Screen from './Screen'
@@ -384,6 +385,7 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
   const [files, setFiles] = useState<string[] | null>(null)
   const [actTab, setActTab] = useState<ActTab>('history') // 팔레트로 열 때 처음 보일 활동 탭
   const [centerScreen, setCenterScreen] = useState(false) // 열린 파일이 없을 때 가운데 영역에 Device 화면 표시 (파일을 열면 파일이 가려 줌)
+  const [pluginMgr, setPluginMgr] = useState(false) // 플러그인 관리 창
   const [view, setView] = useState<View>('code') // 작업 공간 위에 덮는 화면 (VIEWS)
   const views = VIEWS.filter((v) => v.id !== 'screen' || host.remote === 'vnc') // 앱 안 뷰어는 VNC만 되므로 VNC 연결에만 Device 화면 탭
   const groups = GROUPS.map((g) => ({ ...g, views: g.views.filter((id) => views.some((v) => v.id === id)) })).filter((g) => g.views.length)
@@ -465,6 +467,7 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
       ...(currentMascot() ? [{ id: 'mascot', title: mascotHidden() ? tr('마스코트 보이기') : tr('마스코트 숨기기'), run: () => setMascotHidden(!mascotHidden()) }] : []),
       sess.status === 'offline' ? { id: 'reconnect', title: tr('다시 연결'), run: reconnect } : { id: 'disconnect', title: tr('연결 해제'), run: onDisconnect },
       { id: 'hosts', title: tr('연결 관리 열기'), run: onHosts },
+      { id: 'plugins', title: tr('플러그인 관리 열기'), run: () => setPluginMgr(true) },
       { id: 'mcp', title: tr('MCP 연결 열기 (AI 연결)'), run: onMcp },
       { id: 'lang', title: tr('언어 전환 (English / 한국어)'), run: onLang },
       { id: 'guide', title: tr('도움말 (사용 가이드)'), run: onGuide },
@@ -862,6 +865,7 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
           }}
         />
       )}
+      {pluginMgr && <PluginManager onClose={() => setPluginMgr(false)} />}
       {palette && (
         <Palette
           key={palette.mode}

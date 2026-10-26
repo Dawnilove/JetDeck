@@ -12,6 +12,7 @@ import { currentMascot, currentTheme, mascotHidden, setMascotHidden, themeList, 
 import { parseSnippets } from './snippets.mts'
 import { mergeSnippets } from '../../../main/settingsio.mts'
 import ThemePicker from '../components/ThemePicker'
+import PluginManager from './PluginManager'
 import { MascotOr } from '../components/Mascot'
 import { errText, pwBlocked, PW_HELP, trNode } from '../util'
 import { getLang, tr } from '../../../main/i18n.mts'
@@ -193,6 +194,7 @@ export default function Main({ onConnect, theme, onTheme, onGuide, onNews, onMcp
     }
   }
   const settingsPop = useRef<HTMLDivElement>(null)
+  const [plugins, setPlugins] = useState(false) // 플러그인 관理 창
   const [overwriteCfg, setOverwriteCfg] = useState(false) //가져올 때 같은 기기·스니펫을 덮어쓸지 (기본은 새 것만 추가)
   const importCfg = async () => {
     try {
@@ -259,10 +261,12 @@ export default function Main({ onConnect, theme, onTheme, onGuide, onNews, onMcp
             <input type="checkbox" checked={overwriteCfg} onChange={(e) => setOverwriteCfg(e.target.checked)} />
             {tr('같은 것은 덮어쓰기')}
           </label>
+          <Button size={36} onClick={() => { settingsPop.current?.hidePopover(); setPlugins(true) }} title={tr('팩 파일로 Device에서 실행할 기능을 추가해요')}>{tr('플러그인 관리…')}</Button>
           <Button size={36} onClick={() => { settingsPop.current?.hidePopover(); saveDiag() }} title={tr('문제 신고용 정보(버전·OS·호스트 개수·최근 오류)를 파일로 저장. 이름·주소·비밀은 빼요')}>{tr('진단 정보 저장')}</Button>
         </div>
         </div>
       </header>
+      {plugins && <PluginManager onClose={() => setPlugins(false)} />}
       {top?.(hosts)}
 
       <div style={{ flexGrow: 1, display: 'flex', flexWrap: 'wrap' }}>
