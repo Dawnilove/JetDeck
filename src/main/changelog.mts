@@ -3,6 +3,21 @@ export type Release = { version: string; ko: string[]; en: string[] }
 
 export const RELEASES: Release[] = [
   {
+    version: '5.3.0',
+    ko: [
+      '보안 수정: 5.0.0~5.2.0의 팩 항목이 실행하는 git 명령과, 4.1.0~5.2.0의 탐색기 Git 표시가 믿을 수 없는 저장소(받은 압축 파일, 남의 clone)가 든 기기에서 그 저장소 설정에 적힌 프로그램을 실행할 수 있었어요. 이제 저장소 설정이 프로그램을 실행할 수 있으면 git을 실행하지 않고(폴더에 ⚠ 표시), 훅·서명 확인 프로그램·페이저도 꺼요. 업데이트를 권해요',
+      '탐색기 배지: 팩이 폴더를 열 때 읽기 명령을 자동 실행해 파일·폴더 옆에 작은 표시(M·U 등)와 폴더 점(●), 기준 폴더 옆 태그(브랜치)를 붙여요. 앱이 읽기로 증명한 명령만 쓸 수 있고, 플러그인 관리의 "탐색기 배지" 스위치로 끌 수 있어요',
+      '새 공식 팩 "개발 도구 (베타)": Git 상태 배지. 기본 꺼짐이고, 켜면 탐색기가 내장 Git 표시를 건너뛰어요 (내장 표시는 그대로 있어요)',
+      '허용 창과 플러그인 관리 창에 배지 표시와 "폴더를 열 때" 줄이 생겼어요. 팩 만드는 법(배지 절·보안 절·JSON Schema·예제)은 사이트의 plugins 문서에 추가됐어요'
+    ],
+    en: [
+      'Security fix: Git commands run by plugin items (5.0.0–5.2.0) and the Explorer\'s Git marks (4.1.0–5.2.0) could run programs set up inside an untrusted repository (a downloaded archive, someone else\'s clone) on the connected device. JetDeck now refuses to run Git when a repository\'s own settings can run programs (the folder shows a ⚠) and turns off hooks, signature programs and pagers. Updating is recommended',
+      'Explorer badges: when you open a folder, a pack can run a read-only command by itself and add small marks (M, U…) next to files and folders, a dot (●) on folders, and a tag (the branch) beside the base folder. Only commands the app proves read-only are allowed, and the "Explorer badges" switch in the plugin manager turns them off',
+      'New official pack "Developer tools (beta)": a Git status badge. Off by default; when on, the Explorer skips its built-in Git marks (the built-in marks are unchanged)',
+      'The allow dialog and the plugin manager now show badges and a "When you open a folder" line. Writing badges (chapter, security chapter, JSON Schema, examples) is covered in the plugins docs on the website'
+    ]
+  },
+  {
     version: '5.2.0',
     ko: [
       '플러그인 시계열 그래프: 팩이 읽기 명령을 되풀이해서 숫자를 선 그래프로 그려 줘요 (시작·멈춤·일시정지·지우기). 화면을 나가거나 연결이 끊기거나 앱을 닫으면 멈추고, 데이터는 앱 메모리에만 있어요',
