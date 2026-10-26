@@ -83,3 +83,12 @@ test('git 보호: git이 보일 때만 함수로 감싸고, 실제로 옵션이 
   assert.match(sh('echo $(git status) | cat'), /git -c core.fsmonitor=false status/)
   assert.match(sh('git status >/dev/null; env | grep -c GIT_EXTERNAL_DIFF; true'), /^0/)
 })
+
+test('결과 글자는 ANSI·제어 문자 제거와 비밀 가림을 거친 뒤 표로도 만들어짐', () => {
+  const r = parseResult(A({}), '\x1b[31mred\x1b[0m\npassword=hunter2\n__EXIT__0\n', 't')
+  assert.equal(r.text.includes('\x1b'), false)
+  assert.equal(r.text.includes('hunter2'), false)
+  const table = A({ display: { type: 'table', columns: [L('a'), L('b')], split: 'ws' } })
+  assert.deepEqual(parseResult(table, 'x\x1b[1m 1‮\n__EXIT__0\n', 't').rows, [['x', '1']])
+  assert.ok(parseResult(A({}), 'x'.repeat(300_000) + '\n__EXIT__0\n', 't').text.length < 262_144 + 100)
+})

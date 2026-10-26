@@ -129,6 +129,7 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
   if (!label) return bad(S ? 'label은 {ko, en} 둘 다 있어야 해요' : `label은 글자(또는 {ko, en})이고 ${LIMITS.name}자 이내예요`)
   if (typeof a.cmd !== 'string' || !a.cmd.trim()) return bad('cmd가 비었어요')
   if (a.cmd.length > LIMITS.cmd) return bad(`cmd는 ${LIMITS.cmd}자 이내예요`)
+  if (a.cmd.includes('\r') || a.cmd.search(BAD_TEXT) >= 0) return bad('cmd에 제어 문자는 쓸 수 없어요') // 확인창에 보이는 글자와 실제 입력·실행이 달라지는 것 방지
   if (a.risk !== 'read' && a.risk !== 'change' && a.risk !== 'danger') return bad('risk는 read·change·danger 중 하나예요')
   const declared: Risk = a.risk
   let desc: L10n | undefined
@@ -175,7 +176,7 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
   if (new Set(params.map((p) => p.name)).size !== params.length) return bad('params 이름이 겹쳐요')
   let preview: string | undefined
   if (a.preview !== undefined) {
-    if (typeof a.preview !== 'string' || !a.preview.trim() || a.preview.length > LIMITS.cmd) return bad('preview가 올바르지 않아요')
+    if (typeof a.preview !== 'string' || !a.preview.trim() || a.preview.length > LIMITS.cmd || a.preview.includes('\r') || a.preview.search(BAD_TEXT) >= 0) return bad('preview가 올바르지 않아요')
     preview = a.preview
   }
   const names = new Set(params.map((p) => p.name))

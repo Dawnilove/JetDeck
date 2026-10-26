@@ -251,3 +251,12 @@ test('요약: 위험도별 개수·부정확 항목', () => {
   const p = validatePack(pack([act({ id: 'r' }), act({ id: 'c', risk: 'change', cmd: 'touch x', confirm: L('x') }), act({ id: 'd', risk: 'danger', cmd: 'reboot', confirm: L('x') }), act({ id: 'u', cmd: 'kill 1' }), act({ id: 't', mode: 'terminal', cmd: 'git status' })])).pack!
   assert.deepEqual(summarizePack(p), { total: 5, read: 2, change: 2, danger: 1, understated: 1, hidden: 0, terminal: 1 })
 })
+
+test('cmd·preview에 제어 문자(CR·ESC·BiDi)가 있으면 항목이 빠짐: 확인창에 보인 글자와 실제 입력이 달라지는 것 방지', () => {
+  for (const c of ['ls\rrm -rf x', 'ls \x1b[2J', 'ls ‮', 'ls \x07']) {
+    assert.match(errs({ cmd: c }), /제어 문자/, JSON.stringify(c))
+    assert.match(errs({ mode: 'terminal', cmd: c }), /제어 문자/, JSON.stringify(c))
+  }
+  assert.match(errs({ risk: 'change', confirm: L('x'), cmd: 'touch a', preview: 'ls\rrm x' }), /preview/)
+  ok({ mode: 'terminal', cmd: 'ls\n\tpwd' }) // 줄바꿈·탭은 허용
+})

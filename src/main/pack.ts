@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { tr } from './i18n.mts'
 import { run } from './monitor'
 import deviceJson from './packs/device.json'
+import { sanitizeOutput } from './packsafe.mts'
 import { buildPreview, buildRun, buildTerminal, parseResult, resolveParams, type PackResult } from './packrun.mts'
 import { approveAndEnable, buildCatalog, enabledPacks, ensureDir, forgetPack, inspectPackBytes, installPackBytes, readState, readUserDir, setEnabled, writeState, type Inspect, type PackEntry, type StateFile } from './packstore.mts'
 import type { Pack, PackAction } from './packschema.mts'
@@ -111,7 +112,7 @@ export function registerPackIpc(): void {
         if (!a.preview) throw new Error(tr('미리보기가 없는 항목이에요'))
         const out = await run(client(connId), buildPreview(a, values))
         previewed.set(key, Date.now())
-        return { ok: true, needPassword: false, text: out.replace(/__EXIT__\d+\s*$/, '').trim() }
+        return { ok: true, needPassword: false, text: sanitizeOutput(out.replace(/__EXIT__\d+\s*$/, '').trim()) }
       }
       if (a.preview && Date.now() - (previewed.get(key) ?? 0) > PREVIEW_TTL) throw new Error(tr('먼저 미리보기를 확인해야 실행할 수 있어요'))
       previewed.delete(key)

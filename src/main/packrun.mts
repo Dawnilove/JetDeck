@@ -1,4 +1,5 @@
 // 팩 항목을 실행할 명령으로 만들고 출력을 표시용으로 바꿈 (Electron 없이 시험)
+import { sanitizeOutput } from './packsafe.mts'
 import { shq } from './shq.mts'
 import type { Display, PackAction } from './packschema.mts'
 import { parseAction } from './svcparse.mts'
@@ -72,6 +73,7 @@ export function toRows(d: Display, text: string): string[][] | undefined {
 export function parseResult(a: PackAction, out: string, termCmd: string): PackResult {
   const hasExit = /__EXIT__\d+/.test(out)
   const r = parseAction(out)
+  r.text = sanitizeOutput(r.text) // 제어 문자·ANSI 제거, 비밀 가림, 256KB 상한 (표·글자 모두 이 글자에서 만듦)
   if (!hasExit) {
     // 종료 코드가 없음: 재부팅·종료는 연결이 끊긴 것이라 정상, 아니면 시간 초과·끊김
     return a.disconnects ? { ok: true, needPassword: false, text: r.text } : { ok: false, needPassword: false, text: r.text }

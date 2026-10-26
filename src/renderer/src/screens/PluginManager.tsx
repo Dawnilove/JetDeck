@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { tr } from '../../../main/i18n.mts'
 import type { Catalog } from '../../../main/pack'
+import { trErr } from '../../../main/packerr.mts'
 import type { Inspect, PackEntry } from '../../../main/packstore.mts'
 import Button from '../components/Button'
 import { errText } from '../util'
@@ -106,7 +107,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
           <details>
             <summary className="dim" style={{ fontSize: 12, cursor: 'pointer' }}>{tr('문제 {0}개', problems.length)}</summary>
             <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12 }}>
-              {problems.map((p, i) => <li key={i} style={{ overflowWrap: 'anywhere' }}>{p}</li>)}
+              {problems.map((p, i) => <li key={i} style={{ overflowWrap: 'anywhere' }}>{trErr(p)}</li>)}
             </ul>
           </details>
         )}
@@ -188,7 +189,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
           )}
           {sub.ins.errors.length > 0 && (
             <ul className="msg-err" style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>
-              {sub.ins.errors.map((p, i) => <li key={i} style={{ overflowWrap: 'anywhere' }}>{p}</li>)}
+              {sub.ins.errors.map((p, i) => <li key={i} style={{ overflowWrap: 'anywhere' }}>{trErr(p)}</li>)}
             </ul>
           )}
           {sub.ins.pack && <PackBody pack={sub.ins.pack} hash={sub.ins.hash} size={sub.ins.size} changes={sub.ins.existing?.diff} />}

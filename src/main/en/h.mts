@@ -90,5 +90,6 @@ export const EN_H: Record<string, string> = {
   '확인하면 입력만 하고 Enter는 누르지 않아요.': 'On confirm, the text is typed but Enter is not pressed.',
   '입력': 'Type',
   '{0} 열기': 'Open {0}',
-  '플러그인 열기': 'Open plugins'
+  '플러그인 열기': 'Open plugins',
+  '…잘렸어요 (출력이 너무 길어서 앞부분만 보여요)': '…truncated (the output is too long, so only the beginning is shown)'
 }
