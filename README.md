@@ -61,6 +61,10 @@
     <td width="50%"><img src="docs/images/search.png" alt="파일 검색·바꾸기 화면"><br><sub><b>검색·바꾸기</b> · 결과를 누르면 그 줄로 이동</sub></td>
   </tr>
   <tr>
+    <td width="50%"><img src="docs/images/diff.png" alt="기기의 저장된 파일과 편집 내용 비교 화면"><br><sub><b>파일 비교</b> · 기기의 저장본과 나란히, 탭은 다시 연결하면 복원</sub></td>
+    <td width="50%"></td>
+  </tr>
+  <tr>
     <td width="50%"><img src="docs/images/health.png" alt="기기 점검 화면"><br><sub><b>기기 점검</b> · 온도·Wi-Fi·디스크·실패한 서비스</sub></td>
     <td width="50%"><img src="docs/images/ai-read.png" alt="AI 터미널 읽기 승인 창"><br><sub><b>AI 터미널 읽기</b> · 허용을 먼저 묻고 비밀은 가림</sub></td>
   </tr>
