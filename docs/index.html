@@ -364,7 +364,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
             <div class="card"><span class="ico">📈</span><h3>기록·프로세스·AI 활동</h3><p>최근 1시간 모니터 그래프와 CSV, 프로세스 종료, AI·다른 SSH 접속이 한 일 기록.</p></div>
             <div class="card"><span class="ico">⚙️</span><h3>서비스 (systemd)</h3><p>서비스 시작·정지·재시작, journalctl 로그 실시간. sudo 비밀번호는 새 터미널에서 직접 입력.</p></div>
             <div class="card"><span class="ico">🩺</span><h3>기기 점검</h3><p>온도·Wi-Fi 신호·디스크 SMART·실패한 서비스. 문제가 생기면 알림.</p></div>
-            <div class="card"><span class="ico">🧰</span><h3>업데이트·디스크·전원</h3><p>apt 업데이트 확인·설치, 큰 폴더 보기와 미리보기 후 정리, 부팅 방식·재부팅·종료 예약. 명령은 확인창에 그대로 보여 줘요.</p></div>
+            <div class="card"><span class="ico">🧰</span><h3>기기 관리</h3><p>apt 업데이트·디스크·전원·부팅·로그 보기가 탭 4개로. 큰 폴더 보기와 미리보기 후 정리, 재부팅·종료 예약. 명령은 확인창에 그대로 보여 줘요.</p></div>
             <div class="card"><span class="ico">🐳</span><h3>Docker</h3><p>컨테이너·이미지 목록, 시작·정지·재시작·삭제, 로그 보기.</p></div>
             <div class="card"><span class="ico">🔑</span><h3>SSH 키 마법사</h3><p>이 PC의 키를 만들어 기기에 등록하고, 비밀번호 없이 접속하도록 한 번에.</p></div>
           </div>
@@ -386,6 +386,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
             <div class="card"><span class="ico">✳️</span><h3>MCP 연결</h3><p>Claude·Cursor·Codex 등 AI가 기기에서 명령 실행·파일 편집. 연결되면 버튼에 불이 켜져요.</p></div>
             <div class="card"><span class="ico">🎨</span><h3>테마 17종</h3><p>기본 다크·라이트부터 네온, 마스코트 테마까지. 다시 시작 없이 바로 바뀌어요.</p></div>
             <div class="card"><span class="ico">🌐</span><h3>영어 화면</h3><p>위쪽 언어 버튼으로 한국어 ↔ English.</p></div>
+            <div class="card"><span class="ico">🔌</span><h3>플러그인 (5.0)</h3><p>JSON 팩 파일에 명령·표·버튼·확인창을 적으면 기능이 생겨요. 내 PC에서 코드는 실행되지 않고, 읽기로 증명된 명령만 묻지 않고 실행돼요. 만드는 법은 <a href="https://github.com/Dawnilove/JetDeck/tree/main/docs/plugins">plugins 문서</a>.</p></div>
             <div class="card"><span class="ico">🆕</span><h3>업데이트 내용</h3><p>업데이트하면 바뀐 점을 앱에서 바로 보여 줘요. 도움말 옆 버튼으로 다시 볼 수도 있어요.</p></div>
           </div>
         </div>
@@ -569,6 +570,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
           <tr><td>ROS2 목록이 비어 있음</td><td>노드가 실행 중인지, <code>~/.bashrc</code>에 ROS <code>setup.bash</code>를 source하는 줄이 있는지</td></tr>
           <tr><td>시리얼 "다른 프로그램이 쓰고 있어요"</td><td>PuTTY·Arduino IDE가 같은 포트를 열고 있는지</td></tr>
           <tr><td>시리얼 글자가 깨짐</td><td>속도(baud). 젯슨 디버그 콘솔은 115200</td></tr>
+          <tr><td>플러그인이 켜지지 않거나 이상해요</td><td>환경 설정 → 플러그인 관리에서 "다시 허용"이 필요한지 확인하세요(팩 파일이 바뀌면 꺼져요). 문제가 계속되면 앱을 <code>--safe-mode</code>로 시작하면 내가 설치한 팩을 모두 읽지 않아요</td></tr>
           <tr><td>시스템 모니터가 비어 있음</td><td>Linux가 아니거나 <code>/proc</code>·<code>/sys</code>를 읽을 수 없는 기기 (젯슨이 아니어도 일반 리눅스는 표시돼요)</td></tr>
           <tr><td>파일이 편집기로 안 열림</td><td>5MB 초과, 바이너리, UTF-8이 아닌 파일은 열지 않아요 (원본 보호)</td></tr>
         </table></div>
@@ -594,7 +596,7 @@ footer{border-top:1px solid var(--line);padding:28px 0 48px;color:var(--sub);fon
         <tr><td>4.4 (출시)</td><td>터미널 출력 검색·로그 저장 · 진단 정보 저장 · 설정 가져오기 덮어쓰기 · 편집기 단축키 바로가기</td></tr>
         <tr><td>4.5 (출시)</td><td>기기 관리 확장: apt 업데이트 확인·설치 · 디스크 정리 도우미(큰 폴더 보기, 미리보기 후 정리) · 전원·부팅 설정(부팅 대상, 예약 재부팅·종료). 설치·정리는 항상 확인창을 거쳐요</td></tr>
         <tr><td>4.6 (출시)</td><td>원격 파일 비교(diff) · 편집기 탭 복원</td></tr>
-        <tr><td>5.0</td><td>플러그인 1단계: 파일에 명령과 표시 방식(글자·표)·버튼·확인창을 적으면 화면에 기능이 생겨요. 팩(묶음) 단위로 배포하고, 예제 팩과 첫 공식 팩(기기 관리 등)을 함께 제공해요</td></tr>
+        <tr><td>5.0 (출시)</td><td>플러그인 1단계: 파일에 명령과 표시 방식(글자·표)·버튼·확인창을 적으면 화면에 기능이 생겨요. 팩(묶음) 단위로 배포하고, 예제 팩과 첫 공식 팩(기기 관리 등)을 함께 제공해요</td></tr>
         <tr><td>5.1 ~ 5.x</td><td>플러그인 2단계: 흐르는 출력 · 입력 폼 · 시계열 그래프 · 탐색기 배지. ROS2·Git 상태·모니터 그래프·카메라 같은 기능을 팩으로 하나씩 옮겨요</td></tr>
         <tr><td>5.x 후반</td><td>플러그인 모음 공유: 사이트에 올려 둔 팩을 앱에서 내용을 확인하고 불러와요</td></tr>
         <tr><td>6.0 (보류)</td><td>플러그인 3단계: 앱 기능 권한(SFTP·터널·시리얼)을 쓰는 연결·전송 팩. 권한 설계를 먼저 확인한 뒤 진행해요</td></tr>

@@ -3,6 +3,21 @@ export type Release = { version: string; ko: string[]; en: string[] }
 
 export const RELEASES: Release[] = [
   {
+    version: '5.0.0',
+    ko: [
+      '플러그인: JSON 팩 파일에 명령·표시 방식(글자·표)·버튼·확인창을 적으면 화면에 기능이 생겨요. 내 PC에서 코드는 실행되지 않고, 읽기로 증명된 명령만 묻지 않고 실행돼요. 환경 설정 → "플러그인 관리…"에서 팩을 설치하고, 명령 전문을 읽은 뒤 허용해야 켜져요',
+      '앱에 팩이 함께 들어 있어요: 기기 관리(로그 보기·전원 모드 현재값 추가), ROS2 패키지·환경, 모니터·성능(젯슨 전용). 예제 팩(내 프로젝트·센서·학습 작업)은 꺼진 채로 들어 있어요. 스니펫은 "팩으로 내보내기"로 팩 파일로 저장할 수 있어요',
+      '기기 관리 화면이 탭 1개에서 탭 4개(apt 업데이트·디스크·전원·로그)로 바뀌었어요. 재부팅·종료 예약의 확인창은 위험(빨강)으로 올라갔어요. 팩 만드는 법은 사이트의 plugins 문서에 있어요',
+      '문제가 생기면 앱을 --safe-mode로 시작해 외부 팩을 모두 끌 수 있어요'
+    ],
+    en: [
+      'Plugins: describe commands, how to show results (text or table), buttons and confirmation boxes in a JSON pack file and the feature appears. No code runs on your PC, and only commands proven read-only run without asking. Install packs from Settings → "Plugin manager…"; a pack turns on only after you read every command and allow it',
+      'Packs ship with the app: Device management (adds Logs and current power mode), ROS2 packages & env, Monitor & performance (Jetson only). An examples pack (my project, sensors, training job) is included but turned off. Snippets can be saved as a pack file with "Export as pack"',
+      'The Device management screen went from 1 tab to 4 tabs (apt updates, disk, power, logs). The scheduled reboot/shutdown confirmation is now danger (red). See the plugins docs on the website to write your own pack',
+      'If something goes wrong, start the app with --safe-mode to turn off all external packs'
+    ]
+  },
+  {
     version: '4.6.0',
     ko: [
       '파일 비교(diff): 편집기 위쪽의 "Device와 비교"로 기기에 저장된 파일과 지금 편집 중인 내용을 나란히 봐요 (오른쪽은 그대로 고칠 수 있어요)',
