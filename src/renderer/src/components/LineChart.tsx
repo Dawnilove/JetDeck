@@ -11,7 +11,7 @@ const H = 140
 function path(values: (number | null)[], min: number, max: number, xs?: number[]): string {
   const x = (i: number) => {
     if (xs && xs.length === values.length && xs[xs.length - 1] > xs[0]) return (((xs[i] - xs[0]) / (xs[xs.length - 1] - xs[0])) * W).toFixed(1)
-    return ((i / (values.length - 1)) * W).toFixed(1)
+    return ((i / (values.length - 1 || 1)) * W).toFixed(1)
   }
   const y = (v: number) => (H - ((Math.min(max, Math.max(min, v)) - min) / (max - min || 1)) * H).toFixed(1)
   let d = ''
