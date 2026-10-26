@@ -32,7 +32,7 @@ export const cmdOf = (a: PackAction, values?: Record<string, string>) => {
 }
 
 // 명령 속 {이름} 자리를 굵게 (입력 값이 들어가는 곳을 허용 창에서 알아보게)
-const withSlots = (cmd: string): ReactNode[] => cmd.split(/(\{\w+\})/).map((p, i) => (/^\{\w+\}$/.test(p) ? <strong key={i}>{p}</strong> : p))
+const withSlots = (cmd: string): ReactNode[] => cmd.split(/(\{[^{}\s]+\})/).map((p, i) => (/^\{[^{}\s]+\}$/.test(p) ? <strong key={i}>{p}</strong> : p))
 
 // 입력 필드 한 줄 설명 (앱 글자). 값은 따옴표로 감싸 글자 하나로만 들어감
 const fieldText = (f: Field): string => {
@@ -61,7 +61,7 @@ export function PackBody({ pack, hash, size, changes }: { pack: Pack; hash: stri
       <p style={{ fontSize: 13 }}>
         {tr('항목 {0}개: 읽기 {1} · 바꿈 {2} · 위험 {3}', s.total, s.read, s.change, s.danger)}
         {s.terminal > 0 && ` · ${tr('터미널 입력 {0}', s.terminal)}`}
-        {(s.stream > 0 || s.form > 0 || s.chart > 0) && ` / ${[...(s.stream > 0 || s.form > 0 ? [tr('실시간 {0} · 입력 {1}', s.stream, s.form)] : []), ...(s.chart > 0 ? [tr('그래프 {0}', s.chart)] : [])].join(' · ')}`}
+        {(s.stream > 0 || s.form > 0 || s.chart > 0 || s.badge > 0) && ` / ${[...(s.stream > 0 || s.form > 0 ? [tr('실시간 {0} · 입력 {1}', s.stream, s.form)] : []), ...(s.chart > 0 ? [tr('그래프 {0}', s.chart)] : []), ...(s.badge > 0 ? [tr('배지 {0}', s.badge)] : [])].join(' · ')}`}
         {s.autoRun > 0 && ` / ${tr('자동으로 돌아가는 것 {0}', s.autoRun)}`}
       </p>
       {s.autoRun > 0 && (
@@ -70,7 +70,7 @@ export function PackBody({ pack, hash, size, changes }: { pack: Pack; hash: stri
           {pack.plugins.flatMap((pl) => pl.actions.flatMap((a) => [
             ...(a.auto ? [{ key: `${pl.id}/${a.id}`, name: lt(a.label), cmd: cmdOf(a), when: a.display?.type === 'chart' ? tr('{0}초마다', a.display.every) : tr('화면을 열 때') }] : []),
             ...(a.fields ?? []).flatMap((f) => (f.type === 'select' && f.from ? [{ key: `${pl.id}/${a.id}#${f.name}`, name: `${lt(a.label)} · ${lt(f.label)}`, cmd: f.from.cmd, when: tr('화면을 열 때') }] : []))
-          ])).map((x) => (
+          ]).concat((pack.badges ?? []).map((b) => ({ key: `badge:${b.id}`, name: lt(b.label), cmd: b.cmd.replace('{dir}', `{${tr('폴더')}}`), when: tr('폴더를 열 때') })))).map((x) => (
             <div key={x.key} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'baseline', fontSize: 12 }}>
               <span className="tag">{x.when}</span>
               <strong>{x.name}</strong>
@@ -83,6 +83,25 @@ export function PackBody({ pack, hash, size, changes }: { pack: Pack; hash: stri
       {s.hidden > 0 && <p className="dim" style={{ fontSize: 13 }}>{tr('{0}개는 새 버전 앱이 필요해서 지금은 쓸 수 없어요', s.hidden)}</p>}
       {changes && changes.removed.length > 0 && <p className="dim" style={{ fontSize: 12 }}>{tr('빠진 항목')}: {changes.removed.join(', ')}</p>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto', maxHeight: '38vh', paddingRight: 4 }}>
+        {pack.badges && pack.badges.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span className="caption">{tr('탐색기 배지')}</span>
+            {pack.badges.map((b) => {
+              const m = changes?.added.includes(`badge:${b.id}`) ? tr('새로 추가됨') : changes?.changed.includes(`badge:${b.id}`) ? tr('명령이 바뀜') : ''
+              return (
+                <div key={b.id} data-testid="pk-badge" style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: 8, borderRadius: 8, background: 'var(--bg)', border: m ? '1px solid var(--warn)' : '1px solid transparent' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', fontSize: 13 }}>
+                    <RiskTag risk="read" />
+                    <strong>{lt(b.label)}</strong>
+                    <span className="tag">{tr('폴더를 열 때 자동')}</span>
+                    {m && <span className="tag" style={{ color: 'var(--warn)', borderColor: 'var(--warn)' }}>{m}</span>}
+                  </div>
+                  <code className="mono" style={{ fontSize: 12, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{withSlots(b.cmd.replace('{dir}', `{${tr('폴더')}}`))}</code>
+                </div>
+              )
+            })}
+          </div>
+        )}
         {pack.plugins.map((pl) => (
           <div key={pl.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <span className="caption">{lt(pl.title)}</span>

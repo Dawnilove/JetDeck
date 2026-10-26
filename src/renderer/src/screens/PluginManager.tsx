@@ -5,6 +5,7 @@ import { trErr } from '../../../main/packerr.mts'
 import type { Inspect, PackEntry } from '../../../main/packstore.mts'
 import { summarizePack } from '../../../main/packschema.mts'
 import Button from '../components/Button'
+import Switch from '../components/Switch'
 import { errText } from '../util'
 import { lt, PackBody } from './PackUi'
 
@@ -97,6 +98,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
           {e.pack && summarizePack(e.pack).stream > 0 && <span className="tag">{tr('실시간')}</span>}
           {e.pack && summarizePack(e.pack).form > 0 && <span className="tag">{tr('입력')}</span>}
           {e.pack && summarizePack(e.pack).chart > 0 && <span className="tag">{tr('그래프')}</span>}
+          {e.pack && summarizePack(e.pack).badge > 0 && <span className="tag">{tr('배지 {0}', summarizePack(e.pack).badge)}</span>}
           <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {e.pack && <Button size={36} onClick={() => setSub({ kind: 'view', e })}>{tr('내용 보기')}</Button>}
             {e.source === 'user' && e.file && <Button size={36} onClick={() => setSub({ kind: 'remove', e })}>{tr('제거')}</Button>}
@@ -107,6 +109,17 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
         </div>
         <span style={{ fontSize: 12 }} className={e.enabled ? '' : 'dim'}>{e.enabled ? tr('켜짐') : tr('꺼짐')}{note && <> · <span className={e.approval === 'changed' || e.status !== 'ok' ? 'msg-err' : ''}>{e.approval === 'changed' ? '⚠ ' : ''}{note}</span></>}</span>
         {e.pack?.desc && <p className="dim" style={{ fontSize: 13 }}>{lt(e.pack.desc)}</p>}
+        {e.pack?.badges && e.pack.badges.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', fontSize: 13 }}>
+            <Switch
+              label={tr('탐색기 배지')}
+              checked={e.pack.badges.some((b) => !e.badgesOff.includes(b.id))}
+              onChange={(on) => { const ids = e.pack!.badges!.map((b) => b.id); act(() => window.api.packBadgesOff(e.id, on ? [] : ids)) }}
+            />
+            <span>{tr('탐색기 배지')}</span>
+            <span className="dim" style={{ fontSize: 12 }}>{tr('폴더를 열 때 자동으로 실행해요. 끄면 팩은 켜 둔 채 배지만 멈춰요')}</span>
+          </div>
+        )}
         {problems.length > 0 && (
           <details>
             <summary className="dim" style={{ fontSize: 12, cursor: 'pointer' }}>{tr('문제 {0}개', problems.length)}</summary>

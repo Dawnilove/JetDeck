@@ -18,5 +18,10 @@ export const EN_K: Record<string, string> = {
   // 5.3.0 탐색기 배지 화면
   '이 저장소의 설정이 위험해서 배지를 건너뛰었어요': 'Badges were skipped because this repository’s settings are unsafe',
   '느려서 멈췄어요': 'Stopped because it was slow',
-  '안에 배지가 있는 파일이 있어요': 'Contains files with badges'
+  '안에 배지가 있는 파일이 있어요': 'Contains files with badges',
+  '배지 {0}': 'Badges {0}',
+  '탐색기 배지': 'Explorer badges',
+  '폴더를 열 때': 'When a folder opens',
+  '폴더를 열 때 자동': 'Runs when a folder opens',
+  '폴더를 열 때 자동으로 실행해요. 끄면 팩은 켜 둔 채 배지만 멈춰요': 'Runs automatically when a folder opens. Turning it off stops only the badges; the pack stays on'
 }
