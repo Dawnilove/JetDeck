@@ -1,6 +1,8 @@
 // 팩 검사 오류·경고 문장(packschema·packstore가 한국어로 만든 것)을 영어 화면에서 보이게 함 (Electron 없이 시험)
 // 문장에 id·숫자가 끼어 있어서 문장 통째가 아니라 고정된 조각을 바꿈. 긴 조각부터 적용해 짧은 조각이 먼저 먹지 않게 함
+import { EN } from './en/index.mts'
 import { getLang } from './i18n.mts'
+import { REASON_TEXT } from './risk.mts'
 
 const PIECES: [string, string][] = [
   ['항목이 객체가 아니에요', 'The item is not an object'],
@@ -38,7 +40,14 @@ const PIECES: [string, string][] = [
   ['막힌 경로를 지워요:', 'Deletes a blocked path:'],
   ['preview는 읽기 전용이어야 해요', 'preview must be read-only'],
   ['change·danger 항목은 confirm 문구가 필요해요', 'change and danger items need a confirm text'],
-  ['읽기라고 적혀 있지만 앱 계산은', 'marked as read, but the app computed'],
+  ['읽기라고 적혀 있지만 앱이 계산한 위험도는', 'marked as read, but the app computed the risk as'],
+  ['이에요 (', ' ('],
+  ['팩에 적힌 위험도', 'The risk written in the pack'],
+  ['보다 앱이 계산한 위험도', ' is lower than the app-computed risk'],
+  ['가 더 높아요', ''],
+  ['"읽기"', '"read"'],
+  ['"바꿈"', '"change"'],
+  ['"위험"', '"danger"'],
   ['바꾸는 항목은 auto를 쓸 수 없어요', 'Items that change things cannot use auto'],
   ['auto는 팩당', 'auto is limited per pack to'],
   ['개까지라 꺼요', ' (the rest are turned off)'],
@@ -92,5 +101,6 @@ export function trErr(msg: string): string {
   if (getLang() !== 'en') return msg
   let s = msg
   for (const [ko, en] of SORTED) s = s.split(ko).join(en)
+  for (const ko of Object.values(REASON_TEXT)) if (EN[ko]) s = s.split(ko).join(EN[ko]) // 이유 문장은 앱 사전 그대로
   return s
 }

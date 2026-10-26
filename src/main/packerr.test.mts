@@ -40,3 +40,19 @@ test('영어 화면: 검사 오류·경고 문장에 한글이 남지 않음', (
     setLang('ko')
   }
 })
+
+test('경고 문장: 이유 코드 대신 앱 글자, 선언이 읽기가 아니면 다른 문장', () => {
+  const r = validatePack(base([a({ cmd: 'touch /tmp/x' }), a({ id: 'b', risk: 'change', confirm: L('x'), cmd: 'rm /tmp/x', preview: 'ls /tmp' })]), { official: false })
+  const w = r.warnings.join('|')
+  assert.match(w, /a: 읽기라고 적혀 있지만 앱이 계산한 위험도는 "바꿈"이에요/)
+  assert.match(w, /b: 팩에 적힌 위험도 "바꿈"보다 앱이 계산한 위험도 "위험"가 더 높아요 \(삭제 명령이에요\)/)
+  assert.ok(!/\((unknown|delete|write)/.test(w))
+  setLang('en')
+  try {
+    const en = r.warnings.map(trErr).join('|')
+    assert.ok(!/[가-힣]/.test(en), en)
+    assert.match(en, /The risk written in the pack "change" is lower than the app-computed risk "danger"/)
+  } finally {
+    setLang('ko')
+  }
+})

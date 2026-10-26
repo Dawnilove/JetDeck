@@ -1,7 +1,7 @@
 // 선언형 팩 (4.5.0 → 5.0.0): 명령·표시 방식·확인창을 JSON 데이터로 적고, 코드는 읽어서 실행만 함. 팩 > 플러그인(화면) > 항목(버튼). Electron 없이 시험
 // 위험도는 팩이 적은 값이 아니라 risk.mts가 계산한 값과의 max (내려갈 수 없음)
 import { fill } from './packrun.mts'
-import { analyze, destroysBlockedPath, maxRisk, type Reason, type Risk } from './risk.mts'
+import { analyze, destroysBlockedPath, maxRisk, REASON_TEXT, type Reason, type Risk } from './risk.mts'
 
 export type { Risk, Reason }
 export type L10n = { ko: string; en: string }
@@ -58,6 +58,8 @@ export const OFFICIAL_UNPROVEN_READS = new Map<string, string>([
   ['device/pwr-status', 'echo "target=$(systemctl get-default 2>/dev/null)"; echo "up=$(uptime -p)"; echo "since=$(uptime -s)"; if [ -f /var/run/reboot-required ]; then echo reboot=yes; else echo reboot=no; fi; if [ -f /run/systemd/shutdown/scheduled ]; then s=$(grep -m1 \'^USEC=\' /run/systemd/shutdown/scheduled | cut -d= -f2); echo "scheduled=$(date -d @$((s/1000000)) \'+%F %T\') $(grep -m1 \'^MODE=\' /run/systemd/shutdown/scheduled | cut -d= -f2)"; else echo scheduled=none; fi']
 ])
 
+const RISK_KO: Record<Risk, string> = { read: '읽기', change: '바꿈', danger: '위험' }
+const why = (rs: Reason[]) => rs.map((r) => REASON_TEXT[r]).join(' · ') // 오류·경고에는 이유 코드 대신 앱 글자
 const ID = /^[a-z][a-z0-9-]{0,39}$/
 const VALUE = /^[A-Za-z0-9_.@:~/+][A-Za-z0-9_.@:~/+-]*$/ // 선택지 값: 셸 특수문자 없음, 맨 앞 '-' 금지(옵션 주입 방지) → 따옴표 없이 명령에 끼워도 안전
 const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/
@@ -199,7 +201,7 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
     for (const v of all) {
       const pf = fill(preview, v)
       const pr = analyze(pf)
-      if (pr.risk !== 'read') return bad(`preview는 읽기 전용이어야 해요 — ${pr.reasons.join(',')}`)
+      if (pr.risk !== 'read') return bad(`preview는 읽기 전용이어야 해요 — ${why(pr.reasons)}`)
     }
   }
   let risk = maxRisk(declared, computed)
@@ -210,7 +212,7 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
   }
   if (sudo) risk = maxRisk(risk, 'change')
   if (declared !== 'read' && !confirm) return bad('change·danger 항목은 confirm 문구가 필요해요')
-  if (understated) warnings.push(`${id}: 읽기라고 적혀 있지만 앱 계산은 ${computed}예요 (${reasons.join(',')})`)
+  if (understated) warnings.push(declared === 'read' ? `${id}: 읽기라고 적혀 있지만 앱이 계산한 위험도는 "${RISK_KO[computed]}"이에요 (${why(reasons)})` : `${id}: 팩에 적힌 위험도 "${RISK_KO[declared]}"보다 앱이 계산한 위험도 "${RISK_KO[computed]}"가 더 높아요 (${why(reasons)})`)
   let auto = a.auto === true
   if (auto && declared !== 'read') return bad('바꾸는 항목은 auto를 쓸 수 없어요')
   if (auto && (risk !== 'read' || terminal)) auto = false // 앱 계산이 읽기가 아니거나 터미널 입력이면 자동 실행 안 함
