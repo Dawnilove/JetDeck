@@ -2,10 +2,6 @@
 export type GitCode = 'M' | 'A' | 'D' | 'U' | '!' // 수정·추가(스테이지)·삭제·새 파일(추적 안 됨)·충돌
 export type GitInfo = { top: string; branch: string; ahead: number; behind: number; files: Record<string, GitCode> } // files: 절대 경로 → 상태
 
-// dir 안에서 저장소 최상위와 상태를 한 번에 (git이 없거나 저장소가 아니면 출력이 비어 있음). dir은 shq로 감싸 넘길 것
-export const gitCommand = (qdir: string) =>
-  `cd ${qdir} 2>/dev/null && command -v git >/dev/null && TOP=$(timeout 10 git rev-parse --show-toplevel 2>/dev/null) && { printf 'TOP=%s\\n' "$TOP"; timeout 10 git -c core.quotepath=off status --porcelain=v1 -b -z --no-renames 2>/dev/null; }`
-
 const codeOf = (xy: string): GitCode => {
   if (xy === '??') return 'U'
   if (/U/.test(xy) || xy === 'AA' || xy === 'DD') return '!'

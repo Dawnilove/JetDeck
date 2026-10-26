@@ -22,4 +22,5 @@ test('parseGit: 커밋 없음·HEAD 분리·저장소 아님', () => {
   assert.equal(parseGit('TOP=/r\n## HEAD (no branch)\0')!.branch, 'HEAD')
   assert.equal(parseGit('TOP=/r\n## dev\0')!.ahead, 0)
   assert.equal(parseGit(''), null)
+  assert.equal(parseGit('JETDECK_UNSAFE_REPO\n'), null) // 가드가 위험한 저장소를 거부한 출력
 })

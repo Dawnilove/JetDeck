@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { tr } from './i18n.mts'
-import { gitCommand, parseGit, type GitInfo } from './gitparse.mts'
+import { gitCommand } from './gitcmd.mts'
+import { parseGit, type GitInfo } from './gitparse.mts'
 import { run } from './monitor'
 import { requireClient } from './session'
 import { shq } from './shq.mts'
