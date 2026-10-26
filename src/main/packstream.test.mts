@@ -81,7 +81,7 @@ test('멈춤: 먼저 Ctrl-C, 유예 안에 안 끝나면 채널을 닫음, 이�
   assert.deepEqual(chs[0].written, ['\x03'])
   assert.equal(chs[0].closed, false)
   chs[0].emit('data', Buffer.from('late\n')) // 끝내는 중에 온 출력은 보여 주지 않음
-  await wait(60)
+  for (let t = 0; t < 2000 && !wc.of('pack:stream-end').length; t += 5) await wait(5) // 고정 시간은 CPU가 바쁠 때 흔들림
   assert.equal(chs[0].closed, true)
   assert.equal(wc.of('pack:stream-end')[0][2], 'stopped')
   assert.equal(wc.of('pack:stream-data').length, 0)

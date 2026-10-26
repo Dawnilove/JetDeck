@@ -22,6 +22,10 @@ class FakeWc extends EventEmitter {
 }
 const asWc = (w: FakeWc) => w as never
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
+// 고정 시간 대신 끝날 때까지 기다림 (CPU가 바쁘거나 타이머가 거칠면 고정 시간은 흔들림)
+const until = async (cond: () => boolean, ms = 5000) => {
+  for (let t = 0; t < ms && !cond(); t += 5) await wait(5)
+}
 // run: 호출마다 script 함수가 출력(또는 오류)을 정함
 const conn = (script: (n: number) => Promise<string> | string) => {
   const c = { calls: 0, closeCbs: new Set<() => void>(), unsubbed: 0 }
@@ -80,7 +84,7 @@ test('연속 실패 5번이면 자동 정지(이유 포함), 사이에 성공하
   const seq = ['boom\n__EXIT__1', 'boom\n__EXIT__1', 'boom\n__EXIT__1', 'boom\n__EXIT__1', '1 2\n__EXIT__0'] // 4번 실패 + 성공
   const { c, pc } = conn((n) => (n <= 5 ? seq[n - 1] : 'oops: no such file\n__EXIT__2'))
   startPoll(asWc(wc), pc, 'g3', 'pk', 'cmd', D(0.01), 10)
-  await wait(250)
+  await until(() => wc.of('pack:poll-end').length > 0)
   assert.equal(c.calls, 10) // 성공 뒤 실패 5번에서 멈춤
   assert.deepEqual(wc.of('pack:poll-end')[0].slice(1), ['g3', 'failures', 'oops: no such file'])
   assert.equal(wc.of('pack:poll-data').length, 1) // 성공한 한 번만 점을 보냄
@@ -90,7 +94,7 @@ test('종료 코드 표시가 없거나(시간 초과·끊김) 오류로 거절�
   const wc = new FakeWc()
   const { pc } = conn((n) => (n % 2 ? 'partial output' : Promise.reject(new Error('channel closed'))))
   startPoll(asWc(wc), pc, 'g4', 'pk', 'cmd', D(0.01), 10)
-  await wait(200)
+  await until(() => wc.of('pack:poll-end').length > 0)
   assert.equal(wc.of('pack:poll-end')[0][2], 'failures')
   assert.equal(wc.of('pack:poll-data').length, 0)
 })
@@ -99,7 +103,7 @@ test('연결이 응답 없이 멈추면 앱이 기다림을 끊고 실패로 셈
   const wc = new FakeWc()
   const { c, pc } = conn(() => new Promise<string>(() => {})) // 영영 안 끝남
   startPoll(asWc(wc), pc, 'g5', 'pk', 'cmd', D(0.01), -4.98) // 기다림 = (-4.98+5)초 = 20ms
-  await wait(600)
+  await until(() => wc.of('pack:poll-end').length > 0)
   assert.equal(wc.of('pack:poll-end')[0][2], 'failures')
   assert.ok(c.calls >= 5)
 })
