@@ -45,6 +45,9 @@ const fieldText = (f: Field): string => {
   return `{${f.name}} (${kind})`
 }
 
+// 배지 명령의 {dir}는 탐색기에서 연 폴더로 채워짐 → 허용 창에는 {폴더}로 보임 (모든 자리)
+const slotDir = (cmd: string) => cmd.split('{dir}').join(`{${tr('폴더')}}`)
+
 const fmtSize =(n: number) => (n < 1024 ? `${n}B` : `${(n / 1024).toFixed(1)}KB`)
 
 // 허용 창·설치 확인·"내용 보기"가 같이 쓰는 본문: 머리말(작성자·버전·크기·지문·항목 수) + 모든 항목의 명령 전문
@@ -70,7 +73,7 @@ export function PackBody({ pack, hash, size, changes }: { pack: Pack; hash: stri
           {pack.plugins.flatMap((pl) => pl.actions.flatMap((a) => [
             ...(a.auto ? [{ key: `${pl.id}/${a.id}`, name: lt(a.label), cmd: cmdOf(a), when: a.display?.type === 'chart' ? tr('{0}초마다', a.display.every) : tr('화면을 열 때') }] : []),
             ...(a.fields ?? []).flatMap((f) => (f.type === 'select' && f.from ? [{ key: `${pl.id}/${a.id}#${f.name}`, name: `${lt(a.label)} · ${lt(f.label)}`, cmd: f.from.cmd, when: tr('화면을 열 때') }] : []))
-          ]).concat((pack.badges ?? []).map((b) => ({ key: `badge:${b.id}`, name: lt(b.label), cmd: b.cmd.replace('{dir}', `{${tr('폴더')}}`), when: tr('폴더를 열 때') })))).map((x) => (
+          ])).concat((pack.badges ?? []).map((bd) => ({ key: `badge:${bd.id}`, name: lt(bd.label), cmd: slotDir(bd.cmd), when: tr('폴더를 열 때') }))).map((x) => (
             <div key={x.key} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'baseline', fontSize: 12 }}>
               <span className="tag">{x.when}</span>
               <strong>{x.name}</strong>
@@ -96,7 +99,7 @@ export function PackBody({ pack, hash, size, changes }: { pack: Pack; hash: stri
                     <span className="tag">{tr('폴더를 열 때 자동')}</span>
                     {m && <span className="tag" style={{ color: 'var(--warn)', borderColor: 'var(--warn)' }}>{m}</span>}
                   </div>
-                  <code className="mono" style={{ fontSize: 12, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{withSlots(b.cmd.replace('{dir}', `{${tr('폴더')}}`))}</code>
+                  <code className="mono" style={{ fontSize: 12, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{withSlots(slotDir(b.cmd))}</code>
                 </div>
               )
             })}
