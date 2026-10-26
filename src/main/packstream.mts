@@ -3,6 +3,7 @@ import type { Client, ClientChannel } from 'ssh2'
 import { StringDecoder } from 'string_decoder'
 import { tr } from './i18n.mts'
 import { LiveSet } from './liveset.mts'
+import { onOwnerGone, watchOwner } from './packowner.mts'
 import { Batcher, LineAssembler, STREAM_LIMITS, Throttle, type EndReason } from './packstreamcore.mts'
 
 // 팩 흐르는 출력 실행기 (5.1.0). 내장 ROS·빌드·서비스 화면이 쓰는 ptystream.ts는 건드리지 않고 LiveSet만 같이 씀.
@@ -11,7 +12,6 @@ import { Batcher, LineAssembler, STREAM_LIMITS, Throttle, type EndReason } from 
 type Entry = { id: string; wc: Pick<WebContents, 'send' | 'isDestroyed'>; packId: string; ch?: ClientChannel; reason?: EndReason; exit?: number; timer?: NodeJS.Timeout; kill?: NodeJS.Timeout; done: boolean }
 const entries = new Map<string, Entry>()
 const live = new LiveSet<ClientChannel>()
-const hooked = new WeakSet<object>()
 
 const finish = (e: Entry, reason: EndReason, code?: number) => {
   if (e.done) return
@@ -43,17 +43,8 @@ export function stopAll(): void {
   }
 }
 
-// 화면(webContents)이 사라지거나 새로 불러와지면 그 화면의 스트림을 모두 끝냄 (Device에 프로세스가 남지 않게)
-function hook(wc: Pick<WebContents, 'once' | 'on'>): void {
-  if (hooked.has(wc)) return
-  hooked.add(wc)
-  const stop = () => stopOwnedBy(wc)
-  wc.once('destroyed', stop)
-  wc.on('render-process-gone', stop)
-  wc.on('did-start-navigation', (details) => {
-    if (details.isMainFrame && !details.isSameDocument) stop()
-  })
-}
+// 화면(webContents)이 사라지거나 새로 불러와지면 그 화면의 스트림을 모두 끝냄 (Device에 프로세스가 남지 않게). 추적은 packowner가 함
+onOwnerGone(stopOwnedBy)
 
 // c: 이 연결의 SSH 클라이언트 (호출하는 쪽이 session에서 찾아 넘김 → 이 모듈은 Electron 없이 시험할 수 있음)
 export function startStream(wc: Pick<WebContents, 'send' | 'isDestroyed' | 'once' | 'on'>, c: Pick<Client, 'exec'>, id: string, packId: string, command: string, timeoutSec: number): Promise<void> {
@@ -62,7 +53,7 @@ export function startStream(wc: Pick<WebContents, 'send' | 'isDestroyed' | 'once
   for (const e of entries.values()) if (e.packId === packId) perPack++
   if (perPack >= STREAM_LIMITS.perPack) throw new Error(tr('이 팩은 실시간 보기를 동시에 {0}개까지만 할 수 있어요', STREAM_LIMITS.perPack))
   if (entries.size >= STREAM_LIMITS.perApp) throw new Error(tr('실시간 보기는 동시에 {0}개까지만 할 수 있어요', STREAM_LIMITS.perApp))
-  hook(wc)
+  watchOwner(wc)
   const e: Entry = { id, wc, packId, done: false }
   entries.set(id, e)
   live.begin(id)
