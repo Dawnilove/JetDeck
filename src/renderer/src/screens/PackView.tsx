@@ -6,11 +6,12 @@ import Button from '../components/Button'
 import PanelHead, { Desc, Note } from '../components/PanelHead'
 import Segment from '../components/Segment'
 import { errText } from '../util'
-import { cmdOf, lt, Reasons, RiskTag } from './PackUi'
+import AskDialog, { type Ask } from './PackAsk'
+import { FieldInputs, formErrors, useFormValues } from './PackForm'
+import { lt } from './PackUi'
 
 // 일반 플러그인 화면 (4.5.0 Manage를 일반화): 팩의 플러그인 하나를 카드로 그림. 명령은 화면이 만들지 않고 항목 id만 main에 보냄
 type Cell = { busy: boolean; result?: PackResult; error?: string }
-type Ask = { action: PackAction; values: Record<string, string>; preview?: string; loading: boolean; error?: string; term?: { text: string; enter: boolean } }
 export type Trigger = { packId: string; pluginId: string; actionId: string; n: number } // 명령 팔레트에서 항목을 골랐을 때 (같은 확인 흐름을 탐)
 
 type Props = {
@@ -30,7 +31,7 @@ export default function PackView({ connId, online, jetson, pack, plugin, trigger
   const [params, setParams] = useState<Record<string, Record<string, string>>>({}) // 항목 id → 고른 선택값
   const [ask, setAsk] = useState<Ask | null>(null)
   const shown = plugin.actions.filter((a) => a.when !== 'jetson' || jetson)
-  const runnable = shown.filter((a) => a.mode === 'exec' && !a.hidden)
+  const runnable = shown.filter((a) => a.mode === 'exec' && !a.hidden && !a.fields) // 입력 폼 항목은 값을 넣고 눌러야 실행
   const started = useRef(new Set<string>()) // 자동 실행은 연결·플러그인마다 한 번
 
   useEffect(() => {
@@ -40,10 +41,10 @@ export default function PackView({ connId, online, jetson, pack, plugin, trigger
 
   const valuesOf = (a: PackAction) => resolveParams(a, params[a.id])
   const setCell = (id: string, c: Cell) => setCells((m) => ({ ...m, [id]: c }))
-  const exec = async (a: PackAction, values: Record<string, string>): Promise<PackResult | null> => {
+  const exec = async (a: PackAction, values: Record<string, string>, token?: string): Promise<PackResult | null> => {
     setCell(a.id, { busy: true })
     try {
-      const r = await window.api.packRun(connId, pack.id, plugin.id, a.id, values, 'run')
+      const r = await window.api.packRun(connId, pack.id, plugin.id, a.id, values, 'run', token)
       setCell(a.id, { busy: false, result: r })
       return r
     } catch (e) {
@@ -61,8 +62,26 @@ export default function PackView({ connId, online, jetson, pack, plugin, trigger
     if (online) autoRun(false)
   }, [online, connId, pack.id, plugin.id])
 
-  const click = async (a: PackAction) => {
+  // 입력 폼 항목: main이 값을 검사해 채운 명령과 다시 분석한 위험도(+ 확인 토큰)를 줌. 읽기면 바로 실행, 아니면 채운 명령 전문으로 확인창
+  const begin = async (a: PackAction, values: Record<string, string>) => {
+    try {
+      const p = await window.api.packPrepare(pack.id, plugin.id, a.id, values)
+      if (!p.needConfirm) {
+        exec(a, values, p.token)
+        return
+      }
+      setAsk({ action: { ...a, risk: p.risk, reasons: p.reasons, understated: p.understated }, values, loading: !!a.preview, prepared: { cmd: p.cmd, token: p.token } })
+      if (!a.preview) return
+      const r = await window.api.packRun(connId, pack.id, plugin.id, a.id, values, 'preview')
+      setAsk((s) => (s?.action.id === a.id ? { ...s, preview: r.text, loading: false } : s))
+    } catch (e) {
+      setAsk((s) => (s?.action.id === a.id ? { ...s, error: errText(e), loading: false } : s))
+      setCell(a.id, { busy: false, error: errText(e) })
+    }
+  }
+  const click = async (a: PackAction, given?: Record<string, string>) => {
     if (a.hidden) return
+    if (a.fields && a.mode === 'exec') return begin(a, given ?? {}) // 팔레트에서 고르면 기본값으로
     let values: Record<string, string>
     try {
       values = valuesOf(a)
@@ -104,7 +123,7 @@ export default function PackView({ connId, online, jetson, pack, plugin, trigger
     const { action: a, values, term } = ask
     setAsk(null)
     if (term) return onTerminal(term.text, term.enter)
-    const r = await exec(a, values)
+    const r = await exec(a, values, ask.prepared?.token)
     if (r?.needPassword && r.termCmd) onLaunch(r.termCmd, tr('sudo 비밀번호를 물어볼 수 있어요. 터미널에서 직접 입력해 주세요.'))
     else if (r?.ok) autoRun(true) // 바뀐 뒤 목록·상태를 다시 읽음
   }
@@ -117,6 +136,7 @@ export default function PackView({ connId, online, jetson, pack, plugin, trigger
         shown.map((a) => {
           const c = cells[a.id]
           const term = a.mode === 'terminal'
+          if (a.fields && a.mode === 'exec' && !a.hidden) return <FormCard key={a.id} connId={connId} packId={pack.id} pluginId={plugin.id} a={a} c={c} online={online} onRun={(values) => begin(a, values)} />
           return (
             <section key={a.id} className="card card-sm" style={{ display: 'flex', flexDirection: 'column', gap: 10 }} aria-label={lt(a.label)}>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
@@ -202,44 +222,21 @@ function Result({ a, c }: { a: PackAction; c?: Cell }) {
   )
 }
 
-// 실행 전 확인. 위 → 아래: ① 앱이 계산한 위험 이유(앱 글자) ② 팩이 쓴 설명(이름표 붙은 별도 상자) ③ 미리보기 ④ 실제로 실행(입력)할 명령 전문
-function AskDialog({ ask, onCancel, onOk }: { ask: Ask; onCancel: () => void; onOk: () => void }) {
-  const ref = useRef<HTMLDialogElement>(null)
-  const a = ask.action
-  useEffect(() => {
-    ref.current?.showModal()
-  }, [])
-  const term = ask.term
-  const cmd = term ? term.text : cmdOf(a, ask.values)
+// 입력 폼이 있는 실행 항목: 칸 + 실행 버튼 + 결과. 틀린 칸이 있으면 버튼 비활성
+function FormCard({ connId, packId, pluginId, a, c, online, onRun }: { connId: string; packId: string; pluginId: string; a: PackAction; c?: Cell; online: boolean; onRun: (values: Record<string, string>) => void }) {
+  const [values, setValue] = useFormValues(packId, pluginId, a)
+  const bad = Object.keys(formErrors(a.fields, values)).length > 0
   return (
-    <dialog ref={ref} className="hk" aria-labelledby="pk-title" onCancel={(e) => { e.preventDefault(); onCancel() }}>
-      <h1 id="pk-title" style={{ fontSize: 20, fontWeight: 600 }}>{lt(a.label)}</h1>
-      <div data-testid="pk-app-reasons" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <span className="caption">{tr('앱이 확인한 내용')}</span>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}><RiskTag risk={a.risk} /> {a.risk === 'danger' ? tr('되돌리기 어려울 수 있는 작업이에요') : tr('Device의 상태를 바꿀 수 있는 작업이에요')}</div>
-        <Reasons a={a} />
+    <section className="card card-sm" style={{ display: 'flex', flexDirection: 'column', gap: 10 }} aria-label={lt(a.label)}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-start' }}>
+        <h2 style={{ marginRight: 'auto' }}>{lt(a.label)}</h2>
+        <FieldInputs connId={connId} online={online} packId={packId} pluginId={pluginId} action={a} values={values} onChange={setValue} disabled={c?.busy} />
+        <Button size={36} variant={a.risk === 'danger' ? 'warn' : 'secondary'} disabled={c?.busy || bad} onClick={() => onRun(values)}>
+          {c?.busy ? tr('실행 중…') : a.risk === 'read' ? tr('보기') : tr('실행…')}
+        </Button>
       </div>
-      {a.confirm && (
-        <div data-testid="pk-pack-text" style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: 10, borderRadius: 8, border: '1px dashed var(--border)' }}>
-          <span className="caption">{tr('팩이 쓴 설명')}</span>
-          <p style={{ fontSize: 14, overflowWrap: 'anywhere' }}>{lt(a.confirm)}</p>
-        </div>
-      )}
-      {a.preview && !term && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span className="caption">{tr('미리보기 (아직 아무것도 바뀌지 않았어요)')}</span>
-          {ask.loading ? <p className="dim">{tr('미리보기 불러오는 중…')}</p> : ask.error ? <p className="msg-err">{ask.error}</p> : <pre className="hk-code ros-out" style={{ minHeight: 0, maxHeight: '30vh' }}>{ask.preview || tr('(바뀌는 것이 없어요)')}</pre>}
-        </div>
-      )}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <span className="caption">{term ? tr('터미널에 입력할 글자') : tr('실행할 명령')}</span>
-        <code className="hk-code" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: '30vh', overflowY: 'auto' }}>{cmd}</code>
-        {term && <span className="dim" style={{ fontSize: 12 }}>{term.enter ? tr('확인하면 입력하고 Enter까지 눌러요.') : tr('확인하면 입력만 하고 Enter는 누르지 않아요.')}</span>}
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 10 }}>
-        <Button style={{ padding: '0 18px' }} onClick={onCancel}>{tr('취소')}</Button>
-        <Button variant={a.risk === 'danger' ? 'warn' : 'primary'} style={{ padding: '0 20px' }} disabled={ask.loading || !!ask.error} onClick={onOk}>{term ? tr('입력') : tr('실행')}</Button>
-      </div>
-    </dialog>
+      {a.desc && <p className="dim" style={{ fontSize: 13 }}>{lt(a.desc)}</p>}
+      <Result a={a} c={c} />
+    </section>
   )
 }
