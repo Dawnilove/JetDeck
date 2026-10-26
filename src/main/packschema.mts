@@ -10,6 +10,21 @@ export type Display =
   | { type: 'text' }
   | { type: 'table'; columns: L10n[]; match?: string; split?: 'ws' | 'tab'; skip?: number; empty?: L10n; labels?: Record<string, L10n> } // labels: 첫 열의 값을 사람이 읽는 이름으로 바꿈
   | { type: 'log'; maxLines: number; wrap: boolean } // 5.1.0: 흐르는 출력(mode:'stream') 전용
+  | ChartDisplay // 5.2.0: 되풀이 실행한 숫자를 선 그래프로 (mode:'exec' 전용)
+export type ChartSeries = { label: L10n; key?: string; col?: number; scale: number } // key: match 방식(이름표), col: split 방식(1부터 센 칸)
+export type ChartDisplay = {
+  type: 'chart'
+  every: number // 초
+  points: number
+  unit?: string
+  min?: number
+  max?: number
+  match?: string
+  split?: 'ws' | 'tab' | 'csv'
+  skip?: number
+  perLine?: { label: L10n; value: number; scale: number } // 맞는 줄마다 선 하나. label의 {n}은 n번째 묶음 값, value는 값 묶음 번호(1부터)
+  series?: ChartSeries[] // 고정 선 목록
+}
 export type Choice = { value: string; label: L10n }
 export type Param = { name: string; label: L10n; choices: Choice[] }
 export type PackAction = {
@@ -54,7 +69,11 @@ export type Pack = {
 export type ValidateOptions = { official?: boolean; appVersion?: string }
 export type ValidateResult = { pack: Pack | null; errors: string[]; warnings: string[] }
 
-export const LIMITS = { fileBytes: 512 * 1024, plugins: 20, actionsPerPlugin: 50, actionsPerPack: 200, cmd: 2000, choices: 30, columns: 20, auto: 5, name: 60, desc: 300, confirm: 500, terminalLines: 20, matchLen: 200, comboMax: 500, timeoutExternal: 600, timeoutOfficial: 1800, timeoutDefault: 60, timeoutStreamDefault: 600, timeoutStreamExternal: 3600, timeoutStreamOfficial: 14400, logMin: 100, logMax: 5000, logDefault: 1000 }
+export const LIMITS = { fileBytes: 512 * 1024, plugins: 20, actionsPerPlugin: 50, actionsPerPack: 200, cmd: 2000, choices: 30, columns: 20, auto: 5, name: 60, desc: 300, confirm: 500, terminalLines: 20, matchLen: 200, comboMax: 500, timeoutExternal: 600, timeoutOfficial: 1800, timeoutDefault: 60, timeoutStreamDefault: 600, timeoutStreamExternal: 3600, timeoutStreamOfficial: 14400, logMin: 100, logMax: 5000, logDefault: 1000,
+  // 5.2.0 그래프: 간격·점·선·한 번 실행 시간, 읽는 출력 한도, 동시 실행, 값 상한
+  chartEveryExternal: 1, chartEveryOfficial: 0.5, chartEveryMax: 60, chartEveryDefault: 2, chartPointsMin: 10, chartPointsMax: 3600, chartPointsDefault: 300, chartLines: 8, chartCols: 50, chartUnit: 8,
+  chartTimeoutDefault: 10, chartTimeoutMax: 30, chartReadLines: 1000, chartReadLineChars: 1000, chartValueMax: 1e9, chartPerPack: 2, chartPerApp: 4 }
+export const CHART_MIN_APP = '5.2.0'
 export const RESERVED_IDS = ['device', 'ros2', 'monitor', 'perf', 'examples', 'ros2-live', 'jetdeck', 'official', 'app', 'core', 'snippets']
 // 공식 팩에서 읽기로 증명되지 않아도 읽기로 인정하는 항목 (팩id/항목id → 고정된 명령). 새 공식 항목을 추가하면 여기와 시험을 고쳐야 함 = 리뷰 강제
 export const OFFICIAL_UNPROVEN_READS = new Map<string, string>([
@@ -192,6 +211,72 @@ function checkField(f: unknown, S: boolean): { field?: Field; error?: string } {
   return { field }
 }
 
+// 그래프 표시 읽기 (5.2.0). 오류는 글자만 돌려줌 (호출한 쪽이 항목 id를 붙임)
+const CHART_KEY = /^[\w.-]{1,40}$/
+const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
+function checkChart(d: Record<string, unknown>, S: boolean): { display?: ChartDisplay; error?: string } {
+  const bad = (error: string) => ({ error })
+  const evMin = S ? LIMITS.chartEveryOfficial : LIMITS.chartEveryExternal
+  const every = d.every ?? LIMITS.chartEveryDefault
+  if (!(finite(every) && every >= evMin && every <= LIMITS.chartEveryMax)) return bad(`chart의 every는 ${evMin}~${LIMITS.chartEveryMax}초예요`)
+  const points = d.points ?? LIMITS.chartPointsDefault
+  if (!(Number.isInteger(points) && (points as number) >= LIMITS.chartPointsMin && (points as number) <= LIMITS.chartPointsMax)) return bad(`chart의 points는 ${LIMITS.chartPointsMin}~${LIMITS.chartPointsMax}예요`)
+  let unit: string | undefined
+  if (d.unit !== undefined && !(unit = str(d.unit, LIMITS.chartUnit))) return bad(`chart의 unit은 ${LIMITS.chartUnit}자 이내예요`)
+  for (const k of ['min', 'max'] as const) if (d[k] !== undefined && !(finite(d[k]) && Math.abs(d[k] as number) <= LIMITS.chartValueMax)) return bad('chart의 min·max가 올바르지 않아요')
+  if (d.min !== undefined && d.max !== undefined && (d.min as number) >= (d.max as number)) return bad('chart의 min은 max보다 작아야 해요')
+  if ((d.match === undefined) === (d.split === undefined)) return bad('chart는 match 또는 split 중 하나만 써요')
+  if (d.skip !== undefined && (d.match !== undefined || !(Number.isInteger(d.skip) && (d.skip as number) >= 0 && (d.skip as number) <= 100))) return bad('chart의 skip은 split과 함께 쓰는 0 이상의 정수예요')
+  if (d.split !== undefined && d.split !== 'ws' && d.split !== 'tab' && d.split !== 'csv') return bad("chart의 split은 'ws'·'tab'·'csv'만 돼요")
+  let groups = 0
+  if (d.match !== undefined) {
+    if (typeof d.match !== 'string') return bad('chart의 match는 문자열이에요')
+    let re: RegExp
+    try {
+      re = new RegExp(d.match)
+    } catch {
+      return bad('chart의 match 정규식이 올바르지 않아요')
+    }
+    if (!S) {
+      const p = regexProblem(d.match)
+      if (p) return bad(p)
+    }
+    groups = new RegExp(re.source + '|').exec('')!.length - 1
+  }
+  if ((d.perLine === undefined) === (d.series === undefined)) return bad('chart는 perLine 또는 series 중 하나만 써요')
+  const scaleOf = (o: Record<string, unknown>) => (o.scale === undefined ? 1 : finite(o.scale) && o.scale !== 0 && Math.abs(o.scale) <= LIMITS.chartValueMax ? o.scale : null)
+  const base = { type: 'chart' as const, every, points: points as number, unit, min: d.min as number | undefined, max: d.max as number | undefined, match: d.match as string | undefined, split: d.split as ChartDisplay['split'], skip: d.skip as number | undefined }
+  if (d.perLine !== undefined) {
+    const p = d.perLine
+    if (d.match === undefined) return bad('perLine은 match와 함께 써요')
+    const label = isObj(p) ? loc(p.label, S, LIMITS.name) : null
+    const scale = isObj(p) ? scaleOf(p) : null
+    if (!isObj(p) || !label || scale === null) return bad('chart의 perLine이 올바르지 않아요')
+    if (!(Number.isInteger(p.value) && (p.value as number) >= 1 && (p.value as number) <= groups)) return bad(`perLine의 value는 (match 묶음 번호) 1~${groups}예요`)
+    if ([...label.ko.matchAll(/\{(\d+)\}/g), ...label.en.matchAll(/\{(\d+)\}/g)].some((m) => +m[1] < 1 || +m[1] > groups)) return bad(`perLine의 label {n}은 (match 묶음 번호) 1~${groups}예요`)
+    return { display: { ...base, perLine: { label, value: p.value as number, scale } } }
+  }
+  const raw = d.series
+  if (!Array.isArray(raw) || !raw.length || raw.length > LIMITS.chartLines) return bad(`chart의 series는 배열이고 1~${LIMITS.chartLines}개예요`)
+  const series: ChartSeries[] = []
+  for (const s of raw) {
+    const label = isObj(s) ? loc(s.label, S, LIMITS.name) : null
+    const scale = isObj(s) ? scaleOf(s) : null
+    if (!isObj(s) || !label || scale === null) return bad('chart의 series 항목이 올바르지 않아요')
+    if (d.match !== undefined) {
+      if (groups !== 2) return bad('series의 key를 쓰려면 match에 묶음이 정확히 2개(이름표, 값) 있어야 해요')
+      if (typeof s.key !== 'string' || !CHART_KEY.test(s.key) || s.col !== undefined) return bad('match와 함께 쓰는 series에는 key(글자)만 있어야 해요')
+      if (series.some((x) => x.key === s.key)) return bad('series의 key가 겹쳐요')
+      series.push({ label, key: s.key, scale })
+    } else {
+      if (!(Number.isInteger(s.col) && (s.col as number) >= 1 && (s.col as number) <= LIMITS.chartCols) || s.key !== undefined) return bad(`split과 함께 쓰는 series에는 col만 있어야 해요 (1~${LIMITS.chartCols})`)
+      if (series.some((x) => x.col === s.col)) return bad('series의 col이 겹쳐요')
+      series.push({ label, col: s.col as number, scale })
+    }
+  }
+  return { display: { ...base, series } }
+}
+
 type Ctx = { official: boolean; packId: string; seen: Set<string>; autoCount: { n: number } }
 
 function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackAction; error?: string } {
@@ -224,6 +309,16 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
   const cmd = a.cmd
   const terminal = mode === 'terminal'
   const stream = mode === 'stream'
+  // 그래프 (5.2.0): 되풀이 실행이라 사용자 값·sudo·미리보기 없이 exec 모드의 읽기 명령만. 읽기 증명은 아래 위험도 계산 뒤에 확인
+  let chart: ChartDisplay | undefined
+  if (isObj(a.display) && a.display.type === 'chart') {
+    if (mode !== 'exec') return bad('chart는 mode가 exec인 항목에서만 쓸 수 있어요')
+    for (const k of ['fields', 'params', 'sudo', 'preview'] as const) if (a[k] !== undefined) return bad(`chart 항목은 ${k}를 쓸 수 없어요`)
+    if (declared !== 'read') return bad('chart 항목은 risk가 read여야 해요')
+    const c = checkChart(a.display, S)
+    if (!c.display) return bad(c.error!)
+    chart = c.display
+  }
   if (stream) {
     if (sudo) return bad('stream 항목은 sudo를 쓸 수 없어요')
     if (a.auto === true) return bad('stream 항목은 auto를 쓸 수 없어요 (사용자가 시작해요)')
@@ -308,6 +403,7 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
       if (pr.risk !== 'read') return bad(`preview는 읽기 전용이어야 해요 — ${why(pr.reasons)}`)
     }
   }
+  if (chart && computed !== 'read') return bad(`chart 항목의 명령은 앱이 읽기로 증명해야 해요 — ${why(reasons)}`) // 공식 팩의 OFFICIAL_UNPROVEN_READS 예외도 쓸 수 없음
   let risk = maxRisk(declared, computed)
   let understated = maxRisk(declared, computed) !== declared // 적힌 값이 계산보다 낮음
   if (S && declared === 'read' && computed !== 'read' && OFFICIAL_UNPROVEN_READS.get(`${ctx.packId}/${id}`) === cmd) {
@@ -374,7 +470,8 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
       if (!(Number.isInteger(ml) && (ml as number) >= LIMITS.logMin && (ml as number) <= LIMITS.logMax)) return bad(`log의 maxLines는 ${LIMITS.logMin}~${LIMITS.logMax}예요`)
       if (d.wrap !== undefined && typeof d.wrap !== 'boolean') return bad('log의 wrap은 true/false예요')
       display = { type: 'log', maxLines: ml as number, wrap: d.wrap !== false }
-    } else hidden ??= 'display' // 모르는 표시 방식 (5.2 이후 추가될 값) → 숨김
+    } else if (d.type === 'chart') display = chart
+    else hidden ??= 'display' // 모르는 표시 방식 (5.2 이후 추가될 값) → 숨김
   }
   if (stream && !hidden) {
     if (display && display.type !== 'log') return bad('stream 항목은 display가 log여야 해요')
@@ -382,11 +479,12 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
   }
   let timeout: number | undefined
   if (a.timeout !== undefined) {
-    const cap = stream ? (S ? LIMITS.timeoutStreamOfficial : LIMITS.timeoutStreamExternal) : S ? LIMITS.timeoutOfficial : LIMITS.timeoutExternal
+    const cap = chart ? LIMITS.chartTimeoutMax : stream ? (S ? LIMITS.timeoutStreamOfficial : LIMITS.timeoutStreamExternal) : S ? LIMITS.timeoutOfficial : LIMITS.timeoutExternal
     if (!(typeof a.timeout === 'number' && a.timeout >= 1 && a.timeout <= cap)) return bad(`timeout은 1~${cap}초예요`)
     timeout = a.timeout
   }
   if (stream) timeout ??= LIMITS.timeoutStreamDefault // 스트림은 항상 최대 실행 시간이 있음
+  if (chart) timeout ??= LIMITS.chartTimeoutDefault // 그래프는 한 번 실행이 짧게 끝나야 함
   ctx.seen.add(id)
   return {
     action: {
@@ -460,6 +558,8 @@ export function validatePack(raw: unknown, opts: ValidateOptions = {}): Validate
   }
   if (raw.plugins.length > LIMITS.plugins) errors.push(`플러그인은 ${LIMITS.plugins}개까지예요`)
   if (!plugins.length) return fail('쓸 수 있는 플러그인이 없어요')
+  // 옛 앱은 chart 항목만 숨기고 팩은 열어 버림 → 그래프를 쓰는 팩은 minApp으로 옛 앱이 팩 전체를 거부하게 해야 함
+  if (plugins.some((p) => p.actions.some((a) => a.display?.type === 'chart')) && !(typeof raw.minApp === 'string' && compareSemver(raw.minApp, CHART_MIN_APP) >= 0)) warnings.push(`chart 항목이 있어요: minApp을 "${CHART_MIN_APP}" 이상으로 적어 주세요`)
   return {
     pack: {
       id: raw.id, format: 1, version: raw.version, name, desc,
@@ -472,8 +572,8 @@ export function validatePack(raw: unknown, opts: ValidateOptions = {}): Validate
 }
 
 // 허용 창·관리 화면용 요약: 위험도별 개수, 적힌 위험도가 부정확한 항목, 숨겨진 항목
-export function summarizePack(p: Pack): { total: number; read: number; change: number; danger: number; understated: number; hidden: number; terminal: number; stream: number; form: number; autoRun: number } {
-  const s = { total: 0, read: 0, change: 0, danger: 0, understated: 0, hidden: 0, terminal: 0, stream: 0, form: 0, autoRun: 0 }
+export function summarizePack(p: Pack): { total: number; read: number; change: number; danger: number; understated: number; hidden: number; terminal: number; stream: number; form: number; chart: number; autoRun: number } {
+  const s = { total: 0, read: 0, change: 0, danger: 0, understated: 0, hidden: 0, terminal: 0, stream: 0, form: 0, chart: 0, autoRun: 0 }
   for (const pl of p.plugins) for (const a of pl.actions) {
     s.total++
     s[a.risk]++
@@ -482,6 +582,7 @@ export function summarizePack(p: Pack): { total: number; read: number; change: n
     if (a.mode === 'terminal') s.terminal++
     if (a.mode === 'stream') s.stream++
     if (a.fields) s.form++
+    if (a.display?.type === 'chart') s.chart++
     if (a.auto || a.fields?.some((f) => f.type === 'select' && f.from)) s.autoRun++ // 누르지 않아도 실행되는 것 (auto, 목록 불러오기)
   }
   return s

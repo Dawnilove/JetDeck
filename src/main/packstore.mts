@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tr } from './i18n.mts'
-import { compareSemver, LIMITS, validatePack, type Pack } from './packschema.mts'
+import { compareSemver, LIMITS, validatePack, type ChartDisplay, type Pack } from './packschema.mts'
 
 export const PACK_EXT = '.jdpack.json'
 export const MAX_FILES = 100
@@ -55,9 +55,11 @@ export function writeState(file: string, st: StateFile): void {
 
 // ───────────── 명령 비교 (허용 창에서 "바뀐 명령" 강조) ─────────────
 export type CommandDiff = { added: string[]; changed: string[]; removed: string[] }
+// 그래프에서 "무엇을 읽어 보여 주나"를 정하는 부분 (단위·범위·점 수는 제외): 바뀌면 허용 창에서 바뀐 항목으로 보임
+const chartCmdPart = (d: ChartDisplay) => ({ every: d.every, match: d.match, split: d.split, skip: d.skip, perLine: d.perLine, series: d.series })
 export function commandMap(p: Pack): Record<string, string> {
   const m: Record<string, string> = Object.create(null)
-  for (const pl of p.plugins) for (const a of pl.actions) m[`${pl.id}/${a.id}`] = a.cmd + (a.preview ? `\u0000${a.preview}` : '') + (a.sudo ? '\u0000sudo' : '') + `\u0000${a.mode}` + (a.fields ? `\u0000fields:${JSON.stringify(a.fields)}` : '')
+  for (const pl of p.plugins) for (const a of pl.actions) m[`${pl.id}/${a.id}`] = a.cmd + (a.preview ? `\u0000${a.preview}` : '') + (a.sudo ? '\u0000sudo' : '') + `\u0000${a.mode}` + (a.fields ? `\u0000fields:${JSON.stringify(a.fields)}` : '') + (a.display?.type === 'chart' ? `\u0000chart:${JSON.stringify(chartCmdPart(a.display))}` : '')
   return m
 }
 export function diffCommands(before: Record<string, string> | undefined, after: Record<string, string>): CommandDiff {
