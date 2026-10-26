@@ -201,3 +201,18 @@ test('출력이 매우 커도 앞부분만 읽고 종료 코드는 놓치지 않
   assert.equal(res![0].status, 'ok')
   assert.equal(res![0].truncated, true)
 })
+
+test('root:"dir" 배지는 연 폴더마다 따로 실행함 (하위 폴더를 캐시로 덮지 않음), root:"line1"은 기준 폴더 안을 캐시로 답함', async () => {
+  const ls = mk({ id: 'ls', cmd: 'ls -1A {dir}', separator: 'line', root: 'dir', tag: undefined, match: '^(.+\.(py))$', code: 2, path: 1, codes: { py: { show: 'py', text: L('py'), tone: 'info' } } })
+  const { c, calls } = conn((_n, cmd) => (cmd.includes('/r/sub') ? 'b.py\n__EXIT__0\n' : 'a.py\n__EXIT__0\n'))
+  const k = key()
+  const top = await runBadges(asWc(new FakeWc()), k, c, '/r', [target(ls)])
+  assert.deepEqual(Object.keys(top![0].items!), ['/r/a.py'])
+  assert.equal(top![0].exact, true)
+  const sub = await runBadges(asWc(new FakeWc()), k, c, '/r/sub', [target(ls)])
+  assert.deepEqual(Object.keys(sub![0].items!), ['/r/sub/b.py'])
+  assert.equal(calls.length, 2)
+  const again = await runBadges(asWc(new FakeWc()), k, c, '/r', [target(ls)]) // 같은 폴더는 ttl 안에 캐시
+  assert.equal(again![0].items!['/r/a.py'].show, 'py')
+  assert.equal(calls.length, 2)
+})

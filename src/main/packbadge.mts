@@ -51,7 +51,7 @@ async function one(conn: BadgeConn, st: ConnState, t: BadgeTarget, dir: string, 
   const out = (status: BadgeResult['status'], more: Partial<BadgeResult> = {}): BadgeResult => ({ packId: t.packId, badgeId: b.id, status, ...more })
   if (st.off.has(id)) return out('slow')
   const ttl = b.ttl * 1000
-  const hit = st.roots.get(id)?.find((h) => now() - h.at < ttl && inside(dir, h.res.root!))
+  const hit = st.roots.get(id)?.find((h) => now() - h.at < ttl && (h.res.exact ? dir === h.res.root : inside(dir, h.res.root!)))
   if (hit) return hit.res
   const negKey = `${id}|${dir}`
   if (now() - (st.neg.get(negKey) ?? -Infinity) < ttl) return out('none')
@@ -91,7 +91,7 @@ async function one(conn: BadgeConn, st: ConnState, t: BadgeTarget, dir: string, 
   const p = parseBadge(b, body, dir)
   if (p === 'unsafe') return remember(out('unsafe'))
   if (!p) return remember(out('none'))
-  return remember(out('ok', { root: p.root, tag: p.tag, items: p.items, truncated: p.truncated || undefined }))
+  return remember(out('ok', { root: p.root, exact: b.root === 'dir' || undefined, tag: p.tag, items: p.items, truncated: p.truncated || undefined }))
 }
 
 // 연결 하나에 한 번에 하나만 실행. 이미 하나가 돌고 있으면 대기열에는 가장 새 요청 하나만 남기고 옛 요청은 null(밀려남)로 끝냄

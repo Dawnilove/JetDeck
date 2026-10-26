@@ -9,7 +9,7 @@ export type BadgeItem = { show: string; tone: BadgeTone; text: L10n }
 export type BadgeStatus = 'ok' | 'none' | 'skipped' | 'unsafe' | 'slow' | 'failed'
 // ok: 기준 폴더(root)를 알아냄(items가 비어 있어도 깨끗한 저장소). none: 해당 없음(저장소가 아님 등). skipped: 이번 폴더로는 읽기가 아니라서 실행 안 함(조용히).
 // unsafe: 저장소 설정이 위험해서 실행 안 함. slow: 연속 시간 초과로 이번 접속 동안 멈춤. failed: 이번 한 번 실패(곧 다시 시도 가능)
-export type BadgeResult = { packId: string; badgeId: string; status: BadgeStatus; root?: string; tag?: string; items?: Record<string, BadgeItem>; truncated?: boolean }
+export type BadgeResult = { packId: string; badgeId: string; status: BadgeStatus; root?: string; exact?: boolean; tag?: string; items?: Record<string, BadgeItem>; truncated?: boolean }
 export type BadgeParsed = { root: string; tag?: string; items: Record<string, BadgeItem>; truncated: boolean }
 
 export const BODY_MAX = 1024 * 1024 // 이보다 긴 출력은 잘라서 읽음 (truncated)

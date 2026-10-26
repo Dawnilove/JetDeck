@@ -50,3 +50,10 @@ test('devtools/git 배지가 켜져 있을 때만 내장 Git을 건너뜀', asyn
   assert.equal(skipsBuiltinGit(activeBadges(cat([entry('devtools', true, ['git'])]))), false)
   assert.equal(skipsBuiltinGit(activeBadges(cat([entry('other', true, [])]))), false)
 })
+
+test('exact(root:"dir") 결과는 그 폴더만 덮고 하위 폴더는 다시 물음', () => {
+  const r: BadgeResult = { packId: 'p', badgeId: 'b', status: 'ok', root: '/r', exact: true, items: { '/r/a.py': M('py') } }
+  const { set, none } = applyResults({}, new Set(), '/r', [r])
+  assert.equal(covered(set, none, 'p/b', '/r'), true)
+  assert.equal(covered(set, none, 'p/b', '/r/sub'), false)
+})

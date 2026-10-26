@@ -29,7 +29,7 @@ const under = (root: string, p: string) => p === root || p.startsWith(root === '
 // 이 배지를 이 폴더에 대해 다시 물을 필요가 없는가: 이미 받은 기준 폴더 안이거나, 해당 없음으로 답받은 폴더
 export function covered(set: BadgeSet, none: Set<string>, key: string, dir: string): boolean {
   if (none.has(`${key}\0${dir}`)) return true
-  return Object.values(set).some((r) => r.status === 'ok' && r.root && `${r.packId}/${r.badgeId}` === key && under(r.root, dir))
+  return Object.values(set).some((r) => r.status === 'ok' && r.root && `${r.packId}/${r.badgeId}` === key && (r.exact ? dir === r.root : under(r.root, dir)))
 }
 
 export type Applied = { set: BadgeSet; none: Set<string>; notice?: Record<string, 'unsafe' | 'slow'> }
