@@ -25,6 +25,8 @@ export function resolveParams(a: PackAction, given: Record<string, string> = {})
   return Object.assign(out, resolveFields(a.fields, given))
 }
 export const fill = (cmd: string, values: Record<string, string>) => cmd.replace(/\{(\w+)\}/g, (_m, n: string) => values[n])
+// 배지 명령의 {dir}: 항상 작은따옴표로 감싼 글자 하나로 (폴더 이름에 셸 글자가 있어도 명령이 되지 않음)
+export const fillDir = (cmd: string, dir: string) => cmd.replace(/\{dir\}/g, () => shq(dir))
 
 const DEFAULT_TIMEOUT = 60
 // git은 저장소 설정(core.fsmonitor, 외부 diff·textconv)이 코드를 실행할 수 있어서, 명령에 git이 보이면 앱이 함수로 감싸 그 기능을 끄고 실행함 (팩 글자는 그대로, 터미널 입력 모드는 해당 없음).

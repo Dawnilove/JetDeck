@@ -1,7 +1,7 @@
 // 선언형 팩 (4.5.0 → 5.0.0): 명령·표시 방식·확인창을 JSON 데이터로 적고, 코드는 읽어서 실행만 함. 팩 > 플러그인(화면) > 항목(버튼). Electron 없이 시험
 // 위험도는 팩이 적은 값이 아니라 risk.mts가 계산한 값과의 max (내려갈 수 없음)
 import { FIELD_LIMITS, FIELD_TYPES, FLAG_ON, checkValue, sampleCombos, type Field, type FromSpec } from './packfields.mts'
-import { fill } from './packrun.mts'
+import { fill, fillDir } from './packrun.mts'
 import { analyze, destroysBlockedPath, maxRisk, REASON_TEXT, slotProblem, type Reason, type Risk } from './risk.mts'
 
 export type { Risk, Reason, Field, FromSpec }
@@ -24,6 +24,26 @@ export type ChartDisplay = {
   skip?: number
   perLine?: { label: L10n; value: number; scale: number } // 맞는 줄마다 선 하나. label의 {n}은 n번째 묶음 값, value는 값 묶음 번호(1부터)
   series?: ChartSeries[] // 고정 선 목록
+}
+export type BadgeTone = 'info' | 'ok' | 'warn' | 'bad' | 'dim' // 색은 앱이 정함 (팩은 못 정함)
+export const BADGE_TONES: BadgeTone[] = ['info', 'ok', 'warn', 'bad', 'dim']
+export type BadgeCode = { show: string; text: L10n; tone: BadgeTone } // show: 항목 옆에 보이는 1~2글자
+// 5.3.0 탐색기 배지: 폴더를 열 때 cmd({dir}만 채움)를 자동 실행해 출력 레코드를 (코드, 경로)로 읽고 codes에 적힌 코드만 표시
+export type Badge = {
+  id: string
+  label: L10n
+  cmd: string
+  shell: 'sh' | 'bash-i'
+  separator: 'line' | 'nul'
+  root: 'dir' | 'line1' // line1: 출력 첫 줄이 기준 폴더의 절대 경로 (Git 저장소 최상위)
+  match: string
+  code: number // match 묶음 번호
+  path: number
+  codes: Record<string, BadgeCode>
+  tag?: string // 맞는 첫 레코드의 묶음 1을 기준 폴더 이름 옆에 작게 표시 (정규식)
+  folderDot: boolean
+  ttl: number // 같은 기준 폴더를 다시 실행하기까지 최소 초
+  timeout: number // 초
 }
 export type Choice = { value: string; label: L10n }
 export type Param = { name: string; label: L10n; choices: Choice[] }
@@ -65,6 +85,7 @@ export type Pack = {
   minApp?: string
   official: boolean // 앱에 동봉된 팩만 true (검증 호출 쪽이 정함, 파일 내용으로는 못 정함)
   plugins: PackPlugin[]
+  badges?: Badge[] // 5.3.0: 탐색기 배지 (화면이 아니라 팩 최상위)
 }
 export type ValidateOptions = { official?: boolean; appVersion?: string }
 export type ValidateResult = { pack: Pack | null; errors: string[]; warnings: string[] }
@@ -72,8 +93,11 @@ export type ValidateResult = { pack: Pack | null; errors: string[]; warnings: st
 export const LIMITS = { fileBytes: 512 * 1024, plugins: 20, actionsPerPlugin: 50, actionsPerPack: 200, cmd: 2000, choices: 30, columns: 20, auto: 5, name: 60, desc: 300, confirm: 500, terminalLines: 20, matchLen: 200, comboMax: 500, timeoutExternal: 600, timeoutOfficial: 1800, timeoutDefault: 60, timeoutStreamDefault: 600, timeoutStreamExternal: 3600, timeoutStreamOfficial: 14400, logMin: 100, logMax: 5000, logDefault: 1000,
   // 5.2.0 그래프: 간격·점·선·한 번 실행 시간, 읽는 출력 한도, 동시 실행, 값 상한
   chartEveryExternal: 1, chartEveryOfficial: 0.5, chartEveryMax: 60, chartEveryDefault: 2, chartPointsMin: 10, chartPointsMax: 3600, chartPointsDefault: 300, chartLines: 8, chartCols: 50, chartUnit: 8,
-  chartTimeoutDefault: 10, chartTimeoutMax: 30, chartReadLines: 1000, chartReadLineChars: 1000, chartValueMax: 1e9, chartPerPack: 5, chartPerApp: 10 }
+  chartTimeoutDefault: 10, chartTimeoutMax: 30, chartReadLines: 1000, chartReadLineChars: 1000, chartValueMax: 1e9, chartPerPack: 5, chartPerApp: 10,
+  // 5.3.0 탐색기 배지: 팩당 개수, 코드 수, 표시 글자, 실행 간격·시간, 읽는 결과 한도
+  badges: 2, badgesOfficial: 4, badgeCodes: 30, badgeShow: 2, badgeTtlMin: 3, badgeTtlMax: 300, badgeTtlDefault: 5, badgeTimeoutMax: 15, badgeTimeoutDefault: 10, badgeRecords: 5000, badgeLineChars: 4096, badgeTag: 40, badgeDir: 1024 }
 export const CHART_MIN_APP = '5.2.0'
+export const BADGE_MIN_APP = '5.3.0'
 export const RESERVED_IDS = ['device', 'ros2', 'monitor', 'perf', 'examples', 'ros2-live', 'jetdeck', 'official', 'app', 'core', 'snippets']
 // 공식 팩에서 읽기로 증명되지 않아도 읽기로 인정하는 항목 (팩id/항목id → 고정된 명령). 새 공식 항목을 추가하면 여기와 시험을 고쳐야 함 = 리뷰 강제
 export const OFFICIAL_UNPROVEN_READS = new Map<string, string>([
@@ -275,6 +299,75 @@ function checkChart(d: Record<string, unknown>, S: boolean): { display?: ChartDi
     }
   }
   return { display: { ...base, series } }
+}
+
+// 탐색기 배지 읽기 (5.3.0). 자동으로 돌아가는 명령이라 앱이 읽기로 증명한 것만 받음 (실행 직전에 실제 폴더로 다시 분석함 — packbadgecore)
+const BADGE_SAMPLE_DIR = '/home/user/project'
+const NO_CTRL = /[\u0000-\u001f\u007f-\u009f\s​-‏‪-‮⁦-⁩﻿]/
+function checkBadge(b: unknown, S: boolean, seen: Set<string>): { badge?: Badge; error?: string } {
+  if (!isObj(b)) return { error: '배지 형식이 올바르지 않아요' }
+  const id = b.id
+  if (typeof id !== 'string' || !ID.test(id)) return { error: `id가 올바르지 않아요: ${String(id).slice(0, 40)}` }
+  const bad = (m: string) => ({ error: `${id}: ${m}` })
+  if (seen.has(id)) return bad('id가 겹쳐요')
+  const label = loc(b.label, S, LIMITS.name)
+  if (!label) return bad(S ? 'label은 {ko, en} 둘 다 있어야 해요' : `label은 글자(또는 {ko, en})이고 ${LIMITS.name}자 이내예요`)
+  if (typeof b.cmd !== 'string' || !b.cmd.trim()) return bad('cmd가 비었어요')
+  if (b.cmd.length > LIMITS.cmd) return bad(`cmd는 ${LIMITS.cmd}자 이내예요`)
+  if (b.cmd.includes('\r') || b.cmd.search(BAD_TEXT) >= 0) return bad('cmd에 제어 문자는 쓸 수 없어요')
+  const slots = placeholders(b.cmd)
+  if (slots.some((n) => n !== 'dir')) return bad('cmd에는 입력 자리 {dir}만 쓸 수 있어요')
+  if (!slots.length) return bad('cmd에 {dir}이 필요해요')
+  const slotErr = slotProblem(b.cmd)
+  if (slotErr) return bad(slotErr)
+  const proof = analyze(fillDir(b.cmd, BADGE_SAMPLE_DIR))
+  if (proof.risk !== 'read') return bad(`배지 명령은 앱이 읽기로 증명해야 해요 — ${why(proof.reasons)}`) // 공식 팩의 OFFICIAL_UNPROVEN_READS 예외도 쓸 수 없음
+  if (b.shell !== undefined && b.shell !== 'sh' && b.shell !== 'bash-i') return bad("shell은 'sh' 또는 'bash-i'예요")
+  if (b.separator !== undefined && b.separator !== 'line' && b.separator !== 'nul') return bad("separator는 'line' 또는 'nul'이에요")
+  if (b.root !== undefined && b.root !== 'dir' && b.root !== 'line1') return bad("root는 'dir' 또는 'line1'이에요")
+  if (typeof b.match !== 'string') return bad('match는 문자열이에요')
+  let re: RegExp
+  try {
+    re = new RegExp(b.match)
+  } catch {
+    return bad('match 정규식이 올바르지 않아요')
+  }
+  if (!S) {
+    const p = regexProblem(b.match)
+    if (p) return bad(p)
+  }
+  const groups = new RegExp(re.source + '|').exec('')!.length - 1
+  if (!(Number.isInteger(b.code) && Number.isInteger(b.path) && b.code !== b.path && [b.code, b.path].every((n) => (n as number) >= 1 && (n as number) <= groups))) return bad(`code·path는 서로 다른 match 묶음 번호예요 (1~${groups})`)
+  if (!isObj(b.codes)) return bad(`codes는 {코드: {show, text, tone}} 모양이고 1~${LIMITS.badgeCodes}개예요`)
+  const entries = Object.entries(b.codes)
+  if (!entries.length || entries.length > LIMITS.badgeCodes) return bad(`codes는 {코드: {show, text, tone}} 모양이고 1~${LIMITS.badgeCodes}개예요`)
+  const codes = Object.create(null) as Record<string, BadgeCode>
+  for (const [k, v] of entries) {
+    if (k === '__proto__' || !k.length || k.length > 2 || /[\u0000-\u001f\u007f-\u009f]/.test(k)) return bad('codes의 코드는 1~2글자예요')
+    const text = isObj(v) ? loc(v.text, S, LIMITS.name) : null
+    if (!isObj(v) || !text) return bad('codes의 text가 올바르지 않아요')
+    if (typeof v.show !== 'string' || [...v.show].length < 1 || [...v.show].length > LIMITS.badgeShow || NO_CTRL.test(v.show)) return bad(`codes의 show는 1~${LIMITS.badgeShow}글자(보이는 글자)예요`)
+    if (!BADGE_TONES.includes(v.tone as BadgeTone)) return bad('codes의 tone은 info·ok·warn·bad·dim 중 하나예요')
+    codes[k] = { show: v.show, text, tone: v.tone as BadgeTone }
+  }
+  let tag: string | undefined
+  if (b.tag !== undefined) {
+    let tg: RegExp | null = null
+    try {
+      tg = isObj(b.tag) && typeof b.tag.match === 'string' ? new RegExp(b.tag.match) : null
+    } catch {
+      /* 아래에서 오류 처리 */
+    }
+    if (!tg || new RegExp(tg.source + '|').exec('')!.length < 2 || (!S && regexProblem((b.tag as { match: string }).match))) return bad('tag의 match가 올바르지 않아요 (묶음 1개 이상)')
+    tag = (b.tag as { match: string }).match
+  }
+  if (b.folderDot !== undefined && typeof b.folderDot !== 'boolean') return bad('folderDot은 true/false예요')
+  const ttl = b.ttl ?? LIMITS.badgeTtlDefault
+  if (!(finite(ttl) && ttl >= LIMITS.badgeTtlMin && ttl <= LIMITS.badgeTtlMax)) return bad(`ttl은 ${LIMITS.badgeTtlMin}~${LIMITS.badgeTtlMax}초예요`)
+  const timeout = b.timeout ?? LIMITS.badgeTimeoutDefault
+  if (!(finite(timeout) && timeout >= 1 && timeout <= LIMITS.badgeTimeoutMax)) return bad(`timeout은 1~${LIMITS.badgeTimeoutMax}초예요`)
+  seen.add(id)
+  return { badge: { id, label, cmd: b.cmd, shell: b.shell === 'bash-i' ? 'bash-i' : 'sh', separator: b.separator === 'nul' ? 'nul' : 'line', root: b.root === 'line1' ? 'line1' : 'dir', match: b.match, code: b.code as number, path: b.path as number, codes, tag, folderDot: b.folderDot !== false, ttl, timeout } }
 }
 
 type Ctx = { official: boolean; packId: string; seen: Set<string>; autoCount: { n: number } }
@@ -557,14 +650,30 @@ export function validatePack(raw: unknown, opts: ValidateOptions = {}): Validate
     plugins.push({ id: p.id, title, desc: pdesc, icon, group, actions })
   }
   if (raw.plugins.length > LIMITS.plugins) errors.push(`플러그인은 ${LIMITS.plugins}개까지예요`)
-  if (!plugins.length) return fail('쓸 수 있는 플러그인이 없어요')
+  // 탐색기 배지 (5.3.0): 배지만 있는 팩도 가능하므로 플러그인이 없어도 배지가 있으면 통과
+  const badges: Badge[] = []
+  if (raw.badges !== undefined) {
+    const maxBadges = S ? LIMITS.badgesOfficial : LIMITS.badges
+    if (!Array.isArray(raw.badges)) errors.push('badges는 배열이에요')
+    else {
+      const seenB = new Set<string>()
+      for (const b of raw.badges.slice(0, maxBadges)) {
+        const r = checkBadge(b, S, seenB)
+        if (r.badge) badges.push(r.badge)
+        else errors.push(`badges/${r.error}`)
+      }
+      if (raw.badges.length > maxBadges) errors.push(`배지는 ${maxBadges}개까지예요`)
+    }
+  }
+  if (!plugins.length && !badges.length) return fail('쓸 수 있는 플러그인이 없어요')
+  if (badges.length && !(typeof raw.minApp === 'string' && compareSemver(raw.minApp, BADGE_MIN_APP) >= 0)) warnings.push(`badges가 있어요: minApp을 "${BADGE_MIN_APP}" 이상으로 적어 주세요`)
   // 옛 앱은 chart 항목만 숨기고 팩은 열어 버림 → 그래프를 쓰는 팩은 minApp으로 옛 앱이 팩 전체를 거부하게 해야 함
   if (plugins.some((p) => p.actions.some((a) => a.display?.type === 'chart')) && !(typeof raw.minApp === 'string' && compareSemver(raw.minApp, CHART_MIN_APP) >= 0)) warnings.push(`chart 항목이 있어요: minApp을 "${CHART_MIN_APP}" 이상으로 적어 주세요`)
   return {
     pack: {
       id: raw.id, format: 1, version: raw.version, name, desc,
       author: str(raw.author, 100), license: str(raw.license, 60), homepage: str(raw.homepage, 200), minApp: raw.minApp as string | undefined,
-      official: S, plugins
+      official: S, plugins, ...(badges.length ? { badges } : {})
     },
     errors,
     warnings
@@ -572,8 +681,8 @@ export function validatePack(raw: unknown, opts: ValidateOptions = {}): Validate
 }
 
 // 허용 창·관리 화면용 요약: 위험도별 개수, 적힌 위험도가 부정확한 항목, 숨겨진 항목
-export function summarizePack(p: Pack): { total: number; read: number; change: number; danger: number; understated: number; hidden: number; terminal: number; stream: number; form: number; chart: number; autoRun: number } {
-  const s = { total: 0, read: 0, change: 0, danger: 0, understated: 0, hidden: 0, terminal: 0, stream: 0, form: 0, chart: 0, autoRun: 0 }
+export function summarizePack(p: Pack): { total: number; read: number; change: number; danger: number; understated: number; hidden: number; terminal: number; stream: number; form: number; chart: number; badge: number; autoRun: number } {
+  const s = { total: 0, read: 0, change: 0, danger: 0, understated: 0, hidden: 0, terminal: 0, stream: 0, form: 0, chart: 0, badge: p.badges?.length ?? 0, autoRun: p.badges?.length ?? 0 } // 배지는 폴더를 열 때 저절로 실행되므로 autoRun에 셈
   for (const pl of p.plugins) for (const a of pl.actions) {
     s.total++
     s[a.risk]++
