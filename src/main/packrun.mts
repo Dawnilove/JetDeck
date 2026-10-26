@@ -24,8 +24,12 @@ export function resolveParams(a: PackAction, given: Record<string, string> = {})
 export const fill = (cmd: string, values: Record<string, string>) => cmd.replace(/\{(\w+)\}/g, (_m, n: string) => values[n])
 
 const DEFAULT_TIMEOUT = 60
+// git은 저장소 설정(core.fsmonitor, 외부 diff·textconv)이 코드를 실행할 수 있어서, 명령에 git이 보이면 앱이 함수로 감싸 그 기능을 끄고 실행함 (팩 글자는 그대로, 터미널 입력 모드는 해당 없음).
+// risk.mts가 git 앞 옵션을 -C·--no-pager·--no-optional-locks로만 허용하므로 그 셋만 처리하면 됨
+export const GIT_GUARD = `git() { case "$1" in -C) _d=$2; shift 2; (cd "$_d" && git "$@");; --no-pager|--no-optional-locks) shift; git "$@";; diff|log|show) _s=$1; shift; command git -c core.fsmonitor=false "$_s" --no-ext-diff --no-textconv "$@";; *) command git -c core.fsmonitor=false "$@";; esac; }; unset GIT_EXTERNAL_DIFF
+`
 // 끝에 종료 코드를 붙여 성공·실패를 구분. { …; } 로 묶어 stderr도 함께 받음 (run()은 stderr를 버림)
-const wrap = (inner: string, timeout: number, shell: 'sh' | 'bash-i' = 'sh') => `timeout ${timeout} ${shell === 'bash-i' ? 'bash -ic' : 'sh -c'} ${shq(`{ ${inner}\n} 2>&1; echo __EXIT__$?`)}` // bash-i: ~/.bashrc 환경(ROS2)
+const wrap = (inner: string, timeout: number, shell: 'sh' | 'bash-i' = 'sh') => `timeout ${timeout} ${shell === 'bash-i' ? 'bash -ic' : 'sh -c'} ${shq(`${/\bgit\b/.test(inner) ? GIT_GUARD : ''}{ ${inner}\n} 2>&1; echo __EXIT__$?`)}` // bash-i: ~/.bashrc 환경(ROS2)
 
 export function buildRun(a: PackAction, values: Record<string, string>): { command: string; termCmd: string } {
   const cmd = fill(a.cmd, values)

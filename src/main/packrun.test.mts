@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { buildPreview, buildRun, buildTerminal, fill, parseResult, resolveParams, toRows } from './packrun.mts'
+import { execSync } from 'node:child_process'
+import { mkdtempSync, writeFileSync, chmodSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { GIT_GUARD, buildPreview, buildRun, buildTerminal, fill, parseResult, resolveParams, toRows } from './packrun.mts'
 import type { PackAction } from './packschema.mts'
 
 const L = (s: string) => ({ ko: s, en: s })
@@ -55,4 +59,27 @@ test('bash-i 셸 · 터미널 입력 · 탭 분리 · 표 상한', () => {
   assert.equal(toRows({ type: 'table', split: 'ws', columns: [L('a'), L('b')] }, many)!.length, 500)
   assert.equal(toRows({ type: 'table', match: '^(.*)$', columns: [L('a')] }, many)!.length, 500)
   assert.equal(toRows({ type: 'table', match: '^(.*)$', columns: [L('a')] }, 'x'.repeat(5000))![0][0].length, 1000)
+})
+
+test('git 보호: git이 보일 때만 함수로 감싸고, 실제로 옵션이 붙는다', () => {
+  assert.ok(buildRun(A({ cmd: 'git status' }), {}).command.includes('core.fsmonitor=false'))
+  assert.ok(buildPreview(A({ cmd: 'x', preview: 'git log -n 3' }), {}).includes(GIT_GUARD.slice(0, 20)))
+  assert.ok(!buildRun(A({ cmd: 'ls' }), {}).command.includes('fsmonitor'))
+  // 가짜 git(받은 인자를 그대로 찍음)으로 sh에서 실제 실행해 확인. sh·timeout이 없는 환경이면 건너뜀
+  try {
+    execSync('sh -c "command -v timeout"', { stdio: 'ignore' })
+  } catch {
+    return
+  }
+  const dir = mkdtempSync(join(tmpdir(), 'fakegit-'))
+  writeFileSync(join(dir, 'git'), ['#!/bin/sh', 'echo "git $*"', ''].join('\n'))
+  chmodSync(join(dir, 'git'), 0o755)
+  const PATH = dir + (process.platform === 'win32' ? ';' : ':') + process.env.PATH
+  const sh = (cmd: string) => execSync(buildRun(A({ cmd }), {}).command, { env: { ...process.env, PATH, GIT_EXTERNAL_DIFF: 'evil' }, shell: 'sh' }).toString()
+  assert.match(sh('git status -s'), /git -c core.fsmonitor=false status -s/)
+  assert.match(sh('git diff --stat'), /git -c core.fsmonitor=false diff --no-ext-diff --no-textconv --stat/)
+  assert.match(sh('git --no-pager log -n 1'), /git -c core.fsmonitor=false log --no-ext-diff --no-textconv -n 1/)
+  assert.match(sh('git -C /tmp show HEAD'), /git -c core.fsmonitor=false show --no-ext-diff --no-textconv HEAD/)
+  assert.match(sh('echo $(git status) | cat'), /git -c core.fsmonitor=false status/)
+  assert.match(sh('git status >/dev/null; env | grep -c GIT_EXTERNAL_DIFF; true'), /^0/)
 })
