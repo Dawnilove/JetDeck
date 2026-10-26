@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tr } from './i18n.mts'
@@ -7,10 +8,13 @@ import deviceJson from './packs/device.json'
 import examplesJson from './packs/examples.json'
 import perfJson from './packs/perf.json'
 import ros2Json from './packs/ros2.json'
+import { parseFromOutput } from './packfields.mts'
 import { sanitizeOutput } from './packsafe.mts'
-import { buildPreview, buildRun, buildTerminal, parseResult, resolveParams, type PackResult } from './packrun.mts'
+import { buildFrom, buildPreview, buildRun, buildStream, buildTerminal, fill, parseResult, resolveParams, type PackResult } from './packrun.mts'
+import { startStream, stopAll, stopStream } from './packstream.mts'
 import { approveAndEnable, buildCatalog, enabledPacks, ensureDir, forgetPack, inspectPackBytes, installPackBytes, readState, readUserDir, setEnabled, writeState, type Inspect, type PackEntry, type StateFile } from './packstore.mts'
-import type { Pack, PackAction } from './packschema.mts'
+import { LIMITS, type Pack, type PackAction, type Reason, type Risk } from './packschema.mts'
+import { analyzeWithInput } from './risk.mts'
 import { requireClient as client } from './session'
 
 // 선언형 팩 (5.0.0): 명령은 팩 데이터(main)에 있고 화면은 packId/pluginId/actionId만 보냄. 외부 팩은 사용자가 허용한 파일 지문과 같을 때만 켜짐.
@@ -61,6 +65,21 @@ const PREVIEW_TTL = 10 * 60_000
 const inflight = new Map<string, Set<string>>() // 팩 id → 실행 중인 항목 (같은 항목 중복 금지, 팩당 동시 3개)
 const MAX_INFLIGHT = 3
 
+// 실행 직전 준비 (5.1.0): 입력 값을 검사해서 채운 명령과, 그 명령 전체를 다시 분석한 위험도를 돌려줌.
+// 화면은 이 결과로 확인창을 띄우고, 확인을 받으면 token을 실행 요청에 같이 보냄 → main이 "확인한 명령 = 실행할 명령"인지 다시 검사함 (입력 폼·스트림 항목)
+export type Prepared = { cmd: string; risk: Risk; reasons: Reason[]; escalated: boolean; understated: boolean; needConfirm: boolean; token: string }
+function prepareAction(pack: Pack, pluginId: string, a: PackAction, values: Record<string, string>): Prepared {
+  const cmd = fill(a.cmd, values)
+  // 입력 필드가 없는 항목은 로드 때 계산한 값이 전부임 (공식 팩의 고정된 읽기 예외도 그대로 유지)
+  const r = a.fields ? analyzeWithInput(cmd, { risk: a.risk, reasons: a.reasons }, { stream: a.mode === 'stream' }) : { risk: a.risk, reasons: a.reasons, escalated: false }
+  const token = createHash('sha256').update(`${pack.id}/${pluginId}/${a.id}\0${a.mode}\0${cmd}`).digest('hex').slice(0, 32)
+  return { cmd, risk: r.risk, reasons: r.reasons, escalated: r.escalated, understated: a.understated, needConfirm: r.risk !== 'read', token }
+}
+// 확인이 필요한 실행인데 확인한 명령과 다르거나 확인 없이 왔으면 거부 (스트림·입력 폼 항목)
+function requireConfirmed(a: PackAction, p: Prepared, token: unknown): void {
+  if ((a.mode === 'stream' || a.fields) && p.needConfirm && token !== p.token) throw new Error(tr('확인한 명령과 달라요. 다시 확인해 주세요'))
+}
+
 export function registerPackIpc(): void {
   rescan()
   // 켜진 팩 (4.5.0 호환: 팩 배열). 관리 화면용 전체 목록은 pack:catalog
@@ -105,10 +124,11 @@ export function registerPackIpc(): void {
     return rescan()
   })
 
-  ipcMain.handle('pack:run', async (_e, connId: string, packId: string, pluginId: string, actionId: string, given: Record<string, string> | undefined, mode: 'run' | 'preview'): Promise<PackResult> => {
+  ipcMain.handle('pack:run', async (_e, connId: string, packId: string, pluginId: string, actionId: string, given: Record<string, string> | undefined, mode: 'run' | 'preview', token?: string): Promise<PackResult> => {
     const { pack, action: a } = find(packId, pluginId, actionId)
     if (a.mode !== 'exec') throw new Error(tr('이 항목은 터미널에 입력하는 항목이에요'))
     const values = resolveParams(a, given ?? {})
+    if (mode === 'run') requireConfirmed(a, prepareAction(pack, pluginId, a, values), token)
     const key = `${connId}:${pack.id}/${pluginId}/${a.id}`
     const running = inflight.get(pack.id) ?? new Set<string>()
     if (running.has(key)) throw new Error(tr('같은 항목이 이미 실행 중이에요'))
@@ -132,8 +152,43 @@ export function registerPackIpc(): void {
   })
   // 터미널 입력 항목: 입력할 글자는 main이 팩에서 만들어 돌려줌 (화면이 명령을 끼워 넣을 길이 없음). 위험도·이유를 같이 줘서 화면이 입력 전에 확인창을 띄움
   ipcMain.handle('pack:terminal', (_e, packId: string, pluginId: string, actionId: string, given: Record<string, string> | undefined) => {
-    const { action: a } = find(packId, pluginId, actionId)
+    const { pack, action: a } = find(packId, pluginId, actionId)
     if (a.mode !== 'terminal') throw new Error(tr('이 항목은 터미널에 입력하는 항목이 아니에요'))
-    return { ...buildTerminal(a, resolveParams(a, given ?? {})), risk: a.risk, reasons: a.reasons, understated: a.understated }
+    const values = resolveParams(a, given ?? {})
+    const p = prepareAction(pack, pluginId, a, values) // 입력 값이 위험도를 올렸으면 그 값을 돌려줌
+    return { ...buildTerminal(a, values), risk: p.risk, reasons: p.reasons, understated: a.understated }
   })
+  // 실행 전 준비: 값 검사 + 채운 명령 + 다시 분석한 위험도 + 확인 토큰
+  ipcMain.handle('pack:prepare', (_e, packId: string, pluginId: string, actionId: string, given: Record<string, string> | undefined): Prepared => {
+    const { pack, action: a } = find(packId, pluginId, actionId)
+    return prepareAction(pack, pluginId, a, resolveParams(a, given ?? {}))
+  })
+  // 흐르는 출력: 시작은 확인(필요하면)을 거친 뒤. 멈춤·화면 이탈·연결 끊김·앱 종료는 packstream이 Device 프로세스까지 정리
+  ipcMain.handle('pack:stream-start', (e, connId: string, packId: string, pluginId: string, actionId: string, given: Record<string, string> | undefined, streamId: string, token?: string): Promise<void> => {
+    const { pack, action: a } = find(packId, pluginId, actionId)
+    if (a.mode !== 'stream') throw new Error(tr('이 항목은 실시간으로 보는 항목이 아니에요'))
+    if (!/^[\w-]{1,64}$/.test(String(streamId))) throw new Error(tr('올바르지 않은 요청이에요'))
+    const values = resolveParams(a, given ?? {})
+    requireConfirmed(a, prepareAction(pack, pluginId, a, values), token)
+    return startStream(e.sender, client(connId), String(streamId), pack.id, buildStream(a, values), a.timeout ?? LIMITS.timeoutStreamDefault)
+  })
+  ipcMain.handle('pack:stream-stop', (_e, streamId: string): void => stopStream(String(streamId)))
+  // 동적 선택지(select의 from): 읽기로 증명된 목록 명령을 실행해 줄마다 글자 종류를 검사한 값만 돌려줌
+  ipcMain.handle('pack:from', async (_e, connId: string, packId: string, pluginId: string, actionId: string, fieldName: string): Promise<string[]> => {
+    const { pack, action: a } = find(packId, pluginId, actionId)
+    const f = a.fields?.find((x) => x.name === String(fieldName))
+    if (!f || f.type !== 'select' || !f.from) throw new Error(tr('목록을 불러올 수 없는 항목이에요'))
+    const key = `${connId}:${pack.id}/${pluginId}/${a.id}#${f.name}`
+    const running = inflight.get(pack.id) ?? new Set<string>()
+    if (running.has(key)) throw new Error(tr('같은 항목이 이미 실행 중이에요'))
+    if (running.size >= MAX_INFLIGHT) throw new Error(tr('이 팩은 동시에 3개까지만 실행할 수 있어요'))
+    running.add(key)
+    inflight.set(pack.id, running)
+    try {
+      return parseFromOutput(f.from, sanitizeOutput(await run(client(connId), buildFrom(f.from))))
+    } finally {
+      running.delete(key)
+    }
+  })
+  app.on('before-quit', stopAll)
 }
