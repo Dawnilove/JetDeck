@@ -33,7 +33,7 @@ test('device.json: 모든 항목이 검증을 통과하고 한·영이 모두 �
 test('device.json: 읽기로 증명 못 하는 읽기 항목은 신뢰 목록과 정확히 같다', () => {
   const unproven: [string, string][] = []
   for (const p of raw.plugins) for (const a of p.actions) {
-    if (a.risk !== 'read') continue
+    if (a.risk !== 'read' || a.mode === 'stream') continue
     const cmds = (a.params?.[0]?.choices ?? [{ value: '' }]).map((c: { value: string }) => fill(a.cmd, { [a.params?.[0]?.name ?? '']: c.value }))
     if (cmds.some((c: string) => analyze(c).risk !== 'read')) unproven.push([`${'device'}/${a.id}`, a.cmd])
   }
@@ -47,16 +47,23 @@ test('device.json: 5.0.0 추가 항목(전원 모드 현재값, 로그 보기)�
 })
 
 test('device.json: 4.5.0 항목은 그대로 (5.0.0 추가분 제외)', () => {
-  const ids = r.pack!.plugins.map((p) => `${p.id}:${p.actions.map((a) => a.id).filter((i) => i !== 'pwr-mode').join(',')}`).filter((s) => s !== 'logs:log-view')
+  const ids = r.pack!.plugins.map((p) => `${p.id}:${p.actions.map((a) => a.id).filter((i) => i !== 'pwr-mode').join(',')}`).filter((s) => s !== 'logs:log-view,log-follow')
   assert.deepEqual(ids, [
     'apt:apt-check,apt-update,apt-upgrade',
     'disk:disk-df,disk-du,apt-clean,apt-autoremove,journal-vacuum',
     'power:pwr-status,pwr-target,pwr-sched-reboot,pwr-sched-off,pwr-cancel,pwr-reboot,pwr-off'
   ])
-  const risk = Object.fromEntries(r.pack!.plugins.flatMap((p) => p.actions.map((a) => [a.id, a.risk])).filter(([i]) => i !== 'pwr-mode' && i !== 'log-view'))
+  const risk = Object.fromEntries(r.pack!.plugins.flatMap((p) => p.actions.map((a) => [a.id, a.risk])).filter(([i]) => i !== 'pwr-mode' && i !== 'log-view' && i !== 'log-follow'))
   assert.deepEqual(risk, {
     'apt-check': 'read', 'apt-update': 'change', 'apt-upgrade': 'danger', 'disk-df': 'read', 'disk-du': 'read', 'apt-clean': 'change', 'apt-autoremove': 'danger', 'journal-vacuum': 'change',
     'pwr-status': 'read', 'pwr-target': 'change', 'pwr-sched-reboot': 'danger', 'pwr-sched-off': 'danger', 'pwr-cancel': 'change', 'pwr-reboot': 'danger', 'pwr-off': 'danger'
   })
   for (const a of r.pack!.plugins.flatMap((p) => p.actions)) assert.equal(a.understated, false, a.id) // 선언과 계산이 어긋난 항목 없음
+})
+
+test('device.json: 실시간 로그(log-follow)는 스트림 읽기이며 증명됨', () => {
+  const a = r.pack!.plugins.flatMap((p) => p.actions).find((x) => x.id === 'log-follow')!
+  assert.equal(a.mode, 'stream')
+  assert.equal(a.computed, 'read')
+  assert.equal(a.understated, false)
 })

@@ -8,6 +8,7 @@ import deviceJson from './packs/device.json'
 import examplesJson from './packs/examples.json'
 import perfJson from './packs/perf.json'
 import ros2Json from './packs/ros2.json'
+import ros2LiveJson from './packs/ros2live.json'
 import { parseFromOutput } from './packfields.mts'
 import { sanitizeOutput } from './packsafe.mts'
 import { buildFrom, buildPreview, buildRun, buildStream, buildTerminal, fill, parseResult, resolveParams, type PackResult } from './packrun.mts'
@@ -22,6 +23,7 @@ import { requireClient as client } from './session'
 const OFFICIAL = [
   { fileName: 'device.json', raw: deviceJson as unknown },
   { fileName: 'ros2.json', raw: ros2Json as unknown },
+  { fileName: 'ros2live.json', raw: ros2LiveJson as unknown }, // 기본 꺼짐(베타)
   { fileName: 'perf.json', raw: perfJson as unknown },
   { fileName: 'examples.json', raw: examplesJson as unknown } // 기본 꺼짐(packstore OFFICIAL_DEFAULT_OFF). 원본: docs/plugins/examples/
 ]

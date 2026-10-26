@@ -1,0 +1,49 @@
+{
+  "id": "ros2-live",
+  "format": 1,
+  "version": "5.1.0",
+  "minApp": "5.1.0",
+  "name": { "ko": "ROS2 실시간 보기 (베타)", "en": "ROS2 live view (beta)" },
+  "author": "JetDeck",
+  "license": "Apache-2.0",
+  "plugins": [
+    {
+      "id": "ros2-live",
+      "group": "dev",
+      "title": { "ko": "ROS2 토픽 실시간 (베타)", "en": "ROS2 topics live (beta)" },
+      "desc": { "ko": "토픽을 고르면 메시지(echo)나 발행 속도(hz)를 계속 보여 줘요. 내장 ROS2 화면과 나란히 써 보는 베타예요. 보기만 하고, 화면을 나가면 멈춰요.", "en": "Pick a topic to keep showing its messages (echo) or publish rate (hz). A beta to try next to the built-in ROS2 screen. View only; leaving the screen stops it." },
+      "actions": [
+        {
+          "id": "topic-echo",
+          "label": { "ko": "토픽 메시지 보기 (echo)", "en": "Topic messages (echo)" },
+          "desc": { "ko": "ros2 topic echo — 선택한 토픽의 메시지를 계속 보여 줘요.", "en": "ros2 topic echo — keeps showing messages of the chosen topic." },
+          "mode": "stream",
+          "cmd": "ros2 topic echo {topic}",
+          "risk": "read",
+          "shell": "bash-i",
+          "timeout": 600,
+          "fields": [
+            { "name": "topic", "label": { "ko": "토픽", "en": "Topic" }, "type": "select",
+              "from": { "cmd": "ros2 topic list", "shell": "bash-i", "timeout": 15, "charset": "ros", "max": 200 } }
+          ],
+          "display": { "type": "log", "maxLines": 1000 }
+        },
+        {
+          "id": "topic-hz",
+          "label": { "ko": "토픽 발행 속도 (hz)", "en": "Topic rate (hz)" },
+          "desc": { "ko": "ros2 topic hz — 선택한 토픽이 초당 몇 번 나오는지 계속 보여 줘요.", "en": "ros2 topic hz — keeps showing how many messages per second the chosen topic has." },
+          "mode": "stream",
+          "cmd": "ros2 topic hz {topic}",
+          "risk": "read",
+          "shell": "bash-i",
+          "timeout": 600,
+          "fields": [
+            { "name": "topic", "label": { "ko": "토픽", "en": "Topic" }, "type": "select",
+              "from": { "cmd": "ros2 topic list", "shell": "bash-i", "timeout": 15, "charset": "ros", "max": 200 } }
+          ],
+          "display": { "type": "log", "maxLines": 500 }
+        }
+      ]
+    }
+  ]
+}

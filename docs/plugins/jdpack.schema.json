@@ -8,7 +8,7 @@
   "properties": {
     "$schema": { "type": "string" },
     "$comment": { "type": "string" },
-    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,39}$", "not": { "enum": ["device", "ros2", "monitor", "perf", "examples", "jetdeck", "official", "app", "core", "snippets"] }, "description": "Lower-case letters, digits and '-'. Reserved names and names starting with 'jetdeck-' are refused." },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,39}$", "not": { "enum": ["device", "ros2", "monitor", "perf", "examples", "ros2-live", "jetdeck", "official", "app", "core", "snippets"] }, "description": "Lower-case letters, digits and '-'. Reserved names and names starting with 'jetdeck-' are refused." },
     "format": { "const": 1 },
     "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" },
     "name": { "$ref": "#/definitions/text60" },

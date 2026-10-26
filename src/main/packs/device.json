@@ -304,6 +304,26 @@
             ] }
           ],
           "display": { "type": "text" }
+        },
+        {
+          "id": "log-follow",
+          "label": { "ko": "서비스 로그 따라 보기 (실시간)", "en": "Follow service log (live)" },
+          "desc": { "ko": "journalctl -f — 새 로그가 생길 때마다 이어서 보여 줘요. 멈춤을 누르거나 화면을 나가면 끝나요.", "en": "journalctl -f — keeps showing new log lines as they appear. Stop it, or leave this screen, to end it." },
+          "mode": "stream",
+          "cmd": "journalctl --no-pager -u {unit} -n {lines} -f",
+          "risk": "read",
+          "timeout": 900,
+          "fields": [
+            { "name": "unit", "label": { "ko": "서비스", "en": "Service" }, "type": "select", "choices": [
+              { "value": "ssh", "label": { "ko": "ssh (원격 접속)", "en": "ssh (remote login)" } },
+              { "value": "NetworkManager", "label": { "ko": "NetworkManager (네트워크)", "en": "NetworkManager (network)" } },
+              { "value": "docker", "label": { "ko": "docker", "en": "docker" } },
+              { "value": "systemd-resolved", "label": { "ko": "systemd-resolved (DNS)", "en": "systemd-resolved (DNS)" } },
+              { "value": "cron", "label": { "ko": "cron (예약 작업)", "en": "cron (scheduled jobs)" } }
+            ] },
+            { "name": "lines", "label": { "ko": "처음 줄 수", "en": "First lines" }, "type": "int", "min": 10, "max": 500, "default": "50" }
+          ],
+          "display": { "type": "log", "maxLines": 1000 }
         }
       ]
     }

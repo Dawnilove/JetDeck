@@ -55,7 +55,7 @@ export type ValidateOptions = { official?: boolean; appVersion?: string }
 export type ValidateResult = { pack: Pack | null; errors: string[]; warnings: string[] }
 
 export const LIMITS = { fileBytes: 512 * 1024, plugins: 20, actionsPerPlugin: 50, actionsPerPack: 200, cmd: 2000, choices: 30, columns: 20, auto: 5, name: 60, desc: 300, confirm: 500, terminalLines: 20, matchLen: 200, comboMax: 500, timeoutExternal: 600, timeoutOfficial: 1800, timeoutDefault: 60, timeoutStreamDefault: 600, timeoutStreamExternal: 3600, timeoutStreamOfficial: 14400, logMin: 100, logMax: 5000, logDefault: 1000 }
-export const RESERVED_IDS = ['device', 'ros2', 'monitor', 'perf', 'examples', 'jetdeck', 'official', 'app', 'core', 'snippets']
+export const RESERVED_IDS = ['device', 'ros2', 'monitor', 'perf', 'examples', 'ros2-live', 'jetdeck', 'official', 'app', 'core', 'snippets']
 // 공식 팩에서 읽기로 증명되지 않아도 읽기로 인정하는 항목 (팩id/항목id → 고정된 명령). 새 공식 항목을 추가하면 여기와 시험을 고쳐야 함 = 리뷰 강제
 export const OFFICIAL_UNPROVEN_READS = new Map<string, string>([
   ['device/pwr-status', 'echo "target=$(systemctl get-default 2>/dev/null)"; echo "up=$(uptime -p)"; echo "since=$(uptime -s)"; if [ -f /var/run/reboot-required ]; then echo reboot=yes; else echo reboot=no; fi; if [ -f /run/systemd/shutdown/scheduled ]; then s=$(grep -m1 \'^USEC=\' /run/systemd/shutdown/scheduled | cut -d= -f2); echo "scheduled=$(date -d @$((s/1000000)) \'+%F %T\') $(grep -m1 \'^MODE=\' /run/systemd/shutdown/scheduled | cut -d= -f2)"; else echo scheduled=none; fi']

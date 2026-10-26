@@ -4,6 +4,7 @@ import { test } from 'node:test'
 import { fill } from '../packrun.mts'
 import { OFFICIAL_UNPROVEN_READS, validatePack } from '../packschema.mts'
 import { analyze } from '../risk.mts'
+import { OFFICIAL_DEFAULT_OFF } from '../packstore.mts'
 
 // ros2·perf 공식 팩 (device는 device.test.mts). 통과 못 한 항목은 앱에서 조용히 빠지므로 여기서 잡음
 const walk = (v: unknown, path: string): void => {
@@ -68,4 +69,20 @@ test('perf.json: 모든 항목이 젯슨 전용, 스캔은 바꿈', () => {
   const all = p.plugins.flatMap((x) => x.actions)
   for (const a of all) assert.equal(a.when, 'jetson', a.id)
   assert.equal(all.find((a) => a.id === 'i2c-scan')!.risk, 'change')
+})
+
+test('ros2live.json: 검증 통과, 한·영, 스트림 읽기 증명, 기본 꺼짐 목록에 있음', () => {
+  const raw = JSON.parse(readFileSync(new URL('./ros2live.json', import.meta.url), 'utf8'))
+  const r = validatePack(raw, { official: true })
+  assert.deepEqual(r.errors, [])
+  assert.deepEqual(r.warnings, [])
+  walk(raw, 'ros2live')
+  const all = r.pack!.plugins.flatMap((p) => p.actions)
+  assert.deepEqual(all.map((a) => a.id), ['topic-echo', 'topic-hz'])
+  for (const a of all) {
+    assert.equal(a.mode, 'stream', a.id)
+    assert.equal(a.computed, 'read', a.id)
+    assert.equal(a.understated, false, a.id)
+  }
+  assert.ok(OFFICIAL_DEFAULT_OFF.has('ros2-live'))
 })
