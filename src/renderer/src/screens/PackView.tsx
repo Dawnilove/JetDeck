@@ -7,6 +7,7 @@ import PanelHead, { Desc, Note } from '../components/PanelHead'
 import Segment from '../components/Segment'
 import { errText } from '../util'
 import AskDialog, { type Ask } from './PackAsk'
+import StreamCard from './PackStream'
 import { FieldInputs, formErrors, useFormValues } from './PackForm'
 import { lt } from './PackUi'
 
@@ -136,6 +137,7 @@ export default function PackView({ connId, online, jetson, pack, plugin, trigger
         shown.map((a) => {
           const c = cells[a.id]
           const term = a.mode === 'terminal'
+          if (a.mode === 'stream' && !a.hidden) return <StreamCard key={`${connId}/${a.id}`} connId={connId} online={online} packId={pack.id} pluginId={plugin.id} a={a} />
           if (a.fields && a.mode === 'exec' && !a.hidden) return <FormCard key={a.id} connId={connId} packId={pack.id} pluginId={plugin.id} a={a} c={c} online={online} onRun={(values) => begin(a, values)} />
           return (
             <section key={a.id} className="card card-sm" style={{ display: 'flex', flexDirection: 'column', gap: 10 }} aria-label={lt(a.label)}>
