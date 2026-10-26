@@ -14,7 +14,7 @@ import { dropConn, runBadges } from './packbadge.mts'
 import type { BadgeResult } from './packbadgecore.mts'
 import { startPoll, stopAllPolls, stopPoll } from './packpoll.mts'
 import { sanitizeOutput } from './packsafe.mts'
-import { buildFrom, buildPoll, buildPreview, buildRun, buildStream, buildTerminal, fill, parseResult, resolveParams, type PackResult } from './packrun.mts'
+import { buildFrom, buildPoll, buildPreview, buildRun, buildStream, buildTerminal, fill, hasUnsafeMark, parseResult, resolveParams, unsafeNotice, type PackResult } from './packrun.mts'
 import { startStream, stopAll, stopStream } from './packstream.mts'
 import { approveAndEnable, buildCatalog, enabledPacks, ensureDir, forgetPack, inspectPackBytes, installPackBytes, readState, readUserDir, setBadgesOff, setEnabled, writeState, type Inspect, type PackEntry, type StateFile } from './packstore.mts'
 import { LIMITS, type Pack, type PackAction, type Reason, type Risk } from './packschema.mts'
@@ -144,6 +144,7 @@ export function registerPackIpc(): void {
       if (mode === 'preview') {
         if (!a.preview) throw new Error(tr('미리보기가 없는 항목이에요'))
         const out = await run(client(connId), buildPreview(a, values))
+        if (hasUnsafeMark(out)) return { ok: false, needPassword: false, text: unsafeNotice() } // 미리보기가 안 됐으니 실행도 못 함
         previewed.set(key, Date.now())
         return { ok: true, needPassword: false, text: sanitizeOutput(out.replace(/__EXIT__\d+\s*$/, '').trim()) }
       }
@@ -190,7 +191,9 @@ export function registerPackIpc(): void {
     running.add(key)
     inflight.set(pack.id, running)
     try {
-      return parseFromOutput(f.from, sanitizeOutput(await run(client(connId), buildFrom(f.from))))
+      const out = sanitizeOutput(await run(client(connId), buildFrom(f.from)))
+      if (hasUnsafeMark(out)) throw new Error(unsafeNotice()) // 표식 글자가 선택지로 보이지 않게
+      return parseFromOutput(f.from, out)
     } finally {
       running.delete(key)
     }

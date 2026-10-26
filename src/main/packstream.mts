@@ -4,6 +4,7 @@ import { StringDecoder } from 'string_decoder'
 import { tr } from './i18n.mts'
 import { LiveSet } from './liveset.mts'
 import { onOwnerGone, watchOwner } from './packowner.mts'
+import { unsafeLines } from './packrun.mts'
 import { Batcher, LineAssembler, STREAM_LIMITS, Throttle, type EndReason } from './packstreamcore.mts'
 
 // 팩 흐르는 출력 실행기 (5.1.0). 내장 ROS·빌드·서비스 화면이 쓰는 ptystream.ts는 건드리지 않고 LiveSet만 같이 씀.
@@ -89,14 +90,14 @@ export function startStream(wc: Pick<WebContents, 'send' | 'isDestroyed' | 'once
         if (e.reason) return // 끝내는 중에는 더 보여 주지 않음
         const v = throttle.add(d.length)
         if (v !== 'ok') return stopStream(id, v)
-        batch.add(lines.push(dec.write(d)))
+        batch.add(unsafeLines(lines.push(dec.write(d))))
       })
       ch.on('exit', (code: number | null) => {
         if (typeof code === 'number') e.exit = code
       })
       ch.on('close', () => {
         clearInterval(tick)
-        batch.add(lines.push(dec.end()))
+        batch.add(unsafeLines(lines.push(dec.end())))
         batch.add(lines.flush(Date.now(), true))
         flush()
         live.remove(id, ch)

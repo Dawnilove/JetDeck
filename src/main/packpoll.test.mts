@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
 import { afterEach, test } from 'node:test'
 import { startPoll, stopAllPolls, stopPoll, type PollConn } from './packpoll.mts'
+import { UNSAFE_MARK, unsafeNotice } from './packrun.mts'
 import { LIMITS, type ChartDisplay } from './packschema.mts'
 
 // 5.2.0 그래프 실행기: 가짜 연결·가짜 화면으로 시작·멈춤·겹침 건너뜀·간격 늘림·연속 실패·소유자 정리를 시험 (실제 SSH는 Device 실기에서)
@@ -187,4 +188,14 @@ test('stopAllPolls: 앱 종료 때 모두 정리', async () => {
   startPoll(asWc(wc), pc, 's2', 'pk', 'c', D(0.01), 10)
   stopAllPolls()
   assert.equal(wc.of('pack:poll-end').length, 2)
+})
+
+test('저장소 설정이 위험해서 git을 안 돌렸다는 표식이 오면 연속 실패를 기다리지 않고 바로 멈추고 이유를 알림', async () => {
+  const wc = new FakeWc()
+  const { c, pc } = conn(() => `${UNSAFE_MARK}\n__EXIT__1\n`)
+  startPoll(asWc(wc), pc, 'u1', 'pk', 'cmd', D(0.01), 10)
+  await until(() => wc.of('pack:poll-end').length >= 1)
+  assert.deepEqual(wc.of('pack:poll-end')[0].slice(1), ['u1', 'failures', unsafeNotice()])
+  assert.equal(c.calls, 1)
+  assert.equal(wc.of('pack:poll-data').length, 0)
 })

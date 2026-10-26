@@ -4,7 +4,7 @@ import { execSync } from 'node:child_process'
 import { mkdtempSync, writeFileSync, chmodSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { BADGE_GIT_GUARD, buildFrom, buildPoll, buildPreview, buildRun, buildStream, buildTerminal, fill, parseResult, resolveParams, toRows } from './packrun.mts'
+import { BADGE_GIT_GUARD, UNSAFE_MARK, buildFrom, buildPoll, buildPreview, buildRun, buildStream, buildTerminal, fill, hasUnsafeMark, parseResult, resolveParams, toRows, unsafeLines, unsafeNotice } from './packrun.mts'
 import type { PackAction } from './packschema.mts'
 
 const L = (s: string) => ({ ko: s, en: s })
@@ -110,4 +110,13 @@ test('git 보호는 팩 항목의 모든 실행 경로에 붙음: 실행·미리
   has(buildPoll(A({ cmd: 'git rev-list --count HEAD' })))
   has(buildFrom({ cmd: 'git branch --list', shell: 'sh', timeout: 5 }))
   assert.ok(!buildFrom({ cmd: 'ls', shell: 'sh', timeout: 5 }).includes('git()')) // git이 없으면 감싸지 않음
+})
+
+test('저장소 설정이 위험해서 보호 함수가 거부하면: 결과는 실패 한 줄, 종료 코드가 0이어도 마찬가지, 표식 글자는 선택지·표가 되지 않음', () => {
+  const r = parseResult(A({ display: { type: 'table', columns: [L('a')], split: 'ws' } }), `${UNSAFE_MARK}\n__EXIT__1\n`, 't')
+  assert.deepEqual(r, { ok: false, needPassword: false, text: unsafeNotice() })
+  assert.equal(parseResult(A({}), `x\n${UNSAFE_MARK}\n__EXIT__0\n`, 't').ok, false) // git ... | head 처럼 종료 코드가 가려진 경우
+  assert.equal(hasUnsafeMark(`a\r\n${UNSAFE_MARK}\r\n`), true)
+  assert.equal(hasUnsafeMark(`file ${UNSAFE_MARK} name\n`), false) // 출력 줄의 일부는 해당 없음
+  assert.deepEqual(unsafeLines(['a', UNSAFE_MARK, ` ${UNSAFE_MARK} `, 'b']), ['a', unsafeNotice(), unsafeNotice(), 'b'])
 })

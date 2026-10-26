@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
 import { test } from 'node:test'
 import { activeCount, startStream, stopAll, stopOwnedBy, stopStream } from './packstream.mts'
+import { UNSAFE_MARK, unsafeNotice } from './packrun.mts'
 import { STREAM_LIMITS } from './packstreamcore.mts'
 
 // 5.1.0: 흐르는 출력 실행기. SSH 채널·화면을 가짜로 만들어 시작·멈춤·정리 순서를 시험 (실제 pty의 SIGHUP/SIGINT 전달은 Device 실기에서 확인)
@@ -228,4 +229,17 @@ test('exec 가 실패하면 항목을 지우고 오류를 던짐 (다시 시작 
   await startStream(asWc(wc), asClient(fakeClient(chs)), 'e1', 'pk', 'x', 60)
   stopAll()
   await wait(20)
+})
+
+test('보호 함수가 거부한 표식 줄은 사람이 읽는 문구로 바뀌어 화면에 감', async () => {
+  await settle()
+  fast()
+  const wc = new FakeWc()
+  const chs: FakeChannel[] = []
+  await startStream(asWc(wc), asClient(fakeClient(chs)), 'u1', 'pk', 'sh -c x', 60)
+  chs[0].emit('data', Buffer.from(`${UNSAFE_MARK}\r\nreal line\r\n`))
+  await until(() => wc.of('pack:stream-data').length >= 1)
+  assert.deepEqual((wc.of('pack:stream-data')[0][2] as string[]).slice(0, 2), [unsafeNotice(), 'real line'])
+  chs[0].emit('close')
+  await settle()
 })

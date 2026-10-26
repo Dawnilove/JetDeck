@@ -1,4 +1,5 @@
 // 팩 항목을 실행할 명령으로 만들고 출력을 표시용으로 바꿈 (Electron 없이 시험)
+import { tr } from './i18n.mts'
 import { resolveFields } from './packfields.mts'
 import { sanitizeOutput } from './packsafe.mts'
 import { shq } from './shq.mts'
@@ -40,6 +41,10 @@ const SAFE = '-c core.fsmonitor=false -c core.hooksPath=/dev/null -c gpg.program
 export const BADGE_GIT_GUARD = `\\unalias git 2>/dev/null
 git() { case "$1" in -C) _d=$2; shift 2; (cd "$_d" && git "$@");; --no-pager|--no-optional-locks) shift; git "$@";; *) command git config --local --get-regexp '^(filter\\..*\\.(clean|smudge|process)|diff\\..*\\.(textconv|command)|include\\.|includeif\\.|extensions\\.worktreeconfig)' >/dev/null 2>&1; case $? in 1|128) ;; *) echo ${UNSAFE_MARK}; return 1;; esac; GIT_OPTIONAL_LOCKS=0; GIT_PAGER=cat; export GIT_OPTIONAL_LOCKS GIT_PAGER; case "$1" in diff|log|show) _s=$1; shift; command git ${SAFE} "$_s" --no-ext-diff --no-textconv "$@";; status) shift; command git ${SAFE} status --ignore-submodules=all "$@";; *) command git ${SAFE} "$@";; esac;; esac; }; unset GIT_EXTERNAL_DIFF
 `
+// 보호 함수가 거부하면 UNSAFE_MARK 한 줄이 출력에 들어옴 → 각 실행 길이 이 문구로 바꿔 보여 줌 (실행·미리보기·목록·그래프·실시간)
+export const unsafeNotice = (): string => tr('이 저장소의 설정이 위험해서 실행하지 않았어요')
+export const hasUnsafeMark = (text: string): boolean => text.split(/\r?\n/).some((l) => l.trim() === UNSAFE_MARK)
+export const unsafeLines = (lines: string[]): string[] => lines.map((l) => (l.trim() === UNSAFE_MARK ? unsafeNotice() : l))
 const guarded = (inner: string): string => (/\bgit\b/.test(inner) ? BADGE_GIT_GUARD : '')
 // 끝에 종료 코드를 붙여 성공·실패를 구분. { …; } 로 묶어 stderr도 함께 받음 (run()은 stderr를 버림)
 const wrap = (inner: string, timeout: number, shell: 'sh' | 'bash-i' = 'sh') => `timeout ${timeout} ${shell === 'bash-i' ? 'bash -ic' : 'sh -c'} ${shq(`${guarded(inner)}{ ${inner}\n} 2>&1; echo __EXIT__$?`)}` // bash-i: ~/.bashrc 환경(ROS2)
@@ -105,6 +110,7 @@ export function parseResult(a: PackAction, out: string, termCmd: string): PackRe
   const hasExit = /__EXIT__\d+/.test(out)
   const r = parseAction(out)
   r.text = sanitizeOutput(r.text) // 제어 문자·ANSI 제거, 비밀 가림, 256KB 상한 (표·글자 모두 이 글자에서 만듦)
+  if (hasUnsafeMark(r.text)) return { ok: false, needPassword: false, text: unsafeNotice() } // 파이프 때문에 종료 코드가 0이어도 실패로
   if (!hasExit) {
     // 종료 코드가 없음: 재부팅·종료는 연결이 끊긴 것이라 정상, 아니면 시간 초과·끊김
     return a.disconnects ? { ok: true, needPassword: false, text: r.text } : { ok: false, needPassword: false, text: r.text }

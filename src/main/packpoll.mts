@@ -2,6 +2,7 @@ import type { WebContents } from 'electron'
 import { tr } from './i18n.mts'
 import { onOwnerGone, watchOwner } from './packowner.mts'
 import { FailCounter, lastLine, Pacer, parseChart, readLines, splitExit, type PollEndReason, type Sample } from './packpollcore.mts'
+import { hasUnsafeMark, unsafeNotice } from './packrun.mts'
 import { LIMITS, type ChartDisplay } from './packschema.mts'
 
 // 팩 그래프 되풀이 실행기 (5.2.0). main이 every초마다 읽기 명령을 한 번씩 실행해 점을 화면에 보냄. 화면은 그리기만 함.
@@ -49,6 +50,7 @@ export function startPoll(wc: Pick<WebContents, 'send' | 'isDestroyed' | 'once' 
       const raw = await Promise.race([conn.run(command), new Promise<never>((_r, rej) => (e.guard = setTimeout(() => rej(new Error('timeout')), (timeoutSec + 5) * 1000)))])
       if (e.done) return // 기다리는 동안 멈춤
       const { body, code } = splitExit(raw)
+      if (hasUnsafeMark(body)) return finish(e, 'failures', unsafeNotice()) // 저장소 설정이 위험해서 git을 안 돌림: 되풀이해도 같으므로 바로 멈춤
       const lines = readLines(body)
       e.pacer.record(Date.now() - t)
       if (code !== 0) return fail(lastLine(lines))
