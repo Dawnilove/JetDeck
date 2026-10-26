@@ -2,67 +2,16 @@ import { useEffect, useState } from 'react'
 import type { ActLite } from '../../../main/activity'
 import type { Bucket } from '../../../main/historyfmt.mts'
 import Button from '../components/Button'
+import Chart, { type Band } from '../components/LineChart'
 import PanelHead, { Desc, Note } from '../components/PanelHead'
 import Segment from '../components/Segment'
 import { errText } from '../util'
 import { tr } from '../../../main/i18n.mts'
 
 // 모니터 기록: 최근 1시간을 이 앱의 메모리에만 보관 (파일에 쓰지 않음, 앱을 닫으면 사라짐). 선 그래프 + CSV 내보내기
-type Series = { label: string; color: string; values: (number | null)[]; opacity?: number }
-type Band = { from: number; to: number } // AI가 명령을 돌린 구간(ms)
-const W = 600
-const H = 140
 const MINUTES = [5, 15, 30, 60]
 const N = 300
-
-// 값이 없는 칸(연결이 끊긴 구간)에서는 선을 끊음. 점 하나만 있는 구간은 작은 점으로
-function path(values: (number | null)[], min: number, max: number): string {
-  const x = (i: number) => ((i / (values.length - 1)) * W).toFixed(1)
-  const y = (v: number) => (H - ((Math.min(max, Math.max(min, v)) - min) / (max - min || 1)) * H).toFixed(1)
-  let d = ''
-  values.forEach((v, i) => {
-    if (v == null) return
-    const first = i === 0 || values[i - 1] == null
-    const alone = (i === values.length - 1 || values[i + 1] == null) && first
-    d += `${first ? 'M' : 'L'}${x(i)} ${y(v)}${alone ? ` l0.01 0` : ''} `
-  })
-  return d
-}
 const last = (xs: (number | null)[]) => [...xs].reverse().find((v) => v != null) ?? null
-
-function Chart({ title, unit, series, min = 0, max, digits = 0, note, bands, from, to }: { title: string; unit: string; series: Series[]; min?: number; max: number; digits?: number; note?: string; bands: Band[]; from: number; to: number }) {
-  return (
-    <section className="card card-sm hist-card" aria-label={title}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'baseline' }}>
-        <h2>{title}</h2>
-        <span className="dim mono" style={{ fontSize: 12 }}>{tr('{0}{1} 까지', max, unit)}</span>
-      </div>
-      <svg className="hist-svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={tr('{0} 그래프', title)}>
-        {/* AI가 명령을 돌린 구간 음영 (너무 짧아도 보이게 최소 폭) */}
-        {bands.map((b, i) => {
-          const x0 = Math.max(0, ((b.from - from) / (to - from)) * W)
-          const x1 = Math.min(W, ((b.to - from) / (to - from)) * W)
-          return x1 > x0 || b.to >= from ? <rect key={i} className="hist-band" x={x0} y={0} width={Math.max(2, x1 - x0)} height={H} /> : null
-        })}
-        {[0.25, 0.5, 0.75].map((r) => <line key={r} className="hist-grid-line" x1="0" x2={W} y1={H * r} y2={H * r} />)}
-        {series.map((s) => <path key={s.label} className="hist-line" d={path(s.values, min, max)} stroke={s.color} opacity={s.opacity ?? 1} />)}
-      </svg>
-      <div className="hist-legend">
-        {series.filter((s) => !s.opacity).map((s) => {
-          const v = last(s.values)
-          return (
-            <span key={s.label}>
-              <i className="hist-key" style={{ background: s.color }} />
-              {s.label} <b className="mono">{v == null ? '—' : `${v.toFixed(digits)}${unit}`}</b>
-            </span>
-          )
-        })}
-        {note && <span className="dim">{note}</span>}
-        {bands.length > 0 && <span className="dim"><i className="hist-key hist-key-band" />{tr('AI 명령 실행 구간')}</span>}
-      </div>
-    </section>
-  )
-}
 
 export default function MonitorHistory({ connId }: { connId: string }) {
   const [minutes, setMinutes] = useState(15)
