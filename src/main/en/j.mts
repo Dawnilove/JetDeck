@@ -22,5 +22,19 @@ export const EN_J: Record<string, string> = {
   '출력이 너무 빨라서 멈췄어요': 'Stopped: output was too fast',
   '출력이 너무 많아서 멈췄어요': 'Stopped: too much output',
   '명령이 끝났어요 (종료 코드 {0})': 'The command finished (exit code {0})',
-  '시작하지 못했어요': 'Could not start'
+  '시작하지 못했어요': 'Could not start',
+  '선택: 기기에서 불러옴, 형식 {0}': 'choice: loaded from the Device, format {0}',
+  '선택: {0}': 'choice: {0}',
+  '글자, 형식 {0}, 최대 {1}자': 'text, format {0}, up to {1} chars',
+  '숫자 {0}~{1}': 'number {0}-{1}',
+  '절대 경로, 최대 {0}자': 'absolute path, up to {0} chars',
+  '체크하면 {0}': 'if checked: {0}',
+  '실시간 {0} · 입력 {1}': 'live {0} · input {1}',
+  '자동으로 돌아가는 것 {0}': 'runs automatically {0}',
+  '이 팩은 아래 명령을 누르지 않아도 실행해요': 'This pack runs the commands below without a click',
+  '화면을 열 때': 'When the screen opens',
+  '입력 {0}': 'Input {0}',
+  '자동': 'Auto',
+  '입력 칸': 'Input fields',
+  '고른 값은 따옴표로 감싸 한 글자로만 들어가요': 'The value is quoted and inserted as a single word'
 }

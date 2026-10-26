@@ -3,6 +3,7 @@ import { tr } from '../../../main/i18n.mts'
 import type { Catalog } from '../../../main/pack'
 import { trErr } from '../../../main/packerr.mts'
 import type { Inspect, PackEntry } from '../../../main/packstore.mts'
+import { summarizePack } from '../../../main/packschema.mts'
 import Button from '../components/Button'
 import { errText } from '../util'
 import { lt, PackBody } from './PackUi'
@@ -93,6 +94,8 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
           {e.pack && <span className="dim mono" style={{ fontSize: 12 }}>v{e.pack.version}</span>}
           {e.pack?.author && <span className="dim" style={{ fontSize: 12 }}>{tr('작성자')}: {e.pack.author}</span>}
           {e.source === 'official' && <span className="tag">{tr('공식')}</span>}
+          {e.pack && summarizePack(e.pack).stream > 0 && <span className="tag">{tr('실시간')}</span>}
+          {e.pack && summarizePack(e.pack).form > 0 && <span className="tag">{tr('입력')}</span>}
           <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {e.pack && <Button size={36} onClick={() => setSub({ kind: 'view', e })}>{tr('내용 보기')}</Button>}
             {e.source === 'user' && e.file && <Button size={36} onClick={() => setSub({ kind: 'remove', e })}>{tr('제거')}</Button>}

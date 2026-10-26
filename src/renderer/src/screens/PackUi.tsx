@@ -1,7 +1,9 @@
 import { getLang, tr } from '../../../main/i18n.mts'
 import type { CommandDiff } from '../../../main/packstore.mts'
 import { summarizePack, type L10n, type Pack, type PackAction, type Risk } from '../../../main/packschema.mts'
+import type { Field } from '../../../main/packfields.mts'
 import { REASON_TEXT } from '../../../main/risk.mts'
+import type { ReactNode } from 'react'
 
 // 플러그인 관리·허용 창·팩 화면이 같이 쓰는 조각들
 export const lt = (l: L10n) => l[getLang()]
@@ -29,7 +31,21 @@ export const cmdOf = (a: PackAction, values?: Record<string, string>) => {
   return (a.sudo ? 'sudo ' : '') + c
 }
 
-const fmtSize = (n: number) => (n < 1024 ? `${n}B` : `${(n / 1024).toFixed(1)}KB`)
+// 명령 속 {이름} 자리를 굵게 (입력 값이 들어가는 곳을 허용 창에서 알아보게)
+const withSlots = (cmd: string): ReactNode[] => cmd.split(/(\{\w+\})/).map((p, i) => (/^\{\w+\}$/.test(p) ? <strong key={i}>{p}</strong> : p))
+
+// 입력 필드 한 줄 설명 (앱 글자). 값은 따옴표로 감싸 글자 하나로만 들어감
+const fieldText = (f: Field): string => {
+  const kind =
+    f.type === 'select' ? (f.from ? tr('선택: 기기에서 불러옴, 형식 {0}', f.from.charset) : tr('선택: {0}', (f.choices ?? []).map((c) => c.value).join(' | '))) :
+    f.type === 'text' ? tr('글자, 형식 {0}, 최대 {1}자', f.charset, f.maxLen) :
+    f.type === 'int' ? tr('숫자 {0}~{1}', f.min, f.max) :
+    f.type === 'path' ? tr('절대 경로, 최대 {0}자', f.maxLen) :
+    tr('체크하면 {0}', f.on)
+  return `{${f.name}} (${kind})`
+}
+
+const fmtSize =(n: number) => (n < 1024 ? `${n}B` : `${(n / 1024).toFixed(1)}KB`)
 
 // 허용 창·설치 확인·"내용 보기"가 같이 쓰는 본문: 머리말(작성자·버전·크기·지문·항목 수) + 모든 항목의 명령 전문
 // 숨김(이 앱이 모르는 방식)·젯슨 전용 항목도 숨기지 않고 표시만 달리 함: 실제로 켜진 뒤 다른 환경에서 실행될 수 있어서 명령은 다 보여 줌
@@ -45,7 +61,24 @@ export function PackBody({ pack, hash, size, changes }: { pack: Pack; hash: stri
       <p style={{ fontSize: 13 }}>
         {tr('항목 {0}개: 읽기 {1} · 바꿈 {2} · 위험 {3}', s.total, s.read, s.change, s.danger)}
         {s.terminal > 0 && ` · ${tr('터미널 입력 {0}', s.terminal)}`}
+        {(s.stream > 0 || s.form > 0) && ` / ${tr('실시간 {0} · 입력 {1}', s.stream, s.form)}`}
+        {s.autoRun > 0 && ` / ${tr('자동으로 돌아가는 것 {0}', s.autoRun)}`}
       </p>
+      {s.autoRun > 0 && (
+        <div data-testid="pk-auto" style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: 10, borderRadius: 8, border: '1px solid var(--warn)' }}>
+          <span className="caption">{tr('이 팩은 아래 명령을 누르지 않아도 실행해요')}</span>
+          {pack.plugins.flatMap((pl) => pl.actions.flatMap((a) => [
+            ...(a.auto ? [{ key: `${pl.id}/${a.id}`, name: lt(a.label), cmd: cmdOf(a), when: tr('화면을 열 때') }] : []),
+            ...(a.fields ?? []).flatMap((f) => (f.type === 'select' && f.from ? [{ key: `${pl.id}/${a.id}#${f.name}`, name: `${lt(a.label)} · ${lt(f.label)}`, cmd: f.from.cmd, when: tr('화면을 열 때') }] : []))
+          ])).map((x) => (
+            <div key={x.key} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'baseline', fontSize: 12 }}>
+              <span className="tag">{x.when}</span>
+              <strong>{x.name}</strong>
+              <code className="mono" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{x.cmd}</code>
+            </div>
+          ))}
+        </div>
+      )}
       {s.understated > 0 && <p className="msg-err" style={{ fontSize: 13 }}>⚠ {tr('{0}개는 적힌 위험도가 부정확해요 (읽기라고 적혀 있지만 아니에요)', s.understated)}</p>}
       {s.hidden > 0 && <p className="dim" style={{ fontSize: 13 }}>{tr('{0}개는 새 버전 앱이 필요해서 지금은 쓸 수 없어요', s.hidden)}</p>}
       {changes && changes.removed.length > 0 && <p className="dim" style={{ fontSize: 12 }}>{tr('빠진 항목')}: {changes.removed.join(', ')}</p>}
@@ -59,11 +92,16 @@ export function PackBody({ pack, hash, size, changes }: { pack: Pack; hash: stri
                   <RiskTag risk={a.risk} />
                   <strong>{lt(a.label)}</strong>
                   {a.mode === 'terminal' && <span className="tag">{tr('터미널 입력')}</span>}
+                  {a.mode === 'stream' && <span className="tag">{tr('실시간')}</span>}
+                  {a.fields && <span className="tag">{tr('입력 {0}', a.fields.length)}</span>}
+                  {a.auto && <span className="tag">{tr('자동')}</span>}
                   {a.when === 'jetson' && <span className="tag">{tr('Jetson에서만 표시')}</span>}
                   {a.hidden && <span className="tag">{tr('새 버전 앱이 필요해요')}</span>}
                   {mark(pl.id, a.id) && <span className="tag" style={{ color: 'var(--warn)', borderColor: 'var(--warn)' }}>{mark(pl.id, a.id)}</span>}
                 </div>
-                <code className="mono" style={{ fontSize: 12, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{cmdOf(a)}</code>
+                <code className="mono" style={{ fontSize: 12, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{withSlots(cmdOf(a))}</code>
+                {a.fields && <span className="dim mono" style={{ fontSize: 12, overflowWrap: 'anywhere' }}>{tr('입력 칸')}: {a.fields.map(fieldText).join(' · ')} — {tr('고른 값은 따옴표로 감싸 한 글자로만 들어가요')}</span>}
+                {a.mode === 'stream' && <span className="dim" style={{ fontSize: 12 }}>{tr('멈춤을 누르거나 화면을 나가면 끝나요. 최대 {0}분 실행돼요', Math.max(1, Math.round((a.timeout ?? 600) / 60)))}</span>}
                 {a.preview && <code className="mono dim" style={{ fontSize: 12, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{tr('미리보기')}: {a.preview}</code>}
                 {a.params?.map((p) => (
                   <span key={p.name} className="dim mono" style={{ fontSize: 12 }}>{`{${p.name}}`} = {p.choices.map((c) => c.value).join(' | ')}</span>
