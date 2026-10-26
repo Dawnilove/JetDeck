@@ -119,17 +119,16 @@ test('읽은 숫자가 없으면 빈 점 목록과 마지막 출력 한 줄(hint
   assert.equal(wc.of('pack:poll-end').length, 0) // 숫자가 없어도 5번 넘게 돌며 정지하지 않음
 })
 
-test('동시 한도: 팩당 2개·앱 4개, 같은 id 중복 거부', () => {
+test('동시 한도: 팩당 5개·앱 10개, 같은 id 중복 거부', () => {
   const wc = new FakeWc()
   const { pc } = conn(() => new Promise<string>(() => {}))
-  startPoll(asWc(wc), pc, 'a1', 'p1', 'c', D(50), 10)
-  startPoll(asWc(wc), pc, 'a2', 'p1', 'c', D(50), 10)
-  assert.throws(() => startPoll(asWc(wc), pc, 'a3', 'p1', 'c', D(50), 10), /동시에 2개/)
+  assert.equal(LIMITS.chartPerPack, 5) // 공식 센서 그래프 5개를 한 팩에서 함께 돌릴 수 있게
+  assert.equal(LIMITS.chartPerApp, 10)
+  for (let i = 1; i <= LIMITS.chartPerPack; i++) startPoll(asWc(wc), pc, `a${i}`, 'p1', 'c', D(50), 10)
+  assert.throws(() => startPoll(asWc(wc), pc, 'a6', 'p1', 'c', D(50), 10), /동시에 5개/)
   assert.throws(() => startPoll(asWc(wc), pc, 'a1', 'p2', 'c', D(50), 10), /이미 실행 중/)
-  startPoll(asWc(wc), pc, 'b1', 'p2', 'c', D(50), 10)
-  startPoll(asWc(wc), pc, 'b2', 'p2', 'c', D(50), 10)
-  assert.equal(LIMITS.chartPerApp, 4)
-  assert.throws(() => startPoll(asWc(wc), pc, 'c1', 'p3', 'c', D(50), 10), /동시에 4개/)
+  for (let i = 1; i <= LIMITS.chartPerApp - LIMITS.chartPerPack; i++) startPoll(asWc(wc), pc, `b${i}`, 'p2', 'c', D(50), 10)
+  assert.throws(() => startPoll(asWc(wc), pc, 'c1', 'p3', 'c', D(50), 10), /동시에 10개/)
   stopPoll('a1')
   startPoll(asWc(wc), pc, 'c1', 'p3', 'c', D(50), 10) // 자리가 나면 다시 시작됨
 })

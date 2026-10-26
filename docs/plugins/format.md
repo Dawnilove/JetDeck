@@ -160,7 +160,7 @@ A chart action runs a **read-only** command again and again and draws the number
 * The user presses **Start**, **Stop**, **Pause** and **Clear**. Data stays in the app's memory only; nothing is written to a file.
 * **Leaving the screen, disconnecting, or closing the app stops it.** Every run is one short command that ends by itself, so nothing stays on the Device.
 * Not allowed with a chart: `mode` other than `exec`, `fields`, `params`, `sudo`, `preview`, and a `risk` other than `read`. The app must also **prove** the command is read-only. If it cannot, the action is dropped (a warning is not enough). `auto: true` starts the chart when the screen opens; it counts toward the 5 auto-run actions per pack.
-* Rules: a read waits for the one before it (it is skipped while the last one still runs); if reads are slow the interval is raised (up to 60 s); 5 failures in a row stop the chart. Limits: 2 running charts per pack, 4 in the app.
+* Rules: a read waits for the one before it (it is skipped while the last one still runs); if reads are slow the interval is raised (up to 60 s); 5 failures in a row stop the chart. Limits: 5 running charts per pack, 10 in the app.
 
 | Field | Required | Notes |
 |---|---|---|
@@ -224,7 +224,7 @@ If you write `read` but the app computes more, the action stays, the app uses th
 | Stream output | stops above 1 MB/s (5 s average) or 20 MB; the screen keeps 100–5000 lines |
 | Auto-run actions (`auto`, `from`, auto-start charts) | 5 per pack, counted together |
 | Chart interval / points / lines | 1–60 s (official 0.5–60) / 10–3600 / 8 |
-| Chart: one read | 30 s, 256 KB and 1000 lines of output read, 2 running per pack, 4 in the app |
+| Chart: one read | 30 s, 256 KB and 1000 lines of output read, 5 running per pack, 10 in the app |
 
 ## Compatibility
 

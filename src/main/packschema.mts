@@ -72,7 +72,7 @@ export type ValidateResult = { pack: Pack | null; errors: string[]; warnings: st
 export const LIMITS = { fileBytes: 512 * 1024, plugins: 20, actionsPerPlugin: 50, actionsPerPack: 200, cmd: 2000, choices: 30, columns: 20, auto: 5, name: 60, desc: 300, confirm: 500, terminalLines: 20, matchLen: 200, comboMax: 500, timeoutExternal: 600, timeoutOfficial: 1800, timeoutDefault: 60, timeoutStreamDefault: 600, timeoutStreamExternal: 3600, timeoutStreamOfficial: 14400, logMin: 100, logMax: 5000, logDefault: 1000,
   // 5.2.0 그래프: 간격·점·선·한 번 실행 시간, 읽는 출력 한도, 동시 실행, 값 상한
   chartEveryExternal: 1, chartEveryOfficial: 0.5, chartEveryMax: 60, chartEveryDefault: 2, chartPointsMin: 10, chartPointsMax: 3600, chartPointsDefault: 300, chartLines: 8, chartCols: 50, chartUnit: 8,
-  chartTimeoutDefault: 10, chartTimeoutMax: 30, chartReadLines: 1000, chartReadLineChars: 1000, chartValueMax: 1e9, chartPerPack: 2, chartPerApp: 4 }
+  chartTimeoutDefault: 10, chartTimeoutMax: 30, chartReadLines: 1000, chartReadLineChars: 1000, chartValueMax: 1e9, chartPerPack: 5, chartPerApp: 10 }
 export const CHART_MIN_APP = '5.2.0'
 export const RESERVED_IDS = ['device', 'ros2', 'monitor', 'perf', 'examples', 'ros2-live', 'jetdeck', 'official', 'app', 'core', 'snippets']
 // 공식 팩에서 읽기로 증명되지 않아도 읽기로 인정하는 항목 (팩id/항목id → 고정된 명령). 새 공식 항목을 추가하면 여기와 시험을 고쳐야 함 = 리뷰 강제
