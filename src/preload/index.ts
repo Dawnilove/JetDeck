@@ -8,8 +8,11 @@ import type { Proc } from '../main/procparse.mts'
 import type { DockerAction, DockerData } from '../main/dockerparse.mts'
 import type { RemoteResult } from '../main/remote'
 import type { Guide } from '../main/vncparse.mts'
-import type { Pack } from '../main/packschema.mts'
+import type { Catalog as PackCatalog } from '../main/pack'
+import type { Pack, Reason, Risk } from '../main/packschema.mts'
+import type { Inspect as PackInspect } from '../main/packstore.mts'
 import type { PackResult } from '../main/packrun.mts'
+type PackTerminal = { text: string; enter: boolean; risk: Risk; reasons: Reason[]; understated: boolean }
 import type { BuildKind } from '../main/buildparse.mts'
 import type { ActionResult, SvcAction, SvcData } from '../main/svcparse.mts'
 import type { Health } from '../main/healthparse.mts'
@@ -121,7 +124,16 @@ const api = {
   saveTermLog: (text: string, name: string): Promise<string | null> => ipcRenderer.invoke('termlog:save', text, name),
   // 기기 관리 팩 (4.5.0): 명령은 main의 팩 데이터에 있고 화면은 id만 보냄. mode 'preview'는 미리보기 명령 실행
   packList: (): Promise<Pack[]> => ipcRenderer.invoke('pack:list'),
-  packRun: (connId: string, actionId: string, params: Record<string, string>, mode: 'run' | 'preview'): Promise<PackResult> => ipcRenderer.invoke('pack:run', connId, actionId, params, mode),
+  packRun: (connId: string, packId: string, pluginId: string, actionId: string, params: Record<string, string>, mode: 'run' | 'preview'): Promise<PackResult> => ipcRenderer.invoke('pack:run', connId, packId, pluginId, actionId, params, mode),
+  // 플러그인 관리 (5.0.0): 전체 목록(공식+내 팩, 상태·문제·위험도 요약), 켜기·끄기(외부 팩은 허용 창에서 보여 준 지문을 같이 보냄), 설치(고르기 → 내용 확인 → 지문으로 확정), 제거(휴지통), 터미널 입력 항목
+  packCatalog: (): Promise<PackCatalog> => ipcRenderer.invoke('pack:catalog'),
+  packRescan: (): Promise<PackCatalog> => ipcRenderer.invoke('pack:rescan'),
+  packEnable: (packId: string, on: boolean, shownHash?: string): Promise<PackCatalog> => ipcRenderer.invoke('pack:enable', packId, on, shownHash),
+  packPick: (): Promise<PackInspect | null> => ipcRenderer.invoke('pack:pick'),
+  packInstall: (hash: string): Promise<PackCatalog> => ipcRenderer.invoke('pack:install', hash),
+  packRemove: (packId: string): Promise<PackCatalog> => ipcRenderer.invoke('pack:remove', packId),
+  packOpenDir: (): Promise<void> => ipcRenderer.invoke('pack:open-dir'),
+  packTerminal: (packId: string, pluginId: string, actionId: string, params: Record<string, string>): Promise<PackTerminal> => ipcRenderer.invoke('pack:terminal', packId, pluginId, actionId, params),
   // 기기 점검 (읽기 전용). smart=false면 SMART 생략
   healthRead: (connId: string, smart: boolean): Promise<Health> => ipcRenderer.invoke('health:read', connId, smart),
   // Docker 패널 (젯슨의 docker CLI를 SSH로 실행)

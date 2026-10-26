@@ -26,6 +26,11 @@ export default function Manage({ connId, online, onLaunch }: Props) {
   const [ask, setAsk] = useState<Ask | null>(null)
   const pages = packs.flatMap((p) => p.plugins)
   const page = pages.find((p) => p.id === pageId) ?? pages[0]
+  const shown = (page?.actions ?? []).filter((a) => a.mode === 'exec' && !a.hidden) // 터미널 입력·새 앱이 필요한 항목은 세션 B의 PackView가 다룸
+  const where = (a: PackAction): [string, string] => {
+    for (const p of packs) for (const pl of p.plugins) if (pl.actions.includes(a)) return [p.id, pl.id]
+    return ['', '']
+  }
   const started = useRef(new Set<string>()) // 자동 실행은 연결·페이지마다 한 번
 
   useEffect(() => {
@@ -44,7 +49,7 @@ export default function Manage({ connId, online, onLaunch }: Props) {
   const exec = async (a: PackAction, values: Record<string, string>): Promise<PackResult | null> => {
     setCell(a.id, { busy: true })
     try {
-      const r = await window.api.packRun(connId, a.id, values, 'run')
+      const r = await window.api.packRun(connId, ...where(a), a.id, values, 'run')
       setCell(a.id, { busy: false, result: r })
       return r
     } catch (e) {
@@ -53,7 +58,7 @@ export default function Manage({ connId, online, onLaunch }: Props) {
     }
   }
   const autoRun = (all: boolean) => {
-    for (const a of page?.actions ?? []) if (a.auto && (all || !started.current.has(a.id))) {
+    for (const a of shown) if (a.auto && (all || !started.current.has(a.id))) {
       started.current.add(a.id)
       exec(a, valuesOf(a))
     }
@@ -71,7 +76,7 @@ export default function Manage({ connId, online, onLaunch }: Props) {
     setAsk({ action: a, values, loading: !!a.preview })
     if (!a.preview) return
     try {
-      const r = await window.api.packRun(connId, a.id, values, 'preview')
+      const r = await window.api.packRun(connId, ...where(a), a.id, values, 'preview')
       setAsk((s) => (s?.action.id === a.id ? { ...s, preview: r.text, loading: false } : s))
     } catch (e) {
       setAsk((s) => (s?.action.id === a.id ? { ...s, error: errText(e), loading: false } : s))
@@ -97,7 +102,7 @@ export default function Manage({ connId, online, onLaunch }: Props) {
       {!online && <Note>{tr('연결되면 사용할 수 있어요.')}</Note>}
       {page?.desc && <Desc>{t(page.desc)}</Desc>}
       {online &&
-        page?.actions.map((a) => {
+        shown.map((a) => {
           const c = cells[a.id]
           return (
             <section key={a.id} className="card card-sm" style={{ display: 'flex', flexDirection: 'column', gap: 10 }} aria-label={t(a.label)}>

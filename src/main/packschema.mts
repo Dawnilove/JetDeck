@@ -235,8 +235,9 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
       let labels: Record<string, L10n> | undefined
       if (d.labels !== undefined) {
         if (!isObj(d.labels)) return bad('table의 labels는 {값: {ko, en}} 모양이에요')
-        labels = {}
+        labels = Object.create(null) as Record<string, L10n>
         for (const [k, v] of Object.entries(d.labels)) {
+          if (k === '__proto__') continue
           const l = loc(v, S, LIMITS.name)
           if (!l) return bad('table의 labels는 {값: {ko, en}} 모양이에요')
           labels[k] = l
