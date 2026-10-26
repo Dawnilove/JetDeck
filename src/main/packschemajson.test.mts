@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import { LIMITS, RESERVED_IDS, validatePack } from './packschema.mts'
+import { FIELD_LIMITS } from './packfields.mts'
 
 // docs/plugins/jdpack.schema.json (편집기용)과 검사기(packschema.mts)의 규칙이 어긋나지 않는지 대조
 const rd = (p: string) => readFileSync(new URL(p, import.meta.url), 'utf8')
@@ -12,7 +13,11 @@ test('schema: 제한 값이 검사기와 같음', () => {
   assert.equal(schema.properties.plugins.maxItems, LIMITS.plugins)
   assert.equal(D.plugin.properties.actions.maxItems, LIMITS.actionsPerPlugin)
   assert.equal(D.action.properties.cmd.maxLength, LIMITS.cmd)
-  assert.equal(D.action.properties.timeout.maximum, LIMITS.timeoutExternal)
+  assert.equal(D.action.properties.timeout.maximum, LIMITS.timeoutStreamExternal)
+  assert.equal(D.field.properties.choices.maxItems, LIMITS.choices)
+  assert.equal(D.action.properties.fields.maxItems, FIELD_LIMITS.fields)
+  assert.equal(D.display.properties.maxLines.maximum, LIMITS.logMax)
+  assert.equal(D.display.properties.maxLines.minimum, LIMITS.logMin)
   assert.equal(D.param.properties.choices.maxItems, LIMITS.choices)
   assert.equal(D.display.properties.columns.maxItems, LIMITS.columns)
   assert.equal(D.display.properties.match.maxLength, LIMITS.matchLen)
@@ -35,7 +40,7 @@ test('schema: 예제·공식 팩이 스키마를 통과함 (ajv가 있을 때; �
     return // ajv는 직접 의존성이 아니라서 없으면 건너뜀
   }
   const validate = new Ajv({ strict: false }).compile(schema)
-  for (const f of ['../../docs/plugins/examples/examples.jdpack.json', './packs/ros2.json', './packs/perf.json']) {
+  for (const f of ['../../docs/plugins/examples/examples.jdpack.json', './packs/ros2.json', './packs/ros2live.json', './packs/perf.json']) {
     assert.ok(validate({ ...JSON.parse(rd(f)), id: 'copy' }), `${f}: ${JSON.stringify(validate.errors)}`)
   }
 })

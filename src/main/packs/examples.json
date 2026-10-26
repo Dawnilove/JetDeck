@@ -3,7 +3,8 @@
   "$comment": "Example pack: copy this file, change the id (the name examples is reserved), the paths (~/my-project) and names, and install the copy. 예제 팩: 이 파일을 복사해 id(examples는 예약어), 경로(~/my-project)와 이름을 바꿔 쓰세요.",
   "id": "examples",
   "format": 1,
-  "version": "5.0.0",
+  "version": "5.1.0",
+  "minApp": "5.1.0",
   "name": { "ko": "예제 모음", "en": "Examples" },
   "desc": { "ko": "복사해서 고쳐 쓰는 템플릿이에요. 경로는 ~/my-project 처럼 내 것으로 바꾸세요.", "en": "Templates to copy and edit. Change paths such as ~/my-project to your own." },
   "author": "JetDeck",
@@ -96,6 +97,56 @@
           "cmd": "dmesg | tail -n 30",
           "risk": "read",
           "display": { "type": "text" }
+        }
+      ]
+    },
+    {
+      "id": "live",
+      "title": { "ko": "실시간 보기", "en": "Live view" },
+      "desc": { "ko": "끝나지 않는 출력을 실시간으로 보여 주는 템플릿이에요. 시작·멈춤을 누르고, 화면을 나가면 멈춰요.", "en": "Templates that show endless output live. Press Start and Stop; leaving the screen stops it." },
+      "actions": [
+        {
+          "id": "follow-log",
+          "$comment": "stream + a fixed-choice field + an int field. 스트림 + 고정 선택지 + 숫자 필드.",
+          "label": { "ko": "서비스 로그 따라 보기", "en": "Follow a service log" },
+          "mode": "stream",
+          "cmd": "journalctl --no-pager -u {unit} -n {lines} -f",
+          "risk": "read",
+          "timeout": 900,
+          "fields": [
+            { "name": "unit", "label": { "ko": "서비스", "en": "Service" }, "type": "select", "choices": [
+              { "value": "ssh", "label": { "ko": "ssh", "en": "ssh" } },
+              { "value": "docker", "label": { "ko": "docker", "en": "docker" } }
+            ] },
+            { "name": "lines", "label": { "ko": "처음 줄 수", "en": "First lines" }, "type": "int", "min": 10, "max": 500, "default": "50" }
+          ],
+          "display": { "type": "log", "maxLines": 1000 }
+        },
+        {
+          "id": "follow-train-log",
+          "$comment": "tail -f of your own log file. 내 로그 파일을 tail -f로.",
+          "label": { "ko": "학습 로그 따라 보기", "en": "Follow the training log" },
+          "mode": "stream",
+          "cmd": "tail -n {lines} -f ~/my-project/train.log",
+          "risk": "read",
+          "fields": [
+            { "name": "lines", "label": { "ko": "처음 줄 수", "en": "First lines" }, "type": "int", "min": 10, "max": 500, "default": "50" }
+          ],
+          "display": { "type": "log", "maxLines": 2000 }
+        },
+        {
+          "id": "topic-echo",
+          "$comment": "A select whose choices are read from the Device (from). 기기에서 선택지를 불러오는 select(from).",
+          "label": { "ko": "ROS2 토픽 보기", "en": "Watch a ROS2 topic" },
+          "mode": "stream",
+          "cmd": "ros2 topic echo {topic}",
+          "risk": "read",
+          "shell": "bash-i",
+          "fields": [
+            { "name": "topic", "label": { "ko": "토픽", "en": "Topic" }, "type": "select",
+              "from": { "cmd": "ros2 topic list", "shell": "bash-i", "timeout": 15, "charset": "ros", "max": 200 } }
+          ],
+          "display": { "type": "log" }
         }
       ]
     },

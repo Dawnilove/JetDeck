@@ -16,6 +16,17 @@ What a bad pack can still try: make you run a harmful command on the Device (for
 * **Safe mode.** Start JetDeck with `--safe-mode` to ignore every external pack.
 * **Limits.** File size, number of items, regular-expression shape and run time are limited.
 
+## Live output, input forms and values you type (5.1.0)
+
+New abilities, and how each is limited:
+
+* **Live output (`stream`).** The risk is a process that stays on the Device. JetDeck starts a stream only when you press Start, stops it when you press Stop, leave the screen, lose the connection or close the app (Ctrl-C first, then the channel is closed after 3 seconds), and stops it when `timeout` ends. Output speed and total size are capped (1 MB/s, 20 MB), 2 streams per pack and 4 in the app. Only a short list of endless read commands runs without asking; other streams ask first. Streams cannot use `sudo` or `auto`.
+* **Input forms (`fields`).** A value you type could become a command (`a; rm -rf ~`). JetDeck inserts it as **one quoted word**, refuses a leading `-`, line breaks and control characters, limits the length, and refuses the pack when a `{name}` slot sits in a place where it could be read as code (inside quotes, as the command name, in `$( )`, in `sh -c`). Just before every run it **analyzes the filled command again**; a value that makes it riskier raises the risk and the dialog says why. The app's main process also checks that the command you confirmed is the command it runs.
+* **Choices from the Device (`from`).** The list command must be read-only and runs by itself when the card opens. The Device could send bad text, so every line is checked against its `charset` and the chosen value goes through the same checks as typed text.
+* **Output on screen.** Each line is cleaned and masked as above. One weak point stays: a secret that spans several lines (a private key printed to a log) is not masked line by line.
+
+In the allow dialog, items show tags (`Live`, `Input`), and a box at the top lists everything that runs **without a click** (list commands, `auto` items). Read that box first.
+
 ## Reading the allow dialog
 
 1. **Header counts** — how many items are read / change / danger. A pack with many danger items needs a reason.
@@ -45,4 +56,5 @@ If you find a way for a pack to bypass the allow list or the risk analysis, repo
 * 선택지에는 셸 특수문자가 들어갈 수 없고, 출력은 정리·비밀 가림·256KB 제한을 거쳐요.
 * `--safe-mode`로 시작하면 외부 팩을 모두 무시해요.
 * 허용 창에서 `curl`·`wget`·`ssh`·`eval`·`sudo`·`rm`·민감한 경로가 보이면 의심하세요. 믿는 사람의 팩만 설치하세요.
+* **실시간·입력·값 주의 (5.1.0).** 흐르는 출력(`stream`)은 시작·멈춤을 사용자가 누르고, 화면을 나가거나 연결이 끊기거나 앱을 닫거나 시간이 끝나면 멈춰요. 입력 값은 따옴표 처리한 단어 하나로만 들어가고, 앞의 `-`·줄바꿈·제어 문자는 거부돼요. 실행할 때마다 값을 채운 명령을 앱이 다시 분석해요. 기기에서 불러온 선택지(`from`)도 글자 종류를 검사해요. 한계: 여러 줄에 걸친 비밀(로그에 찍힌 개인 키)은 줄마다 가려지지 않을 수 있어요.
 * 우회 방법을 찾으면 공개 이슈 대신 GitHub의 "Report a vulnerability"로 알려 주세요.

@@ -55,6 +55,11 @@ test('examples: 앱 동봉본 = 공개 문서 원본, 검증 통과, 선언과 �
   assert.equal(all.find((a) => a.id === 'train-stop')!.risk, 'danger')
   assert.equal(all.find((a) => a.id === 'train-log')!.risk, 'read')
   assert.ok(all.some((a) => a.mode === 'terminal'))
+  for (const id of ['follow-log', 'follow-train-log', 'topic-echo']) {
+    const a = all.find((x) => x.id === id)!
+    assert.equal(a.mode, 'stream', id)
+    assert.equal(a.computed, 'read', id)
+  }
 })
 
 test('ros2.json: bash-i, 그룹 dev, 내장 ROS2 탭과 제목이 다름', () => {

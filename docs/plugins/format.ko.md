@@ -10,7 +10,7 @@
 
 | 필드 | 형식 | 필수 | 설명 |
 |---|---|---|---|
-| `id` | 글자 | ○ | 소문자·숫자·`-`, 글자로 시작, 40자 이내. 예약어: `device ros2 monitor perf examples jetdeck official app core snippets`, `jetdeck-`로 시작하는 이름 |
+| `id` | 글자 | ○ | 소문자·숫자·`-`, 글자로 시작, 40자 이내. 예약어: `device ros2 ros2-live monitor perf examples jetdeck official app core snippets`, `jetdeck-`로 시작하는 이름 |
 | `format` | `1` | ○ | 5.x에서는 항상 `1` |
 | `version` | 글자 | ○ | `1.2.3` 형식 (`-접미사` 가능) |
 | `name` | 글자쌍 | ○ | 60자 이내 |
@@ -42,15 +42,16 @@
 | `desc` | 글자쌍 | | 300자 이내 |
 | `cmd` | 글자 | ○ | 2000자 이내, 제어 문자 금지. `{이름}`은 `params`의 선택지로 바뀌어요. `sudo`는 쓰지 말고 `"sudo": true`를 써요 |
 | `risk` | `read` · `change` · `danger` | ○ | 내가 적는 위험도. [위험도](#위험도) 참고 |
-| `mode` | `exec` · `terminal` | | `exec`(기본)는 실행하고 결과를 보여 줘요. `terminal`은 열린 터미널에 `cmd`를 입력해 줘요(최대 20줄) |
+| `mode` | `exec` · `terminal` · `stream` | | `exec`(기본)는 실행하고 결과를 보여 줘요. `terminal`은 열린 터미널에 `cmd`를 입력해 줘요(최대 20줄). `stream`은 끝나지 않는 출력을 실시간으로 보여 줘요([아래](#흐르는-출력과-입력-폼-510)) |
 | `enter` | true/false | | `terminal` 전용. 기본 `true` = 입력 뒤 Enter |
 | `sudo` | true/false | | `exec` 전용. 앱이 `sudo`를 붙여요. 파이프·리다이렉트 없는 단일 명령만. `read`와 같이 못 써요 |
 | `confirm` | 글자쌍 | 바꿈·위험 | 확인창에 보여 줄 설명. 500자 이내 |
 | `preview` | 글자 | 정리·설치류 | 실제 실행 전에 보여 줄 읽기 전용 명령. 삭제·설치·정리 항목은 필수 |
+| `fields` | 배열 | | 입력 폼(5.1.0, [아래](#흐르는-출력과-입력-폼-510)). `params`와 같이 쓸 수 없어요 |
 | `params` | 배열 | | 선택지 `[{ "name", "label", "choices": [{ "value", "label" }] }]`. 선택지는 30개까지. `value`에는 셸 특수문자가 없고 `-`로 시작하지 않아요 |
 | `auto` | true/false | | 화면을 열면 바로 실행. 앱이 계산한 위험도가 `read`일 때만. 팩당 5개 |
-| `display` | 객체 | | `{ "type": "text" }` 또는 아래 표 |
-| `timeout` | 숫자 | | 초. 기본 60, 외부 팩은 최대 600 |
+| `display` | 객체 | | `{ "type": "text" }`, 아래 표, 또는 `stream`용 `{ "type": "log" }` |
+| `timeout` | 숫자 | | 초. 기본 60, 외부 팩은 최대 600. `stream`은 최대 실행 시간(기본 600, 최대 3600) |
 | `disconnects` | true/false | | 실행하면 연결이 끊김(재부팅·종료) |
 | `shell` | `sh` · `bash-i` | | `bash-i`는 `~/.bashrc`를 불러와요(ROS2 등) |
 | `when` | `jetson` | | 젯슨일 때만 보여요 |
@@ -80,6 +81,76 @@
 
 `match`는 200자 이내, `(a+)+` 같은 중첩 수량자·역참조·lookbehind를 쓸 수 없어요. 표는 500행, 한 줄 1000자까지 보여요.
 
+## 흐르는 출력과 입력 폼 (5.1.0)
+
+이 절의 기능을 쓰는 팩에는 `"minApp": "5.1.0"`을 적으세요. 더 오래된 앱은 "JetDeck 5.1.0 이상이 필요해요"라며 팩 전체를 거부해요.
+
+### 흐르는 출력: `mode: "stream"`
+
+`stream` 항목은 스스로 끝나지 않는 명령(`journalctl -f`, `ros2 topic echo`)을 시작하고, 나오는 줄을 바로 보여 줘요. `"display": { "type": "log", "maxLines": 1000 }`을 써요. `maxLines`는 화면에 남기는 줄 수예요(100~5000, 기본 1000).
+
+* 사용자가 **시작**과 **멈춤**을 눌러요. 스트림은 스스로 시작하지 않아서 `auto`는 쓸 수 없어요.
+* **화면을 나가거나 연결을 끊거나 앱을 닫으면** Device의 명령도 끝나요. 앱이 Ctrl-C를 보내고, 3초 뒤 채널을 닫고, `timeout`이 끝나도 멈춰요.
+* `timeout`은 최대 실행 시간이에요. 기본 600, 외부 팩은 최대 3600.
+* 스트림에 쓸 수 없는 것: `sudo`, `preview`, `auto`, 삭제·설치·디스크 명령.
+* 한도: 팩당 동시 2개, 앱 전체 4개. 출력이 초당 1MB(5초 평균)를 넘거나 20MB를 넘으면 스스로 멈춰요.
+* 스트림에서 **읽기**로 인정하는 끝나지 않는 명령은 짧은 목록뿐이에요: `journalctl -f`, `tail -f`/`-F`, `dmesg -w`, `top -b`, `iostat`, `mpstat`, `tegrastats`, `ros2 topic echo|hz|bw|delay`(안전한 옵션만, `--filter` 불가), `ip monitor`, `udevadm monitor`. 그 밖의 스트림(`ros2 launch`, `colcon build` …)은 읽기가 아니라서 먼저 물어요.
+
+### 입력 폼: `fields`
+
+`fields`(최대 6개)로 사용자가 값을 고르거나 적게 해요. 각 `name`이 `cmd`의 `{name}` 자리를 채워요. `fields`와 `params`는 **둘 중 하나**만 써요.
+
+| `type` | 추가 필드 | 받는 값 | 명령에 들어가는 모양 |
+|---|---|---|---|
+| `select` | `choices`(고정, `params`와 같음) **또는** `from` | `choices`: 적힌 값만. `from`: 영문·숫자·`_ . @ : ~ / + -`, 100자 이내 | 고정: 적힌 그대로. `from`: 따옴표 처리한 단어 하나 |
+| `text` | `charset`(`word` 기본, `ros`, `free`), `maxLen`(≤200, 기본 60) | `word` = `A-Za-z0-9_.-`, `ros` = `A-Za-z0-9_/~`, `free` = 줄바꿈·제어 문자 없는 모든 글자 | 따옴표 처리한 단어 하나 |
+| `int` | `min`(≥0), `max`(≤1000000) | 숫자만, 음수 불가 | 숫자 |
+| `path` | `maxLen`(≤300) | `/`로 시작하는 절대 경로, `..` 불가 | 따옴표 처리한 단어 하나 |
+| `flag` | `on`(체크했을 때 들어갈 글자, `A-Za-z0-9_.=-`) | 사용자는 체크 여부만 정함 | `on` 또는 빈 글자 |
+
+공통 필드: `name`, `label`(글자쌍), `type`, `desc`, `default`(항상 **글자**, 예: `"50"`. `flag`는 true/false), `required`(기본 `true`).
+
+앱이 지키게 하는 규칙(어기면 그 항목이 빠져요):
+
+* 값은 `-`로 시작할 수 없고, 줄바꿈·제어 문자도 없어요.
+* 자리는 맨 단어로 써요: `journalctl -u {unit} -n {lines}`. 따옴표 안(`'{unit}'`), 명령 이름 자리, `$( )`·백틱·`sh -c` 안, 리다이렉트 대상에는 쓸 수 없어요.
+* 값 앞에 `--`가 필요한 명령이면 직접 적어요: `grep -- {pattern} file`.
+* `sudo` 항목에는 고정 `select`·`int`·`flag`만 쓸 수 있어요.
+* **앱은 실행할 때마다 값을 채운 명령을 다시 분석해요.** 값 때문에 위험해지면(`~/.ssh/id_rsa` 같은 경로) 먼저 물어보고 "입력한 값 때문에 위험도가 올라갔어요"라고 알려 줘요.
+
+#### `from`: 기기에서 불러오는 선택지
+
+```json
+{ "name": "topic", "label": "토픽", "type": "select",
+  "from": { "cmd": "ros2 topic list", "shell": "bash-i", "timeout": 15, "charset": "ros", "max": 200 } }
+```
+
+명령은 읽기 전용이어야 하고, 아니면 항목이 거부돼요. 카드를 열 때와 **새로고침**을 누를 때 **스스로** 실행돼서 팩당 자동 실행 5개 한도에 들어가요. 출력 한 줄이 선택지 하나예요. `charset`(`word`·`ros`·`path`)에 맞지 않는 줄은 버려요. 최대 200개.
+
+### 예
+
+```json
+{
+  "format": 1, "id": "my-logs", "version": "1.0.0", "minApp": "5.1.0",
+  "name": "내 로그",
+  "plugins": [{
+    "id": "logs", "title": "로그",
+    "actions": [{
+      "id": "follow", "label": "서비스 로그 따라 보기",
+      "mode": "stream", "risk": "read",
+      "cmd": "journalctl --no-pager -u {unit} -n {lines} -f",
+      "fields": [
+        { "name": "unit", "label": "서비스", "type": "select",
+          "choices": [ { "value": "ssh", "label": "ssh" }, { "value": "docker", "label": "docker" } ] },
+        { "name": "lines", "label": "처음 줄 수", "type": "int", "min": 10, "max": 500, "default": "50" }
+      ],
+      "timeout": 900,
+      "display": { "type": "log", "maxLines": 1000 }
+    }]
+  }]
+}
+```
+
 ## 위험도
 
 JetDeck은 팩에 적힌 `risk`를 **믿지 않아요.** 모든 선택지 조합의 명령을 분석해서 둘 중 **높은 쪽**을 써요.
@@ -97,10 +168,15 @@ JetDeck은 팩에 적힌 `risk`를 **믿지 않아요.** 모든 선택지 조합
 | 파일 크기 | 512 KB |
 | 팩당 플러그인 / 플러그인당 항목 / 팩당 항목 | 20 / 50 / 200 |
 | `cmd` | 2000자 |
-| 팩당 자동 실행 항목 | 5개 |
 | 보이는 출력 | 256 KB (ANSI·제어 문자 제거, 비밀처럼 보이는 값 가림) |
 | 팩당 동시 실행 | 3개 |
+| 실행 중인 스트림 | 팩당 2개 / 앱 전체 4개 |
+| 항목당 입력 필드 | 6개 |
+| 스트림 출력 | 초당 1MB(5초 평균) 또는 20MB 초과 시 멈춤, 화면에는 100~5000줄 |
+| 자동 실행(`auto`와 `from`) | 팩당 합쳐서 5개 |
 
 ## 호환
 
 5.x 동안 `format: 1`은 그대로예요. 새 5.x 버전은 필드를 **추가만** 해요. 추가된 기능을 쓰려면 `minApp`을 적으세요.
+
+5.0.0 앱이 5.1 팩을 열면 `stream`·`log`·`fields`를 쓴 항목은 숨기고("새 버전 앱이 필요해요"), `minApp`이 더 높으면 팩 전체를 거부해요. 더 위험한 방식으로 실행하는 일은 없어요.
