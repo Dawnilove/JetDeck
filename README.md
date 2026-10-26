@@ -69,6 +69,10 @@
     <td width="50%"><img src="docs/images/health.png" alt="기기 점검 화면"><br><sub><b>기기 점검</b> · 온도·Wi-Fi·디스크·실패한 서비스</sub></td>
     <td width="50%"><img src="docs/images/ai-read.png" alt="AI 터미널 읽기 승인 창"><br><sub><b>AI 터미널 읽기</b> · 허용을 먼저 묻고 비밀은 가림</sub></td>
   </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/plugins.png" alt="플러그인 팩이 만든 성능·장치 화면"><br><sub><b>플러그인</b> · 팩 파일로 만든 화면, 읽기만 하는 항목</sub></td>
+    <td width="50%"><img src="docs/images/device-manage.png" alt="기기 관리 로그 보기 탭"><br><sub><b>기기 관리</b> · apt·디스크·전원·로그 탭</sub></td>
+  </tr>
 </table>
 
 더 많은 화면(테마 17종 등)과 자세한 사용법은 **[사이트](https://dawnilove.github.io/JetDeck/)** 에서 볼 수 있어요.
