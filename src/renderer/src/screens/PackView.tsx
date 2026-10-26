@@ -162,7 +162,7 @@ export function PluginHub({ packs, sel, onSel, children }: { packs: Pack[]; sel:
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, padding: '12px 24px 0', alignItems: 'center' }}>
         {packs.length > 1 && <Segment label={tr('팩')} value={pack.id} onChange={(id) => onSel(id, '')} options={packs.map((p) => ({ value: p.id, label: lt(p.name) }))} />}
         {plugins.length > 1 && <Segment label={tr('플러그인')} value={plugin.id} onChange={(id) => onSel(pack.id, id)} options={plugins.map((p) => ({ value: p.id, label: lt(p.title) }))} />}
-        {packs.length === 1 && plugins.length === 1 && <span className="dim" style={{ fontSize: 13 }}>{lt(pack.name)}</span>}
+        {packs.length === 1 && <span className="dim" style={{ fontSize: 13 }}>{lt(pack.name)}</span>}
       </div>
       {children(pack, plugin)}
     </div>

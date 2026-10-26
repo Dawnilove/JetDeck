@@ -15,7 +15,7 @@ export const RiskTag = ({ risk }: { risk: Risk }) => (
 // 앱이 계산한 위험 이유 (앱 글자). 팩이 쓴 글자가 아님
 export const Reasons = ({ a }: { a: Pick<PackAction, 'reasons' | 'understated' | 'declared'> }) => (
   <>
-    {a.understated && <p className="msg-err" style={{ fontSize: 12 }}>⚠ {tr('읽기라고 적혀 있지만 실제로는 읽기가 아니에요')}</p>}
+    {a.understated && <p className="msg-err" style={{ fontSize: 12 }}>⚠ {a.declared === 'read' ? tr('읽기라고 적혀 있지만 실제로는 읽기가 아니에요') : tr('팩에 적힌 위험도보다 실제로 더 위험해요')}</p>}
     {a.reasons.length > 0 && (
       <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12 }} className="dim">
         {a.reasons.map((r) => <li key={r}>{tr(REASON_TEXT[r])}</li>)}

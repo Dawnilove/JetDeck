@@ -26,6 +26,7 @@ export const EN_H: Record<string, string> = {
   '바꿈': 'Change',
   '위험': 'Danger',
   '읽기라고 적혀 있지만 실제로는 읽기가 아니에요': 'Marked as read-only, but it is not',
+  '팩에 적힌 위험도보다 실제로 더 위험해요': 'Riskier than the level written in the pack',
   '새로 추가됨': 'Newly added',
   '명령이 바뀜': 'Command changed',
   '작성자': 'Author',
