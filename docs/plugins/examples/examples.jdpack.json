@@ -3,8 +3,8 @@
   "$comment": "Example pack: copy this file, change the id (the name examples is reserved), the paths (~/my-project) and names, and install the copy. 예제 팩: 이 파일을 복사해 id(examples는 예약어), 경로(~/my-project)와 이름을 바꿔 쓰세요.",
   "id": "examples",
   "format": 1,
-  "version": "5.1.0",
-  "minApp": "5.1.0",
+  "version": "5.2.0",
+  "minApp": "5.2.0",
   "name": { "ko": "예제 모음", "en": "Examples" },
   "desc": { "ko": "복사해서 고쳐 쓰는 템플릿이에요. 경로는 ~/my-project 처럼 내 것으로 바꾸세요.", "en": "Templates to copy and edit. Change paths such as ~/my-project to your own." },
   "author": "JetDeck",
@@ -147,6 +147,52 @@
               "from": { "cmd": "ros2 topic list", "shell": "bash-i", "timeout": 15, "charset": "ros", "max": 200 } }
           ],
           "display": { "type": "log" }
+        }
+      ]
+    },
+    {
+      "id": "charts",
+      "title": { "ko": "그래프", "en": "Charts" },
+      "desc": { "ko": "숫자를 시간에 따라 선 그래프로 그리는 템플릿이에요. 시작을 누르면 읽기 명령을 되풀이하고, 화면을 나가면 멈춰요.", "en": "Templates that plot numbers over time. Start runs a read-only command again and again; leaving the screen stops it." },
+      "actions": [
+        {
+          "id": "temp-chart",
+          "$comment": "match + perLine: one chart line per matching output line. match + perLine: 맞는 줄마다 선 하나.",
+          "label": { "ko": "온도 그래프", "en": "Temperature chart" },
+          "cmd": "grep -H . /sys/class/thermal/thermal_zone*/temp 2>/dev/null || true",
+          "risk": "read",
+          "display": { "type": "chart", "every": 2, "unit": "℃", "min": 0, "max": 100, "match": "thermal_zone(\\d+)/temp:(-?\\d+)$", "perLine": { "label": { "ko": "존 {1}", "en": "Zone {1}" }, "value": 2, "scale": 0.001 } }
+        },
+        {
+          "id": "mem-chart",
+          "$comment": "match + series with key: pick named values (the match needs exactly 2 groups). match + series(key): 이름으로 값 고르기(묶음 정확히 2개).",
+          "label": { "ko": "메모리 그래프", "en": "Memory chart" },
+          "cmd": "grep -E '^(MemTotal|MemAvailable):' /proc/meminfo",
+          "risk": "read",
+          "display": { "type": "chart", "every": 2, "unit": "MB", "min": 0, "match": "^(\\w+):\\s+(\\d+) kB$", "series": [
+            { "label": { "ko": "전체", "en": "Total" }, "key": "MemTotal", "scale": 0.0009765625 },
+            { "label": { "ko": "쓸 수 있음", "en": "Available" }, "key": "MemAvailable", "scale": 0.0009765625 }
+          ] }
+        },
+        {
+          "id": "load-chart",
+          "$comment": "split + series with col: columns of one line. split + series(col): 한 줄의 칸.",
+          "label": { "ko": "부하 평균 그래프", "en": "Load average chart" },
+          "cmd": "cat /proc/loadavg",
+          "risk": "read",
+          "display": { "type": "chart", "every": 2, "min": 0, "split": "ws", "series": [
+            { "label": { "ko": "1분", "en": "1 min" }, "col": 1 },
+            { "label": { "ko": "5분", "en": "5 min" }, "col": 2 },
+            { "label": { "ko": "15분", "en": "15 min" }, "col": 3 }
+          ] }
+        },
+        {
+          "id": "train-loss-chart",
+          "$comment": "Your own log: the last line must contain loss=1.234. Change the file name and the expression. 내 로그: 마지막 줄에 loss=1.234 가 있어야 해요. 파일 이름과 식을 바꾸세요.",
+          "label": { "ko": "학습 loss 그래프", "en": "Training loss chart" },
+          "cmd": "tail -n 1 ~/my-project/train.log",
+          "risk": "read",
+          "display": { "type": "chart", "every": 5, "match": "loss=(\\d+\\.?\\d*)", "perLine": { "label": { "ko": "loss", "en": "loss" }, "value": 1 } }
         }
       ]
     },

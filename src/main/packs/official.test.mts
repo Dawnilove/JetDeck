@@ -56,6 +56,13 @@ test('examples: 앱 동봉본 = 공개 문서 원본, 검증 통과, 선언과 �
   assert.equal(all.find((a) => a.id === 'train-stop')!.risk, 'danger')
   assert.equal(all.find((a) => a.id === 'train-log')!.risk, 'read')
   assert.ok(all.some((a) => a.mode === 'terminal'))
+  for (const id of ['temp-chart', 'mem-chart', 'load-chart', 'train-loss-chart']) {
+    const a = all.find((x) => x.id === id)!
+    assert.equal(a.display?.type, 'chart', id)
+    assert.equal(a.computed, 'read', id)
+    assert.ok(!a.auto, id)
+  }
+  assert.equal(r.pack!.minApp, '5.2.0')
   for (const id of ['follow-log', 'follow-train-log', 'topic-echo']) {
     const a = all.find((x) => x.id === id)!
     assert.equal(a.mode, 'stream', id)

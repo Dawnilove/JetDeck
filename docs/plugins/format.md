@@ -50,7 +50,7 @@ External packs appear under the **Plugins** button of the activity bar. (Only pa
 | `fields` | array | no | Input form (5.1.0), see [below](#live-output-and-input-forms-510). Not together with `params`. |
 | `params` | array | no | Choices: `[{ "name", "label", "choices": [{ "value", "label" }] }]`. Max 30 choices. A `value` has no shell special characters and does not start with `-`. |
 | `auto` | boolean | no | Run when the screen opens. Only when the app-computed risk is `read`. Max 5 per pack. |
-| `display` | object | no | `{ "type": "text" }`, a table (see below), or `{ "type": "log" }` for `stream`. |
+| `display` | object | no | `{ "type": "text" }`, a table (see below), `{ "type": "log" }` for `stream`, or `{ "type": "chart" }` ([5.2.0](#charts-520)). |
 | `timeout` | number | no | Seconds. Default 60, max 600 for external packs. For `stream`: the longest run time, default 600, max 3600. |
 | `disconnects` | boolean | no | The action ends the connection (reboot, power off). |
 | `shell` | `sh` \| `bash-i` | no | `bash-i` loads `~/.bashrc` (for example ROS2). |
@@ -151,6 +151,55 @@ The command must be read-only, or the action is refused. It runs **by itself** w
 }
 ```
 
+## Charts (5.2.0)
+
+Put `"minApp": "5.2.0"` in a pack that uses a chart. An older app then refuses the whole pack with "needs JetDeck 5.2.0 or newer".
+
+A chart action runs a **read-only** command again and again and draws the numbers it reads as lines. Use `"display": { "type": "chart", ... }` on a normal `exec` action.
+
+* The user presses **Start**, **Stop**, **Pause** and **Clear**. Data stays in the app's memory only; nothing is written to a file.
+* **Leaving the screen, disconnecting, or closing the app stops it.** Every run is one short command that ends by itself, so nothing stays on the Device.
+* Not allowed with a chart: `mode` other than `exec`, `fields`, `params`, `sudo`, `preview`, and a `risk` other than `read`. The app must also **prove** the command is read-only. If it cannot, the action is dropped (a warning is not enough). `auto: true` starts the chart when the screen opens; it counts toward the 5 auto-run actions per pack.
+* Rules: a read waits for the one before it (it is skipped while the last one still runs); if reads are slow the interval is raised (up to 60 s); 5 failures in a row stop the chart. Limits: 2 running charts per pack, 4 in the app.
+
+| Field | Required | Notes |
+|---|---|---|
+| `every` | no | Seconds between reads. Default 2. Min 1 (packs you install yourself) or 0.5 (official packs), max 60. |
+| `points` | no | Points kept on screen. 10–3600, default 300. |
+| `unit` | no | Unit text, max 8 characters. |
+| `min` / `max` | no | Vertical range. Without them the chart picks one. |
+| `match` or `split` | one of them | `match`: a regular expression applied to every output line (same limits as a table). `split`: `ws`, `tab` or `csv`; the first data line is cut into columns. |
+| `skip` | no | With `split`: header lines to skip. |
+| `perLine` or `series` | one of them | `perLine` (with `match`): one line on the chart per matching output line, `{ "label", "value", "scale" }`. `series` (max 8): a fixed list of lines, `[{ "label", "key" or "col", "scale" }]`. |
+
+* `value` is the number of the `match` group that holds the number (first group = 1). `{1}` in a `perLine.label` is the first group. That text may only contain letters, digits and `_ . -` (max 20 characters); a line with other text is dropped.
+* `series[].key` goes with `match`, which must then have **exactly 2 groups** (name, value). `series[].col` goes with `split` (column 1–50).
+* `scale` multiplies the number (default 1). Example: `45000` with `0.001` is `45`. Only finite numbers are used; after scaling the value must be within ±1e9.
+* `timeout` is the longest one read: default 10, max 30.
+* If no number can be read, the card says "No readable number found" and shows the last output line, to help you fix the expression.
+
+```json
+{
+  "id": "temp", "label": "Temperature chart",
+  "cmd": "grep -H . /sys/class/thermal/thermal_zone*/temp 2>/dev/null || true", "risk": "read",
+  "display": {
+    "type": "chart", "every": 2, "unit": "C", "min": 0, "max": 100,
+    "match": "thermal_zone(\\d+)/temp:(-?\\d+)$",
+    "perLine": { "label": "Zone {1}", "value": 2, "scale": 0.001 }
+  }
+}
+```
+
+```json
+{
+  "id": "load", "label": "Load average chart", "cmd": "cat /proc/loadavg", "risk": "read",
+  "display": {
+    "type": "chart", "split": "ws", "min": 0,
+    "series": [ { "label": "1 min", "col": 1 }, { "label": "5 min", "col": 2 }, { "label": "15 min", "col": 3 } ]
+  }
+}
+```
+
 ## Risk
 
 JetDeck does **not** trust the `risk` you write. It analyzes every command (all choice combinations) and uses the **higher** of the two:
@@ -173,10 +222,12 @@ If you write `read` but the app computes more, the action stays, the app uses th
 | Running streams per pack / in the app | 2 / 4 |
 | Fields per action | 6 |
 | Stream output | stops above 1 MB/s (5 s average) or 20 MB; the screen keeps 100–5000 lines |
-| Auto-run actions (`auto` and `from`) | 5 per pack, counted together |
+| Auto-run actions (`auto`, `from`, auto-start charts) | 5 per pack, counted together |
+| Chart interval / points / lines | 1–60 s (official 0.5–60) / 10–3600 / 8 |
+| Chart: one read | 30 s, 256 KB and 1000 lines of output read, 2 running per pack, 4 in the app |
 
 ## Compatibility
 
 `format: 1` is fixed for 5.x. New 5.x versions only **add** fields. Use `minApp` when you need one of them.
 
-A 5.0.0 app that opens a 5.1 pack hides actions that use `stream`, `log` or `fields` ("needs a newer app"), or refuses the whole pack when `minApp` is higher. It never runs them in a riskier way.
+A 5.0.0 app that opens a 5.1 pack hides actions that use `stream`, `log` or `fields` ("needs a newer app"), or refuses the whole pack when `minApp` is higher. The same holds for a 5.1 app and a 5.2 pack with `chart`. It never runs them in a riskier way. 5.0 and 5.1 packs run unchanged in 5.2.
