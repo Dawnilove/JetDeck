@@ -7,7 +7,7 @@ import { getLang, tr } from '../../../main/i18n.mts'
 import type { Catalog } from '../../../main/pack'
 import type { BadgeResult } from '../../../main/packbadgecore.mts'
 import { PACKS_CHANGED } from '../screens/PluginManager'
-import { activeBadges, applyResults, chipsFor, covered, dotFor, MAX_CHIPS, tagAt, type BadgeSet } from '../screens/badgeview.mts'
+import { activeBadges, applyResults, chipsFor, covered, dotFor, MAX_CHIPS, skipsBuiltinGit, tagAt, type BadgeSet } from '../screens/badgeview.mts'
 
 type Props = {
   connId: string
@@ -41,7 +41,9 @@ export default function Explorer({ connId, online, home, title, onOpen, onCd, on
   const noGit = useRef(new Set<string>())
   const gitAt = useRef<Record<string, number>>({})
   const gitOf = (p: string) => Object.values(repos).find((r) => p === r.top || p.startsWith(r.top === '/' ? '/' : r.top + '/'))
+  const skipGitRef = useRef(false) // 팩의 Git 배지(devtools/git)가 켜져 있으면 내장 git:status 호출을 건너뜀 (같은 칩이 두 번 보이지 않게)
   const loadGit = async (dir: string) => {
+    if (skipGitRef.current) return
     const known = Object.values(reposRef.current).find((r) => dir === r.top || dir.startsWith(r.top + '/'))
     const at = known ? known.top : dir
     if (!known && noGit.current.has(dir)) return
@@ -62,6 +64,8 @@ export default function Explorer({ connId, online, home, title, onOpen, onCd, on
   const metasRef = useRef(metas)
   metasRef.current = metas
   const badgeSig = metas.map((m) => m.key).join(',')
+  const skipGit = skipsBuiltinGit(metas)
+  skipGitRef.current = skipGit
   const [bset, setBset] = useState<BadgeSet>({})
   const [bnotice, setBnotice] = useState<Record<string, 'unsafe' | 'slow'>>({})
   const bsetRef = useRef(bset)
@@ -136,6 +140,13 @@ export default function Explorer({ connId, online, home, title, onOpen, onCd, on
   useEffect(() => {
     if (online && home) load(home)
   }, [online, home])
+  // 내장 Git 표시를 건너뛰기 시작하면 이미 받은 표시를 지우고, 다시 켜지면 열린 폴더의 Git 상태를 다시 읽음
+  useEffect(() => {
+    setRepos({})
+    noGit.current.clear()
+    gitAt.current = {}
+    if (!skipGit && online && home) [home, ...expanded].forEach(loadGit)
+  }, [skipGit])
   // 켜진 배지가 바뀌면(팩 켬·끔·배지 스위치) 배지 상태를 비우고 열린 폴더를 다시 읽음
   useEffect(() => {
     bnone.current.clear()

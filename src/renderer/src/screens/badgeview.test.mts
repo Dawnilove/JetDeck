@@ -40,3 +40,13 @@ test('폴더 점과 tag', () => {
   assert.equal(tagAt(set, '/r')?.tag, 'main')
   assert.equal(tagAt(set, '/r/src'), undefined)
 })
+
+test('devtools/git 배지가 켜져 있을 때만 내장 Git을 건너뜀', async () => {
+  const { skipsBuiltinGit, activeBadges } = await import('./badgeview.mts')
+  const entry = (id: string, enabled: boolean, off: string[]) => ({ id, enabled, badgesOff: off, pack: { badges: [{ id: 'git', label: L, folderDot: true }] } })
+  const cat = (es: unknown[]) => ({ entries: es }) as never
+  assert.equal(skipsBuiltinGit(activeBadges(cat([entry('devtools', true, [])]))), true)
+  assert.equal(skipsBuiltinGit(activeBadges(cat([entry('devtools', false, [])]))), false)
+  assert.equal(skipsBuiltinGit(activeBadges(cat([entry('devtools', true, ['git'])]))), false)
+  assert.equal(skipsBuiltinGit(activeBadges(cat([entry('other', true, [])]))), false)
+})
