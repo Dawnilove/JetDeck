@@ -10,8 +10,10 @@ import Button from '../components/Button'
 import Segment from '../components/Segment'
 import Docker from './Docker'
 import Services from './Services'
-import Manage from './Manage'
-import PluginManager from './PluginManager'
+import PackView, { PluginHub, type Trigger } from './PackView'
+import { lt } from './PackUi'
+import PluginManager, { PACKS_CHANGED } from './PluginManager'
+import type { Pack } from '../../../main/packschema.mts'
 import HealthView, { useHealth } from './Health'
 import Camera from './Camera'
 import Screen from './Screen'
@@ -89,6 +91,7 @@ const ICONS: Record<string, ReactNode> = {
   camera: (<><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></>),
   build: <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />,
   search: (<><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.6" y2="16.6" /></>),
+  plugin: (<><path d="M9 2v5M15 2v5" /><path d="M6 7h12v4a6 6 0 0 1-12 0z" /><path d="M12 17v5" /></>),
   transfer: (<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></>)
 }
 
@@ -130,8 +133,9 @@ function loadSnippets(): Snippet[] {
 }
 
 // 작업 공간 위에 덮는 화면들: 왼쪽 활동 막대 버튼과 명령 팔레트 항목을 이 목록 하나로 만듦 (한쪽에만 빠지는 일이 없게)
-type View = 'code' | 'search' | 'build' | 'files' | 'forward' | 'ros' | 'docker' | 'services' | 'health' | 'manage' | 'screen' | 'camera' | 'activity'
-const VIEWS: { id: Exclude<View, 'code'>; icon: string; label: string; cmd: string }[] = [
+type View = 'code' | 'search' | 'build' | 'files' | 'forward' | 'ros' | 'docker' | 'services' | 'health' | 'screen' | 'camera' | 'activity' | 'plugins' | `pk:${string}` // pk:팩/플러그인 = 공식 팩이 group으로 기존 묶음에 넣은 화면, plugins = 외부 팩 화면
+type ViewDef = { id: string; label: string; cmd: string }
+const VIEWS: (ViewDef & { id: Exclude<View, 'code' | 'plugins' | `pk:${string}`>; icon: string })[] = [
   { id: 'search', icon: 'search', label: tr('파일 검색·바꾸기'), cmd: tr('파일 검색·바꾸기 열기') },
   { id: 'build', icon: 'build', label: tr('빌드 도구'), cmd: tr('빌드 도구 열기 (colcon·catkin_make)') },
   { id: 'forward', icon: 'forward', label: tr('포트 포워딩'), cmd: tr('포트 포워딩 열기') },
@@ -139,7 +143,6 @@ const VIEWS: { id: Exclude<View, 'code'>; icon: string; label: string; cmd: stri
   { id: 'activity', icon: 'activity', label: tr('활동 (모니터 기록)'), cmd: tr('활동 (모니터 기록 그래프) 열기') },
   { id: 'services', icon: 'services', label: tr('서비스'), cmd: tr('서비스 (systemd) 열기') },
   { id: 'health', icon: 'health', label: tr('기기 점검'), cmd: tr('기기 점검 (온도·Wi-Fi·디스크) 열기') },
-  { id: 'manage', icon: 'services', label: tr('업데이트·디스크·전원'), cmd: tr('업데이트·디스크·전원 (기기 관리 도구) 열기') },
   { id: 'docker', icon: 'docker', label: 'Docker', cmd: tr('Docker 컨테이너·이미지 열기') },
   { id: 'screen', icon: 'screen', label: tr('Device 화면'), cmd: tr('Device 화면 열기') },
   { id: 'camera', icon: 'camera', label: tr('영상 입력'), cmd: tr('영상 입력 열기') },
@@ -147,11 +150,11 @@ const VIEWS: { id: Exclude<View, 'code'>; icon: string; label: string; cmd: stri
 ]
 
 // 왼쪽 활동 막대는 묶음 단위. 묶음 안 화면은 화면 위쪽 탭으로 오가고, 화면이 하나뿐인 묶음은 탭 줄이 없음
-const GROUPS: { id: string; icon: string; label: string; views: Exclude<View, 'code'>[] }[] = [
+const GROUPS: { id: string; icon: string; label: string; views: string[] }[] = [
   { id: 'dev', icon: 'build', label: tr('개발·실행 환경'), views: ['search', 'build', 'ros', 'docker'] },
   { id: 'link', icon: 'transfer', label: tr('연결·전송'), views: ['forward', 'files'] },
   { id: 'activity', icon: 'activity', label: tr('활동 (모니터 기록)'), views: ['activity'] },
-  { id: 'manage', icon: 'services', label: tr('기기 관리'), views: ['services', 'health', 'manage'] },
+  { id: 'manage', icon: 'services', label: tr('기기 관리'), views: ['services', 'health'] },
   { id: 'media', icon: 'screen', label: tr('화면·영상'), views: ['screen', 'camera'] }
 ]
 
@@ -387,13 +390,35 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
   const [centerScreen, setCenterScreen] = useState(false) // 열린 파일이 없을 때 가운데 영역에 Device 화면 표시 (파일을 열면 파일이 가려 줌)
   const [pluginMgr, setPluginMgr] = useState(false) // 플러그인 관리 창
   const [view, setView] = useState<View>('code') // 작업 공간 위에 덮는 화면 (VIEWS)
-  const views = VIEWS.filter((v) => v.id !== 'screen' || host.remote === 'vnc') // 앱 안 뷰어는 VNC만 되므로 VNC 연결에만 Device 화면 탭
-  const groups = GROUPS.map((g) => ({ ...g, views: g.views.filter((id) => views.some((v) => v.id === id)) })).filter((g) => g.views.length)
+  const [packs, setPacks] = useState<Pack[]>([]) // 켜진 팩
+  const loadPacks = () => window.api.packList().then(setPacks, () => setPacks([]))
+  useEffect(() => {
+    loadPacks()
+    window.addEventListener(PACKS_CHANGED, loadPacks)
+    return () => window.removeEventListener(PACKS_CHANGED, loadPacks)
+  }, [])
+  const [hubSel, setHubSel] = useState({ packId: '', pluginId: '' }) // 플러그인 화면에서 고른 팩·플러그인
+  const [trigger, setTrigger] = useState<Trigger | null>(null) // 명령 팔레트에서 고른 팩 항목
+  const jetson = (info.modes?.length ?? 0) > 0 || /jetson|nvidia/i.test(info.model ?? '')
+  const packViews = packs.flatMap((p) => p.plugins.filter((pl) => pl.group).map((pl) => ({ id: `pk:${p.id}/${pl.id}`, group: pl.group!, label: lt(pl.title), cmd: tr('{0} 열기', lt(pl.title)), pack: p, plugin: pl })))
+  const hubPacks = packs.filter((p) => p.plugins.some((pl) => !pl.group))
+  const views: ViewDef[] = [
+    ...VIEWS.filter((v) => v.id !== 'screen' || host.remote === 'vnc'), // 앱 안 뷰어는 VNC만 되므로 VNC 연결에만 Device 화면 탭
+    ...packViews,
+    ...(hubPacks.length ? [{ id: 'plugins', label: tr('플러그인'), cmd: tr('플러그인 열기') }] : [])
+  ]
+  const groups = [
+    ...GROUPS.map((g) => ({ ...g, views: [...g.views, ...packViews.filter((v) => v.group === g.id).map((v) => v.id)].filter((id) => views.some((v) => v.id === id)) })),
+    ...(hubPacks.length ? [{ id: 'plugins', icon: 'plugin', label: tr('플러그인'), views: ['plugins'] }] : [])
+  ].filter((g) => g.views.length)
+  useEffect(() => {
+    if (view !== 'code' && !views.some((v) => v.id === view)) setView('code') // 보던 팩을 껐을 때
+  })
   const curGroup = groups.find((g) => g.views.includes(view as never))
   const tabGroup = curGroup && curGroup.views.length > 1 ? curGroup : null // 탭 줄은 화면이 둘 이상인 묶음에서만
   const lastIn = useRef<Record<string, View>>({}) // 묶음을 다시 누르면 마지막에 보던 화면으로
   if (curGroup) lastIn.current[curGroup.id] = view
-  const openGroup = (g: (typeof groups)[number]) => setView(curGroup?.id === g.id ? 'code' : (lastIn.current[g.id] ?? g.views[0]))
+  const openGroup = (g: (typeof groups)[number]) => setView(curGroup?.id === g.id ? 'code' : ((lastIn.current[g.id] ?? g.views[0]) as View))
   const openPalette = (mode: 'cmd' | 'file', query?: string) => {
     setPalette({ mode, query })
     if (mode === 'file' && !files && home) window.api.fsFind(sess.id, home).then(setFiles, () => setFiles([]))
@@ -424,6 +449,40 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
     setActTab(t)
     setView(view === 'activity' && actTab === t ? 'code' : 'activity')
   }
+
+  // 터미널 입력 모드: 활성 터미널에 입력 (없으면 새 터미널 탭). 확인은 PackView가 끝낸 뒤라서 여기서는 입력만
+  const inputToTerm = (text: string, enter: boolean) => {
+    const keys = keystrokes({ name: '', cmd: text, enter })
+    setView('code')
+    terminalRef.current?.expand()
+    const send = (t: string) => {
+      window.api.writeSession(t, keys)
+      setTimeout(() => xterms.get(t)?.focus(), 100)
+    }
+    if (sess.activeTerm) send(sess.activeTerm)
+    else newTerm().then((t) => t && send(t))
+  }
+  // 켜진 팩의 항목마다 `팩이름: 항목이름`. 고르면 그 화면을 열고 같은 확인 흐름을 탐 (바꿈도 확인창을 거침). 팩이 단축키를 만들 수는 없음
+  const packItems = (): PaletteItem[] =>
+    packs.flatMap((p) =>
+      p.plugins.flatMap((pl) =>
+        pl.actions
+          .filter((a) => !a.hidden && (a.when !== 'jetson' || jetson))
+          .map((a) => ({
+            id: `pk-${p.id}/${pl.id}/${a.id}`,
+            title: `${lt(p.name)}: ${lt(a.label)}`,
+            detail: a.mode === 'terminal' ? tr('터미널 입력') : undefined,
+            run: () => {
+              if (pl.group) setView(`pk:${p.id}/${pl.id}`)
+              else {
+                setHubSel({ packId: p.id, pluginId: pl.id })
+                setView('plugins')
+              }
+              setTrigger({ packId: p.id, pluginId: pl.id, actionId: a.id, n: Date.now() })
+            }
+          }))
+      )
+    )
 
   const commands = (): PaletteItem[] => {
     const modes = info.modes ?? []
@@ -456,7 +515,8 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
       { id: 'toggle-term', title: tr('터미널 패널 접기/펴기'), shortcut: 'Ctrl+`', run: () => toggle(terminalRef.current) },
       ...(sess.activeTerm ? [{ id: 'term-find', title: tr('터미널 출력 검색'), run: () => setTermFind(true) }, { id: 'term-log', title: tr('터미널 로그 저장…'), run: saveTermLog }] : []),
       { id: 'full', title: open.full ? tr('작업 공간으로 돌아가기') : tr('터미널만 크게'), run: toggleFull },
-      ...views.map((v) => ({ id: v.id, title: view === v.id ? tr('작업 공간으로 돌아가기') : v.cmd, run: () => setView(view === v.id ? 'code' : v.id) })),
+      ...views.map((v) => ({ id: v.id, title: view === v.id ? tr('작업 공간으로 돌아가기') : v.cmd, run: () => setView(view === v.id ? 'code' : (v.id as View)) })),
+      ...(online ? packItems() : []),
       { id: 'proc', title: view === 'activity' && actTab === 'proc' ? tr('작업 공간으로 돌아가기') : tr('프로세스 목록 열기'), run: () => openActivity('proc') },
       { id: 'ai', title: view === 'activity' && actTab === 'ai' ? tr('작업 공간으로 돌아가기') : tr('AI 활동 열기'), run: () => openActivity('ai') },
       ...(host.remote && online ? [{ id: 'remote', title: tr('원격 화면 열기 ({0})', host.remote.toUpperCase()), run: openRemote }] : []),
@@ -574,7 +634,7 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
         </nav>
         {tabGroup && (
           <div className="xf-tabs">
-            <Segment label={tabGroup.label} value={view} onChange={(v) => setView(v)} options={tabGroup.views.map((id) => ({ value: id, label: views.find((x) => x.id === id)!.label }))} />
+            <Segment label={tabGroup.label} value={view} onChange={(v) => setView(v as View)} options={tabGroup.views.map((id) => ({ value: id, label: views.find((x) => x.id === id)!.label }))} />
           </div>
         )}
 
@@ -625,9 +685,18 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
             <HealthView online={online} state={health} />
           </div>
         )}
-        {view === 'manage' && (
+        {packViews.map((v) => view === v.id && (
+          <div className="xf-overlay" key={v.id}>
+            <PackView connId={sess.id} online={online} jetson={jetson} pack={v.pack} plugin={v.plugin} trigger={trigger?.packId === v.pack.id && trigger.pluginId === v.plugin.id ? trigger : null} onTriggerDone={() => setTrigger(null)} onLaunch={launchInNewTerm} onTerminal={inputToTerm} />
+          </div>
+        ))}
+        {view === 'plugins' && (
           <div className="xf-overlay">
-            <Manage connId={sess.id} online={online} onLaunch={launchInNewTerm} />
+            <PluginHub packs={hubPacks} sel={hubSel} onSel={(packId, pluginId) => setHubSel({ packId, pluginId })}>
+              {(pack, plugin) => (
+                <PackView key={`${pack.id}/${plugin.id}`} connId={sess.id} online={online} jetson={jetson} pack={pack} plugin={plugin} trigger={trigger?.packId === pack.id && trigger.pluginId === plugin.id ? trigger : null} onTriggerDone={() => setTrigger(null)} onLaunch={launchInNewTerm} onTerminal={inputToTerm} />
+              )}
+            </PluginHub>
           </div>
         )}
         {view === 'docker' && (

@@ -74,5 +74,21 @@ export const EN_H: Record<string, string> = {
   '설치해도 꺼진 채로 들어와요. 켤 때 한 번 더 허용을 받아요.': 'It stays off after installing. You approve it once more when you turn it on.',
   '팩을 제거할까요?': 'Remove this pack?',
   '휴지통으로 옮겼어요.': 'Moved to the trash.',
-  '팩 파일을 휴지통으로 옮겨요. 영구 삭제가 아니에요.': 'The pack file moves to the trash. It is not deleted permanently.'
+  '팩 파일을 휴지통으로 옮겨요. 영구 삭제가 아니에요.': 'The pack file moves to the trash. It is not deleted permanently.',
+  // 플러그인 화면·활동 막대·팔레트
+  '터미널에 입력': 'Type into terminal',
+  '표시할 항목이 없어요.': 'Nothing to show.',
+  '켜진 플러그인이 없어요. 환경 설정 → 플러그인 관리에서 켤 수 있어요.': 'No plugins are on. You can turn them on in Settings → Manage plugins.',
+  '팩': 'Pack',
+  '플러그인': 'Plugins',
+  '앱이 확인한 내용': 'Checked by the app',
+  '되돌리기 어려울 수 있는 작업이에요': 'This may be hard to undo',
+  'Device의 상태를 바꿀 수 있는 작업이에요': 'This can change the state of the device',
+  '팩이 쓴 설명': 'Description written by the pack',
+  '터미널에 입력할 글자': 'Text to type into the terminal',
+  '확인하면 입력하고 Enter까지 눌러요.': 'On confirm, the text is typed and Enter is pressed.',
+  '확인하면 입력만 하고 Enter는 누르지 않아요.': 'On confirm, the text is typed but Enter is not pressed.',
+  '입력': 'Type',
+  '{0} 열기': 'Open {0}',
+  '플러그인 열기': 'Open plugins'
 }
