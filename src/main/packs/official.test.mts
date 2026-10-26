@@ -2,7 +2,8 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import { fill } from '../packrun.mts'
-import { OFFICIAL_UNPROVEN_READS, validatePack } from '../packschema.mts'
+import { parseChart, readLines } from '../packpollcore.mts'
+import { OFFICIAL_UNPROVEN_READS, validatePack, type ChartDisplay } from '../packschema.mts'
 import { analyze } from '../risk.mts'
 import { OFFICIAL_DEFAULT_OFF } from '../packstore.mts'
 
@@ -71,9 +72,34 @@ test('ros2.json: bash-i, 그룹 dev, 내장 ROS2 탭과 제목이 다름', () =>
 
 test('perf.json: 모든 항목이 젯슨 전용, 스캔은 바꿈', () => {
   const p = validatePack(JSON.parse(readFileSync(new URL('./perf.json', import.meta.url), 'utf8')), { official: true }).pack!
-  const all = p.plugins.flatMap((x) => x.actions)
+  const all = p.plugins.filter((x) => x.id === 'perf-hw').flatMap((x) => x.actions)
   for (const a of all) assert.equal(a.when, 'jetson', a.id)
   assert.equal(all.find((a) => a.id === 'i2c-scan')!.risk, 'change')
+})
+
+test('perf.json perf-graph: 그래프 5개, minApp 5.2.0, 읽기 증명, 자동 시작 없음, 젯슨에서 읽은 출력을 파싱함', () => {
+  const p = validatePack(JSON.parse(readFileSync(new URL('./perf.json', import.meta.url), 'utf8')), { official: true }).pack!
+  assert.equal(p.minApp, '5.2.0')
+  const all = p.plugins.find((x) => x.id === 'perf-graph')!.actions
+  assert.deepEqual(all.map((a) => a.id), ['temp-chart', 'mem-chart', 'load-chart', 'gpu-chart', 'fan-chart'])
+  for (const a of all) {
+    assert.equal(a.display?.type, 'chart', a.id)
+    assert.equal(a.risk, 'read', a.id)
+    assert.equal(a.computed, 'read', a.id)
+    assert.ok(!a.auto, a.id)
+  }
+  const d = (id: string) => all.find((a) => a.id === id)!.display as ChartDisplay
+  const run = (id: string, out: string) => parseChart(d(id), readLines(out)).map((s) => s.value)
+  // 입력은 Jetson(Orin급)에서 읽은 출력 모양
+  const temp = run('temp-chart', '/sys/class/thermal/thermal_zone0/temp:46093\n/sys/class/thermal/thermal_zone1/temp:46468\n')
+  assert.deepEqual(temp.map((v) => Math.round(v * 10) / 10), [46.1, 46.5])
+  assert.deepEqual(run('mem-chart', 'MemTotal:        7665088 kB\nMemAvailable:    4162708 kB\n').map(Math.round), [7485, 4065])
+  assert.deepEqual(run('load-chart', '0.04 0.08 0.08 2/947 1146595\n'), [0.04, 0.08, 0.08])
+  assert.deepEqual(run('gpu-chart', '250\n'), [25])
+  assert.deepEqual(run('fan-chart', '/sys/class/hwmon/hwmon0/pwm1:62\n'), [62])
+  assert.equal(all.find((a) => a.id === 'gpu-chart')!.when, 'jetson')
+  assert.equal(all.find((a) => a.id === 'fan-chart')!.when, 'jetson')
+  assert.equal(all.find((a) => a.id === 'temp-chart')!.when, undefined)
 })
 
 test('ros2live.json: 검증 통과, 한·영, 스트림 읽기 증명, 기본 꺼짐 목록에 있음', () => {

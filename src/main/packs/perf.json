@@ -1,7 +1,8 @@
 {
   "id": "perf",
   "format": 1,
-  "version": "5.0.0",
+  "version": "5.2.0",
+  "minApp": "5.2.0",
   "name": { "ko": "모니터·성능", "en": "Monitor and performance" },
   "author": "JetDeck",
   "license": "Apache-2.0",
@@ -77,6 +78,64 @@
           "risk": "read",
           "when": "jetson",
           "display": { "type": "table", "match": "^(/dev/gpiochip\\d+)$", "columns": [{ "ko": "GPIO 칩", "en": "GPIO chip" }], "empty": { "ko": "GPIO 정보를 읽지 못했어요.", "en": "Could not read GPIO info." } }
+        }
+      ]
+    },
+    {
+      "id": "perf-graph",
+      "title": { "ko": "센서 그래프", "en": "Sensor charts" },
+      "desc": { "ko": "온도·메모리·부하·GPU·팬 값을 시간에 따라 그려요. 시작을 누를 때만 읽고, 읽기만 해요.", "en": "Plots temperature, memory, load, GPU and fan values over time. Reads only when you press Start." },
+      "actions": [
+        {
+          "id": "temp-chart",
+          "label": { "ko": "온도 그래프", "en": "Temperature chart" },
+          "desc": { "ko": "열 센서(thermal zone)마다 선 하나로 그려요. 값이 없는 센서는 건너뛰어요.", "en": "One line per thermal zone. Zones without data are skipped." },
+          "cmd": "grep -H . /sys/class/thermal/thermal_zone*/temp 2>/dev/null || true",
+          "risk": "read",
+          "display": { "type": "chart", "every": 2, "unit": "℃", "min": 0, "max": 100, "match": "thermal_zone(\\d+)/temp:(-?\\d+)$", "perLine": { "label": { "ko": "존 {1}", "en": "Zone {1}" }, "value": 2, "scale": 0.001 } }
+        },
+        {
+          "id": "mem-chart",
+          "label": { "ko": "메모리 그래프", "en": "Memory chart" },
+          "desc": { "ko": "전체 메모리와 쓸 수 있는 메모리(MemAvailable)를 MB로 그려요.", "en": "Total and available memory (MemAvailable) in MB." },
+          "cmd": "grep -E '^(MemTotal|MemAvailable):' /proc/meminfo",
+          "risk": "read",
+          "display": { "type": "chart", "every": 2, "unit": "MB", "min": 0, "match": "^(\\w+):\\s+(\\d+) kB$", "series": [
+            { "label": { "ko": "전체", "en": "Total" }, "key": "MemTotal", "scale": 0.0009765625 },
+            { "label": { "ko": "쓸 수 있음", "en": "Available" }, "key": "MemAvailable", "scale": 0.0009765625 }
+          ] }
+        },
+        {
+          "id": "load-chart",
+          "label": { "ko": "부하 평균 그래프", "en": "Load average chart" },
+          "desc": { "ko": "1분·5분·15분 부하 평균이에요. 코어 수와 비교해서 보세요.", "en": "The 1, 5 and 15 minute load averages. Compare them with the core count." },
+          "cmd": "cat /proc/loadavg",
+          "risk": "read",
+          "display": { "type": "chart", "every": 2, "min": 0, "split": "ws", "series": [
+            { "label": { "ko": "1분", "en": "1 min" }, "col": 1 },
+            { "label": { "ko": "5분", "en": "5 min" }, "col": 2 },
+            { "label": { "ko": "15분", "en": "15 min" }, "col": 3 }
+          ] }
+        },
+        {
+          "id": "gpu-chart",
+          "label": { "ko": "GPU 사용률 그래프", "en": "GPU load chart" },
+          "desc": { "ko": "GPU 사용률(%)이에요. 이 경로가 없는 기종에서는 숫자가 안 나와요.", "en": "GPU load in percent. Models without this path show no numbers." },
+          "cmd": "cat /sys/devices/platform/gpu.0/load",
+          "risk": "read",
+          "when": "jetson",
+          "display": { "type": "chart", "every": 1, "unit": "%", "min": 0, "max": 100, "split": "ws", "series": [
+            { "label": { "ko": "GPU", "en": "GPU" }, "col": 1, "scale": 0.1 }
+          ] }
+        },
+        {
+          "id": "fan-chart",
+          "label": { "ko": "팬 속도 그래프", "en": "Fan speed chart" },
+          "desc": { "ko": "팬 속도(PWM 0~255)예요. 팬 경로가 다른 기종에서는 숫자가 안 나와요.", "en": "Fan speed (PWM 0-255). Models with another fan path show no numbers." },
+          "cmd": "grep -H . /sys/class/hwmon/hwmon*/pwm1 2>/dev/null || true",
+          "risk": "read",
+          "when": "jetson",
+          "display": { "type": "chart", "every": 2, "min": 0, "max": 255, "match": "hwmon(\\d+)/pwm1:(\\d+)$", "perLine": { "label": { "ko": "팬 {1}", "en": "Fan {1}" }, "value": 2 } }
         }
       ]
     }

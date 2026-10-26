@@ -121,14 +121,53 @@
       "type": "object",
       "required": ["type"],
       "properties": {
-        "type": { "type": "string", "enum": ["text", "table", "log"] },
+        "type": { "type": "string", "enum": ["text", "table", "log", "chart"] },
         "maxLines": { "type": "integer", "minimum": 100, "maximum": 5000, "description": "log only: lines kept on screen. Default 1000." },
         "match": { "type": "string", "maxLength": 200 },
-        "split": { "enum": ["ws", "tab"] },
-        "skip": { "type": "integer", "minimum": 0 },
+        "split": { "enum": ["ws", "tab", "csv"], "description": "table: ws or tab. chart: ws, tab or csv." },
+        "skip": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Header lines to skip. chart: only with split." },
+        "every": { "type": "number", "minimum": 0.5, "maximum": 60, "default": 2, "description": "chart only (5.2.0, needs minApp 5.2.0): seconds between reads. Packs you install yourself: at least 1." },
+        "points": { "type": "integer", "minimum": 10, "maximum": 3600, "default": 300, "description": "chart only: points kept on screen." },
+        "unit": { "type": "string", "maxLength": 8, "description": "chart only: unit text, for example ℃." },
+        "perLine": {
+          "type": "object",
+          "required": ["label", "value"],
+          "description": "chart only, with match: one line per matching output line. {1} in the label is the first match group (letters, digits, _ . - and at most 20 characters; other lines are dropped).",
+          "properties": {
+            "label": { "$ref": "#/definitions/text60" },
+            "value": { "type": "integer", "minimum": 1, "description": "Number of the match group that holds the value." },
+            "scale": { "type": "number", "not": { "const": 0 }, "minimum": -1000000000, "maximum": 1000000000, "default": 1, "description": "Multiplier. Example: 0.001 turns millidegrees into degrees." }
+          }
+        },
+        "series": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "description": "chart only: a fixed list of lines. With match, each has a key (match needs exactly 2 groups: name, value). With split, each has a col (1 to 50).",
+          "items": {
+            "type": "object",
+            "required": ["label"],
+            "properties": {
+              "label": { "$ref": "#/definitions/text60" },
+              "key": { "type": "string", "pattern": "^[\\w.-]{1,40}$" },
+              "col": { "type": "integer", "minimum": 1, "maximum": 50 },
+              "scale": { "type": "number", "not": { "const": 0 }, "minimum": -1000000000, "maximum": 1000000000, "default": 1 }
+            }
+          }
+        },
         "columns": { "type": "array", "maxItems": 20, "items": { "$ref": "#/definitions/text60" } },
         "empty": { "$ref": "#/definitions/text300" },
-        "labels": { "type": "object", "additionalProperties": { "$ref": "#/definitions/text60" } }
+        "labels": { "type": "object", "additionalProperties": { "$ref": "#/definitions/text60" } },
+        "min": { "type": "number", "minimum": -1000000000, "maximum": 1000000000, "description": "chart only: bottom of the vertical range. Must be below max." },
+        "max": { "type": "number", "minimum": -1000000000, "maximum": 1000000000, "description": "chart only: top of the vertical range." }
+      },
+      "if": { "properties": { "type": { "const": "chart" } }, "required": ["type"] },
+      "then": {
+        "description": "chart: exactly one of match or split, exactly one of perLine or series. The action must use mode exec, risk read, and none of fields, params, sudo, preview.",
+        "allOf": [
+          { "oneOf": [{ "required": ["match"], "not": { "required": ["split"] } }, { "required": ["split"], "not": { "required": ["match"] } }] },
+          { "oneOf": [{ "required": ["perLine"], "not": { "required": ["series"] } }, { "required": ["series"], "not": { "required": ["perLine"] } }] }
+        ]
       }
     }
   }

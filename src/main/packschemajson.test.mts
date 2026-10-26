@@ -24,6 +24,23 @@ test('schema: 제한 값이 검사기와 같음', () => {
   assert.deepEqual([...schema.properties.id.not.enum].sort(), [...RESERVED_IDS].sort())
 })
 
+test('schema: 그래프 상수가 검사기(LIMITS)와 같음', () => {
+  const P = D.display.properties
+  assert.equal(P.every.minimum, LIMITS.chartEveryOfficial) // 외부 팩의 1초 하한은 설명 글로만 표현
+  assert.equal(P.every.maximum, LIMITS.chartEveryMax)
+  assert.equal(P.every.default, LIMITS.chartEveryDefault)
+  assert.equal(P.points.minimum, LIMITS.chartPointsMin)
+  assert.equal(P.points.maximum, LIMITS.chartPointsMax)
+  assert.equal(P.points.default, LIMITS.chartPointsDefault)
+  assert.equal(P.unit.maxLength, LIMITS.chartUnit)
+  assert.equal(P.series.maxItems, LIMITS.chartLines)
+  assert.equal(P.series.items.properties.col.maximum, LIMITS.chartCols)
+  for (const x of [P.min, P.max, P.perLine.properties.scale, P.series.items.properties.scale]) assert.equal(x.maximum, LIMITS.chartValueMax)
+  assert.match(P.every.description, /at least 1/)
+  assert.deepEqual(P.split.enum, ['ws', 'tab', 'csv'])
+  assert.ok(P.type.enum.includes('chart'))
+})
+
 test('schema: 예약어·id·선택지 값 패턴이 검사기 결과와 같음', () => {
   const idRe = new RegExp(schema.properties.id.pattern)
   const valRe = new RegExp(D.param.properties.choices.items.properties.value.pattern)
@@ -43,4 +60,12 @@ test('schema: 예제·공식 팩이 스키마를 통과함 (ajv가 있을 때; �
   for (const f of ['../../docs/plugins/examples/examples.jdpack.json', './packs/ros2.json', './packs/ros2live.json', './packs/perf.json']) {
     assert.ok(validate({ ...JSON.parse(rd(f)), id: 'copy' }), `${f}: ${JSON.stringify(validate.errors)}`)
   }
+  // 그래프: match/split, perLine/series는 정확히 하나
+  const pack = (display: unknown) => ({ id: 'copy', format: 1, version: '1.0.0', name: 'x', plugins: [{ id: 'p', title: 't', actions: [{ id: 'a', label: 'l', cmd: 'cat /proc/loadavg', risk: 'read', display }] }] })
+  const ok = { type: 'chart', split: 'ws', series: [{ label: 'a', col: 1 }] }
+  assert.ok(validate(pack(ok)), JSON.stringify(validate.errors))
+  assert.ok(!validate(pack({ ...ok, match: '^(.*)$' })), 'match+split')
+  assert.ok(!validate(pack({ type: 'chart', split: 'ws' })), 'perLine/series 없음')
+  assert.ok(!validate(pack({ ...ok, perLine: { label: 'a', value: 1 } })), 'perLine+series')
+  assert.ok(!validate(pack({ ...ok, points: 5 })), 'points 한도')
 })
