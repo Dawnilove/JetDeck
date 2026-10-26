@@ -14,7 +14,7 @@ test('device.json: 모든 항목이 검증을 통과하고 한·영이 모두 �
   assert.deepEqual(r.warnings, [])
   assert.ok(r.pack && r.pack.plugins.length >= 3)
   assert.equal(r.pack!.official, true)
-  assert.deepEqual(r.pack!.plugins.map((p) => p.group), ['manage', 'manage', 'manage'])
+  assert.deepEqual(r.pack!.plugins.map((p) => p.group), ['manage', 'manage', 'manage', 'manage'])
   const all = r.pack!.plugins.flatMap((p) => p.actions)
   for (const a of all) if (a.sudo) assert.ok(a.confirm, a.id)
   // 공식 팩 글자는 {ko, en} 둘 다 (strict 검사를 통과했으므로 원본에서도 확인)
@@ -40,14 +40,20 @@ test('device.json: 읽기로 증명 못 하는 읽기 항목은 신뢰 목록과
   assert.deepEqual(unproven, [...OFFICIAL_UNPROVEN_READS].filter(([k]) => k.startsWith('device/')))
 })
 
-test('device.json: 4.5.0과 같은 화면·항목', () => {
-  const ids = r.pack!.plugins.map((p) => `${p.id}:${p.actions.map((a) => a.id).join(',')}`)
+test('device.json: 5.0.0 추가 항목(전원 모드 현재값, 로그 보기)은 읽기이며 증명됨', () => {
+  const all = r.pack!.plugins.flatMap((p) => p.actions)
+  for (const id of ['pwr-mode', 'log-view']) assert.equal(all.find((a) => a.id === id)?.computed, 'read', id)
+  assert.equal(all.find((a) => a.id === 'pwr-mode')!.when, 'jetson')
+})
+
+test('device.json: 4.5.0 항목은 그대로 (5.0.0 추가분 제외)', () => {
+  const ids = r.pack!.plugins.map((p) => `${p.id}:${p.actions.map((a) => a.id).filter((i) => i !== 'pwr-mode').join(',')}`).filter((s) => s !== 'logs:log-view')
   assert.deepEqual(ids, [
     'apt:apt-check,apt-update,apt-upgrade',
     'disk:disk-df,disk-du,apt-clean,apt-autoremove,journal-vacuum',
     'power:pwr-status,pwr-target,pwr-sched-reboot,pwr-sched-off,pwr-cancel,pwr-reboot,pwr-off'
   ])
-  const risk = Object.fromEntries(r.pack!.plugins.flatMap((p) => p.actions.map((a) => [a.id, a.risk])))
+  const risk = Object.fromEntries(r.pack!.plugins.flatMap((p) => p.actions.map((a) => [a.id, a.risk])).filter(([i]) => i !== 'pwr-mode' && i !== 'log-view'))
   assert.deepEqual(risk, {
     'apt-check': 'read', 'apt-update': 'change', 'apt-upgrade': 'danger', 'disk-df': 'read', 'disk-du': 'read', 'apt-clean': 'change', 'apt-autoremove': 'danger', 'journal-vacuum': 'change',
     'pwr-status': 'read', 'pwr-target': 'change', 'pwr-sched-reboot': 'danger', 'pwr-sched-off': 'danger', 'pwr-cancel': 'change', 'pwr-reboot': 'danger', 'pwr-off': 'danger'

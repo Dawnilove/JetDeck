@@ -4,6 +4,8 @@ import { join } from 'node:path'
 import { tr } from './i18n.mts'
 import { run } from './monitor'
 import deviceJson from './packs/device.json'
+import perfJson from './packs/perf.json'
+import ros2Json from './packs/ros2.json'
 import { sanitizeOutput } from './packsafe.mts'
 import { buildPreview, buildRun, buildTerminal, parseResult, resolveParams, type PackResult } from './packrun.mts'
 import { approveAndEnable, buildCatalog, enabledPacks, ensureDir, forgetPack, inspectPackBytes, installPackBytes, readState, readUserDir, setEnabled, writeState, type Inspect, type PackEntry, type StateFile } from './packstore.mts'
@@ -12,7 +14,11 @@ import { requireClient as client } from './session'
 
 // 선언형 팩 (5.0.0): 명령은 팩 데이터(main)에 있고 화면은 packId/pluginId/actionId만 보냄. 외부 팩은 사용자가 허용한 파일 지문과 같을 때만 켜짐.
 // 설치·정리 항목은 미리보기를 한 뒤에만 실행됨. sudo는 sudo -n 먼저, 비밀번호가 필요하면 화면이 새 터미널로 넘김
-const OFFICIAL = [{ fileName: 'device.json', raw: deviceJson as unknown }]
+const OFFICIAL = [
+  { fileName: 'device.json', raw: deviceJson as unknown },
+  { fileName: 'ros2.json', raw: ros2Json as unknown },
+  { fileName: 'perf.json', raw: perfJson as unknown }
+]
 const userDir = () => join(app.getPath('userData'), 'packs')
 const stateFile = () => join(app.getPath('userData'), 'packs-state.json')
 const safeMode = process.argv.includes('--safe-mode') // 문제 팩 때문에 앱이 이상할 때: 외부 팩을 전혀 읽지 않음

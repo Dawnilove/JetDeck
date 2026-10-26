@@ -1,0 +1,84 @@
+{
+  "id": "perf",
+  "format": 1,
+  "version": "5.0.0",
+  "name": { "ko": "모니터·성능", "en": "Monitor and performance" },
+  "author": "JetDeck",
+  "license": "Apache-2.0",
+  "plugins": [
+    {
+      "id": "perf-hw",
+      "title": { "ko": "성능·장치", "en": "Performance & devices" },
+      "desc": { "ko": "Jetson의 클럭·팬·I2C·USB·GPIO를 확인해요. 스캔 한 가지만 확인창을 거치고 나머지는 보기만 해요.", "en": "Check Jetson clocks, fan, I2C, USB and GPIO. Only the bus scan asks first; the rest is view-only." },
+      "actions": [
+        {
+          "id": "clocks",
+          "label": { "ko": "클럭 상태", "en": "Clock status" },
+          "desc": { "ko": "jetson_clocks --show — CPU·GPU·EMC 클럭 설정이에요. 관리자 권한(sudo)이 필요해서 비밀번호를 물을 수 있어요. 보기만 해요.", "en": "jetson_clocks --show — CPU, GPU and EMC clock settings. Needs admin rights (sudo), so it may ask for a password. View only." },
+          "cmd": "jetson_clocks --show",
+          "sudo": true,
+          "risk": "change",
+          "confirm": { "ko": "클럭 설정을 읽기만 해요. 관리자 권한이 필요해서 비밀번호를 물을 수 있어요.", "en": "Only reads the clock settings. It needs admin rights, so it may ask for a password." },
+          "when": "jetson",
+          "display": { "type": "text" }
+        },
+        {
+          "id": "fan",
+          "label": { "ko": "팬 상태", "en": "Fan status" },
+          "desc": { "ko": "팬 속도(PWM) 값을 읽어요. 팬 경로는 기종마다 달라서 없을 수 있어요.", "en": "Reads the fan speed (PWM) value. The fan path differs by model, so it may be missing." },
+          "cmd": "grep -H . /sys/devices/pwm-fan/target_pwm /sys/devices/platform/pwm-fan/hwmon/hwmon*/pwm1 /sys/class/hwmon/hwmon*/pwm1 2>/dev/null",
+          "risk": "read",
+          "when": "jetson",
+          "display": { "type": "table", "match": "^(.+):(\\d+)$", "columns": [{ "ko": "파일", "en": "File" }, { "ko": "값 (0~255)", "en": "Value (0-255)" }], "empty": { "ko": "팬 값을 찾지 못했어요. 이 기종은 팬 경로가 달라요.", "en": "No fan value found. This model uses a different fan path." } }
+        },
+        {
+          "id": "i2c-list",
+          "label": { "ko": "I2C 버스 목록", "en": "I2C bus list" },
+          "cmd": "i2cdetect -l",
+          "risk": "read",
+          "when": "jetson",
+          "display": { "type": "table", "split": "tab", "columns": [{ "ko": "버스", "en": "Bus" }, { "ko": "종류", "en": "Type" }, { "ko": "이름", "en": "Name" }, { "ko": "어댑터", "en": "Adapter" }], "empty": { "ko": "I2C 버스가 없거나 i2c-tools가 없어요.", "en": "No I2C bus, or i2c-tools is missing." } }
+        },
+        {
+          "id": "i2c-scan",
+          "label": { "ko": "I2C 버스 스캔", "en": "Scan I2C bus" },
+          "desc": { "ko": "고른 버스의 주소를 하나씩 읽어 장치를 찾아요.", "en": "Probes each address on the chosen bus to find devices." },
+          "cmd": "i2cdetect -y -r {bus}",
+          "sudo": true,
+          "risk": "change",
+          "when": "jetson",
+          "confirm": { "ko": "버스의 모든 주소를 읽어 봐요. 드물게 일부 장치가 이상 반응할 수 있어요. 센서가 연결된 버스를 고르세요.", "en": "Every address on the bus is probed. Rarely, some devices react oddly. Pick the bus your sensor is on." },
+          "params": [
+            { "name": "bus", "label": { "ko": "버스", "en": "Bus" }, "choices": [
+              { "value": "0", "label": { "ko": "버스 0", "en": "Bus 0" } },
+              { "value": "1", "label": { "ko": "버스 1", "en": "Bus 1" } },
+              { "value": "2", "label": { "ko": "버스 2", "en": "Bus 2" } },
+              { "value": "4", "label": { "ko": "버스 4", "en": "Bus 4" } },
+              { "value": "5", "label": { "ko": "버스 5", "en": "Bus 5" } },
+              { "value": "7", "label": { "ko": "버스 7", "en": "Bus 7" } }
+            ] }
+          ],
+          "display": { "type": "text" }
+        },
+        {
+          "id": "usb",
+          "label": { "ko": "USB 장치 목록", "en": "USB devices" },
+          "cmd": "lsusb",
+          "risk": "read",
+          "when": "jetson",
+          "auto": true,
+          "display": { "type": "table", "match": "^Bus (\\d+) Device (\\d+): ID (\\S+) (.*)$", "columns": [{ "ko": "버스", "en": "Bus" }, { "ko": "장치", "en": "Device" }, { "ko": "ID", "en": "ID" }, { "ko": "이름", "en": "Name" }], "empty": { "ko": "USB 장치가 없어요.", "en": "No USB devices." } }
+        },
+        {
+          "id": "gpio",
+          "label": { "ko": "GPIO 정보", "en": "GPIO info" },
+          "desc": { "ko": "GPIO 칩 장치 파일(/dev/gpiochip*) 목록이에요. 핀의 현재 값은 읽지 않아요.", "en": "List of GPIO chip device files (/dev/gpiochip*). Pin values are not read." },
+          "cmd": "ls /dev/gpiochip* 2>/dev/null",
+          "risk": "read",
+          "when": "jetson",
+          "display": { "type": "table", "match": "^(/dev/gpiochip\\d+)$", "columns": [{ "ko": "GPIO 칩", "en": "GPIO chip" }], "empty": { "ko": "GPIO 정보를 읽지 못했어요.", "en": "Could not read GPIO info." } }
+        }
+      ]
+    }
+  ]
+}

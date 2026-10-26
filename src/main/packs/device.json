@@ -173,6 +173,16 @@
           }
         },
         {
+          "id": "pwr-mode",
+          "label": { "ko": "전원 모드 (현재값)", "en": "Power mode (current)" },
+          "desc": { "ko": "nvpmodel -q — 지금 적용된 Jetson 전원 모드예요. 바꾸는 건 모니터 화면에서 해요.", "en": "nvpmodel -q — the Jetson power mode in use. Change it from the Monitor screen." },
+          "cmd": "nvpmodel -q 2>&1",
+          "risk": "read",
+          "when": "jetson",
+          "auto": true,
+          "display": { "type": "text" }
+        },
+        {
           "id": "pwr-target",
           "label": { "ko": "부팅 방식 바꾸기", "en": "Change boot mode" },
           "desc": { "ko": "graphical은 화면(데스크톱)을 켜고, multi-user는 화면 없이 서버 모드로 켜요. 다음 부팅부터 적용돼요.", "en": "graphical boots to the desktop; multi-user boots without a screen (server mode). Applies from the next boot." },
@@ -260,6 +270,39 @@
           "risk": "danger",
           "disconnects": true,
           "confirm": { "ko": "Device를 지금 꺼요. 다시 켜려면 전원을 직접 눌러야 해요.", "en": "The Device powers off right now. You will need to press its power button to turn it on again." },
+          "display": { "type": "text" }
+        }
+      ]
+    },
+    {
+      "id": "logs",
+      "group": "manage",
+      "title": { "ko": "로그 보기", "en": "Logs" },
+      "desc": { "ko": "systemd 저널(journalctl)에서 서비스별 최근 로그를 읽어요. 보기만 해요.", "en": "Reads recent logs per service from the systemd journal (journalctl). View only." },
+      "actions": [
+        {
+          "id": "log-view",
+          "label": { "ko": "서비스 로그", "en": "Service log" },
+          "cmd": "journalctl --no-pager -u {unit} -n {lines} -p {level}",
+          "risk": "read",
+          "timeout": 60,
+          "params": [
+            { "name": "unit", "label": { "ko": "서비스", "en": "Service" }, "choices": [
+              { "value": "ssh", "label": { "ko": "ssh (원격 접속)", "en": "ssh (remote login)" } },
+              { "value": "NetworkManager", "label": { "ko": "NetworkManager (네트워크)", "en": "NetworkManager (network)" } },
+              { "value": "docker", "label": { "ko": "docker", "en": "docker" } },
+              { "value": "systemd-resolved", "label": { "ko": "systemd-resolved (DNS)", "en": "systemd-resolved (DNS)" } },
+              { "value": "cron", "label": { "ko": "cron (예약 작업)", "en": "cron (scheduled jobs)" } }
+            ] },
+            { "name": "lines", "label": { "ko": "줄 수", "en": "Lines" }, "choices": [
+              { "value": "50", "label": { "ko": "50줄", "en": "50 lines" } },
+              { "value": "200", "label": { "ko": "200줄", "en": "200 lines" } }
+            ] },
+            { "name": "level", "label": { "ko": "범위", "en": "Scope" }, "choices": [
+              { "value": "debug", "label": { "ko": "전체", "en": "All" } },
+              { "value": "err", "label": { "ko": "오류만", "en": "Errors only" } }
+            ] }
+          ],
           "display": { "type": "text" }
         }
       ]

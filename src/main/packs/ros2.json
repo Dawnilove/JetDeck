@@ -1,0 +1,58 @@
+{
+  "id": "ros2",
+  "format": 1,
+  "version": "5.0.0",
+  "name": { "ko": "ROS2 패키지·환경", "en": "ROS2 packages and environment" },
+  "author": "JetDeck",
+  "license": "Apache-2.0",
+  "plugins": [
+    {
+      "id": "ros2-env",
+      "group": "dev",
+      "title": { "ko": "ROS2 패키지·환경", "en": "ROS2 packages & env" },
+      "desc": { "ko": "내장 ROS2 화면에 없는 읽기 항목이에요: 설치된 패키지, 메시지 종류, 환경 변수, 점검 보고서. 모두 보기만 해요.", "en": "Read-only items the built-in ROS2 screen does not have: installed packages, message types, environment variables and the doctor report. Nothing is changed." },
+      "actions": [
+        {
+          "id": "ros-env",
+          "label": { "ko": "환경 요약", "en": "Environment summary" },
+          "desc": { "ko": "ROS_DISTRO, ROS_DOMAIN_ID, RMW_IMPLEMENTATION 값이에요. 비어 있으면 설정되지 않은 거예요.", "en": "Values of ROS_DISTRO, ROS_DOMAIN_ID and RMW_IMPLEMENTATION. Empty means not set." },
+          "cmd": "printenv ROS_DISTRO ROS_DOMAIN_ID RMW_IMPLEMENTATION",
+          "risk": "read",
+          "shell": "bash-i",
+          "auto": true,
+          "display": { "type": "text" }
+        },
+        {
+          "id": "ros-pkg-list",
+          "label": { "ko": "패키지 목록", "en": "Package list" },
+          "desc": { "ko": "ros2 pkg list — 찾을 수 있는 ROS2 패키지예요.", "en": "ros2 pkg list — the ROS2 packages that can be found." },
+          "cmd": "ros2 pkg list",
+          "risk": "read",
+          "shell": "bash-i",
+          "timeout": 60,
+          "display": { "type": "table", "columns": [{ "ko": "패키지", "en": "Package" }], "match": "^(\\S+)$", "empty": { "ko": "패키지를 찾지 못했어요. ROS2 환경이 켜져 있는지 확인하세요.", "en": "No packages found. Check that the ROS2 environment is set up." } }
+        },
+        {
+          "id": "ros-if-list",
+          "label": { "ko": "인터페이스 목록", "en": "Interface list" },
+          "desc": { "ko": "ros2 interface list — 메시지·서비스·액션 종류예요.", "en": "ros2 interface list — message, service and action types." },
+          "cmd": "ros2 interface list",
+          "risk": "read",
+          "shell": "bash-i",
+          "timeout": 60,
+          "display": { "type": "text" }
+        },
+        {
+          "id": "ros-doctor",
+          "label": { "ko": "ROS2 점검 보고서", "en": "ROS2 doctor report" },
+          "desc": { "ko": "ros2 doctor --report — 설정과 네트워크를 점검한 보고서예요.", "en": "ros2 doctor --report — a report on the setup and network." },
+          "cmd": "ros2 doctor --report",
+          "risk": "read",
+          "shell": "bash-i",
+          "timeout": 60,
+          "display": { "type": "text" }
+        }
+      ]
+    }
+  ]
+}
