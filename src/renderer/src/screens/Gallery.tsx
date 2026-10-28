@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { tr } from '../../../main/i18n.mts'
+import { galleryNotes } from '../../../main/gallerynote.mts'
+import { getLang, tr } from '../../../main/i18n.mts'
 import type { Catalog } from '../../../main/pack'
 import type { GalleryInspect } from '../../../main/gallery'
 import type { GalleryItem, GalleryView } from '../../../main/galleryflow.mts'
@@ -34,7 +35,9 @@ function blockNote(it: GalleryItem): string {
   return ''
 }
 
-export default function Gallery({ onCatalog, onCancel }: { onCatalog: (c: Catalog) => void; onCancel: () => void }) {
+const fmtWhen = (iso: string) => new Date(iso).toLocaleString(getLang() === 'ko' ? 'ko-KR' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })
+
+export default function Gallery({ onCatalog, onCancel, onRevoked }: { onCatalog: (c: Catalog) => void; onCancel: () => void; onRevoked: (r: GalleryView['revokedInstalled']) => void }) {
   const [view, setView] = useState<GalleryView | null>(null)
   const [loading, setLoading] = useState(false)
   const [q, setQ] = useState('')
@@ -50,7 +53,11 @@ export default function Gallery({ onCatalog, onCancel }: { onCatalog: (c: Catalo
     try {
       const v0 = await window.api.galleryView()
       setView(v0)
-      if (v0.consent) setView(await window.api.galleryRefresh())
+      if (v0.consent) {
+        const v = await window.api.galleryRefresh()
+        setView(v)
+        onRevoked(v.revokedInstalled)
+      }
     } catch (e) {
       setMsg({ text: errText(e), err: true })
     } finally {
@@ -134,6 +141,9 @@ export default function Gallery({ onCatalog, onCancel }: { onCatalog: (c: Catalo
         </label>
         <Button size={36} onClick={load} disabled={loading}>{tr('새로고침')}</Button>
       </div>
+      {loading && <p className="dim" role="status" style={{ fontSize: 13 }}>{tr('목록을 받는 중…')}</p>}
+      {!loading && galleryNotes(view, fmtWhen).map((n) => <p key={n.text} className={n.kind === 'err' ? 'msg-err' : 'dim'} role="status" style={{ fontSize: 13, overflowWrap: 'anywhere', color: n.kind === 'warn' ? 'var(--warn)' : undefined }}>{n.kind === 'err' ? '⛔ ' : n.kind === 'warn' ? '⚠ ' : ''}{n.text}</p>)}
+      {!loading && view.items.length > 0 && shown.length === 0 && <p className="dim" style={{ fontSize: 13 }}>{tr('찾는 팩이 없어요.')}</p>}
       {msg && <p className={msg.err ? 'msg-err' : 'dim'} role="status" style={{ fontSize: 13, overflowWrap: 'anywhere' }}>{msg.text}</p>}
       {shown.map((it) => {
         const note = blockNote(it)

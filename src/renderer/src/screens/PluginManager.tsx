@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { tr } from '../../../main/i18n.mts'
 import type { Catalog } from '../../../main/pack'
 import { trErr } from '../../../main/packerr.mts'
+import type { GalleryView } from '../../../main/galleryflow.mts'
 import type { Inspect, PackEntry } from '../../../main/packstore.mts'
 import { summarizePack } from '../../../main/packschema.mts'
 import Button from '../components/Button'
@@ -31,6 +32,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
   const [sub, setSub] = useState<Sub | null>(null)
   const [msg, setMsg] = useState<{ text: string; err?: boolean } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [revoked, setRevoked] = useState<GalleryView['revokedInstalled']>([])
   const [tab, setTab] = useState<'mine' | 'gallery'>('mine')
 
   const apply = (c: Catalog) => {
@@ -52,6 +54,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
   }
   useEffect(() => {
     act(() => window.api.packRescan()) // 화면을 열 때 폴더를 한 번 훑음
+    window.api.galleryCached().then((v) => setRevoked(v.revokedInstalled)).catch(() => {}) // 저장해 둔 목록만 봄 (네트워크 없음)
   }, [])
 
   const toggle = (e: PackEntry) => {
@@ -97,6 +100,9 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
           </span>
         </div>
         <span style={{ fontSize: 12 }} className={e.enabled ? '' : 'dim'}>{e.enabled ? tr('켜짐') : tr('꺼짐')}{note && <> · <span className={e.approval === 'changed' || e.status !== 'ok' ? 'msg-err' : ''}>{e.approval === 'changed' ? '⚠ ' : ''}{note}</span></>}</span>
+        {e.origin && e.pack && revoked.filter((r) => r.id === e.id && r.version === e.pack!.version).map((r) => (
+          <p key={r.id} className="msg-err" role="alert" style={{ fontSize: 13, overflowWrap: 'anywhere' }}>⛔ {tr('철회됨')} — {tr('관리자가 모음에서 내렸어요')}: "{lt(r.reason)}" {tr('아직 켜져 있을 수 있어요. 끄거나 제거해 주세요.')}</p>
+        ))}
         {e.pack?.desc && <p className="dim" style={{ fontSize: 13 }}>{lt(e.pack.desc)}</p>}
         {e.pack?.badges && e.pack.badges.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', fontSize: 13 }}>
@@ -148,7 +154,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', maxHeight: '60vh' }}>
           <Segment label={tr('플러그인 관리')} value={tab} onChange={setTab} options={[{ value: 'mine', label: tr('내 팩') }, { value: 'gallery', label: tr('모음') }]} />
-          {tab === 'gallery' ? <Gallery onCatalog={apply} onCancel={() => setTab('mine')} /> : <>
+          {tab === 'gallery' ? <Gallery onCatalog={apply} onCancel={() => setTab('mine')} onRevoked={setRevoked} /> : <>
           <p className="dim" style={{ fontSize: 13 }}>{tr('플러그인은 JSON 파일에 적은 명령을 Device에서 실행해요. 이 PC에서 코드를 실행하지 않아요. 켜기 전에 명령 전문을 확인할 수 있어요.')}</p>
           {cat?.safeMode && <p className="msg-err" role="status" style={{ fontSize: 13 }}>{tr('안전 모드예요. 내가 설치한 팩은 읽지 않아요.')}</p>}
           {msg && <p className={msg.err ? 'msg-err' : 'dim'} role="status" style={{ fontSize: 13, overflowWrap: 'anywhere' }}>{msg.text}</p>}
