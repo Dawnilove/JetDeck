@@ -3,6 +3,21 @@ export type Release = { version: string; ko: string[]; en: string[] }
 
 export const RELEASES: Release[] = [
   {
+    version: '5.4.0',
+    ko: [
+      '공식 팩 "ROS2 실시간·launch·bag (베타)"에 항목이 늘었어요: launch 파일 실행, bag 재생, bag 녹화(모든 토픽·토픽 하나). 기본 꺼짐이고, 내장 ROS2 화면은 그대로 있어서 나란히 써 볼 수 있어요',
+      'launch와 bag 재생은 노드를 실행하거나 메시지를 다시 발행해서 로봇이 움직일 수 있어요. 그래서 앱이 읽기로 증명하지 못하고, 실행할 때마다 확인창이 떠요. bag 녹화는 터미널에 명령을 입력해요',
+      '팩 항목에 "정지 유예(stopGrace)"를 적을 수 있어요. 실시간 항목을 멈출 때 Ctrl-C를 보낸 뒤 기기의 프로그램이 정리할 시간을 주는 값이에요 (기본 3초, 직접 설치하는 팩은 10초까지, 공식 팩은 30초까지)',
+      '멈춤·화면 이동·연결 끊김·앱 강제 종료 뒤에 기기에 launch·bag 프로세스가 남지 않는지 실제 기기로 확인했어요. 팩 만드는 법(stopGrace·JSON Schema·예제)은 사이트의 plugins 문서에 추가됐어요'
+    ],
+    en: [
+      'The official pack "ROS2 live, launch and bag (beta)" has new items: run a launch file, play a bag, record a bag (all topics, or one topic). It is off by default, and the built-in ROS2 screen is unchanged so you can use both side by side',
+      'Launch and bag playback start nodes or publish messages again, so robots may move. The app cannot prove them read-only, so a confirm dialog appears every time. Recording a bag types the command into the terminal',
+      'Pack items can now set a stop grace time (stopGrace): after Ctrl-C is sent when you stop a live item, the program on the device gets this much time to shut down (default 3 s; up to 10 s for packs you install, up to 30 s for official packs)',
+      'We checked on a real device that no launch or bag process is left behind after stopping, leaving the screen, losing the connection or force-quitting the app. Writing stopGrace (JSON Schema, examples) is covered in the plugins docs on the website'
+    ]
+  },
+  {
     version: '5.3.0',
     ko: [
       '보안 수정: 5.0.0~5.2.0의 팩 항목이 실행하는 git 명령과, 4.1.0~5.2.0의 탐색기 Git 표시가 믿을 수 없는 저장소(받은 압축 파일, 남의 clone)가 든 기기에서 그 저장소 설정에 적힌 프로그램을 실행할 수 있었어요. 이제 저장소 설정이 프로그램을 실행할 수 있으면 git을 실행하지 않고(폴더에 ⚠ 표시), 훅·서명 확인 프로그램·페이저도 꺼요. 업데이트를 권해요',
