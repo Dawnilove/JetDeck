@@ -223,6 +223,7 @@ export function McpSetup({ onClose }: { onClose: () => void }) {
             variant={autopilot ? 'warn' : 'secondary'}
             size={36}
             style={{ minWidth: 72, fontWeight: 600, flexShrink: 0 }}
+            aria-pressed={autopilot}
             onClick={() => setAutopilot(!autopilot)}
           >
             {autopilot ? tr('끄기') : tr('켜기')}

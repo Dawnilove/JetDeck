@@ -7,7 +7,7 @@ import { track } from './activity'
 import { exitStatus, redact, type ToolResult } from './activitylog.mts'
 import { tr } from './i18n.mts'
 import { dangerous } from './danger.mts'
-import { checkInitialAutopilot, isAutopilot, setAutopilot } from './autopilot.mts'
+import { checkInitialAutopilot, isAutopilot, loadAutopilotConfig, requiresApproval, saveAutopilotConfig, setAutopilot } from './autopilot.mts'
 import { latest } from './monitor'
 import { getClient, listConns, listShells } from './session'
 import { call, listDir, readText, sftpOf, writeText } from './sftp'
@@ -123,29 +123,9 @@ async function abs(connId: string, path: string): Promise<string> {
 }
 
 export const autopilotFile = () => join(dirname(mcpFile()), 'autopilot.json')
-
-export function loadAutopilotState(): boolean {
-  if (checkInitialAutopilot()) return true
-  if (app?.commandLine?.hasSwitch('autopilot')) return true
-  try {
-    const f = autopilotFile()
-    if (existsSync(f)) {
-      const data = JSON.parse(readFileSync(f, 'utf8'))
-      return data?.autopilot === true
-    }
-  } catch {}
-  return false
-}
-
-export function saveAutopilotState(enabled: boolean): void {
-  try {
-    const dir = dirname(mcpFile())
-    mkdirSync(dir, { recursive: true, mode: 0o700 })
-    writeFileSync(autopilotFile(), JSON.stringify({ autopilot: enabled }, null, 2), { mode: 0o600 })
-  } catch (e) {
-    console.error('오토파일럿 상태 저장 실패:', (e as Error).message)
-  }
-}
+export const loadAutopilotState = (): boolean =>
+  loadAutopilotConfig(autopilotFile(), process.env, (sw) => app?.commandLine?.hasSwitch(sw))
+export const saveAutopilotState = (enabled: boolean): void => saveAutopilotConfig(autopilotFile(), enabled)
 
 // 승인 팝업이 뜰 때 사용자에게 OS 데스크톱 알림(소리 및 토스트) 발송
 function notifyApproval(host: string, command: string, reason: string, kind?: 'terminal'): Notification | null {
@@ -159,7 +139,8 @@ function notifyApproval(host: string, command: string, reason: string, kind?: 't
         ? tr('{0} ({1}): {2}', host, reason, command)
         : tr('{0}: {1}', host, command)
 
-    const iconPath = join(app.getAppPath(), 'resources', process.platform === 'win32' ? 'icon.ico' : 'icon.png')
+    // Windows Toast XML은 PNG/JPEG 형식을 권장함 (ico는 Windows 알림 센터에서 누락될 수 있음)
+    const iconPath = join(app.getAppPath(), 'resources', 'icon.png')
     const notif = new Notification({
       title,
       body: body.length > 250 ? body.slice(0, 250) + '…' : body,
@@ -174,8 +155,14 @@ function notifyApproval(host: string, command: string, reason: string, kind?: 't
           if (win.isMinimized()) win.restore()
           win.show()
           win.focus()
+          try {
+            win.flashFrame(false)
+          } catch {}
         }
       }
+      try {
+        notif.close()
+      } catch {}
     })
 
     notif.show()
@@ -194,6 +181,10 @@ function approve(host: string, command: string, reason: string, kind?: 'terminal
   const id = randomUUID()
   wc.send('mcp:approve', { id, host, command, reason, kind })
   const notif = notifyApproval(host, command, reason, kind)
+  const win = BrowserWindow.fromWebContents(wc)
+  try {
+    win?.flashFrame(true)
+  } catch {}
   return new Promise((resolve) => {
     const finish = (ok: boolean) => {
       clearTimeout(t)
@@ -201,12 +192,16 @@ function approve(host: string, command: string, reason: string, kind?: 'terminal
       try {
         notif?.close()
       } catch {}
+      try {
+        win?.flashFrame(false)
+      } catch {}
       resolve(ok)
     }
     const t = setTimeout(() => finish(false), 120_000)
     waits.set(id, finish)
   })
 }
+
 
 // 화면이 새로 불러와지면 승인 창이 사라지므로 기다리던 요청은 거부로 끝냄
 export function cancelApprovals(): void {
@@ -301,7 +296,7 @@ async function toolText(name: string, a: Args, client: string): Promise<string |
       const command = str(a.command).trim()
       if (!command) throw new Error('command가 비어 있어요')
       const reason = dangerous(command)
-      if (reason) {
+      if (reason && requiresApproval(command)) {
         const host = sshHosts().find((h) => h.id === listConns().find((c) => c.id === id)?.hostId)?.name ?? id
         if (!(await approve(host, command, reason))) return { text: `사용자가 실행을 허용하지 않았어요 (${reason}). 이 명령은 실행되지 않았어요`, status: 'denied' }
       }

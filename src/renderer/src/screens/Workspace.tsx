@@ -616,7 +616,7 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
             </button>
           )}
           <button type="button" className="ws-mini" onClick={onHosts} title={tr('연결 관리 열기')}>{tr('연결 관리')}</button>
-          <button type="button" className="ws-mini" onClick={onMcp}style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} title={mcp.length ? tr('{0} 연결됨', mcp.join(', ')) : tr('연결된 AI 없음 (눌러서 연결 방법 보기)')}>
+          <button type="button" className="ws-mini" onClick={onMcp} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} title={mcp.length ? tr('{0} 연결됨', mcp.join(', ')) : tr('연결된 AI 없음 (눌러서 연결 방법 보기)')}>
             <span className={mcp.length ? 'dot' : 'dot offline'} style={{ width: 7, height: 7 }} aria-hidden />MCP
             {autopilot && (
               <span style={{ fontSize: 9, background: 'var(--warn)', color: '#000', borderRadius: 3, padding: '0 4px', fontWeight: 700 }} title={tr('오토파일럿 모드 활성화됨 (위험 명령 자동 승인)')}>

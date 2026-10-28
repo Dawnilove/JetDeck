@@ -99,6 +99,9 @@ function createWindow(): BrowserWindow {
     cancelHostKeys()
     cancelApprovals()
   })
+  win.on('closed', () => {
+    cancelApprovals()
+  })
 
   startUpdater(win.webContents)
   startMcp(win.webContents)
