@@ -82,6 +82,7 @@ export const EN_E: Record<string, string> = {
   '언어': 'Language',
   '업데이트 내용': "What's new",
   '업데이트 내용 보기': "Show what's new",
+  '자세히 보기': 'Release notes',
   'JetDeck {0}': 'JetDeck {0}',
   '확인': 'OK',
   ': 연결 관리 화면의 English / 한국어 버튼으로 바꿔요.': ': Change it with the English / 한국어 button on the Connections screen.',

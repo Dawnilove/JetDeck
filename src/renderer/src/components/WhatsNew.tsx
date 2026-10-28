@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import Button from './Button'
 import { getLang, tr } from '../../../main/i18n.mts'
-import type { Release } from '../../../main/changelog.mts'
+import { releaseUrl, type Release } from '../../../main/changelog.mts'
 
 // 업데이트 내용: 업데이트 뒤 첫 실행에 자동으로 뜨고, 도움말 옆 버튼·명령 팔레트로 다시 볼 수 있음
 export default function WhatsNew({ releases, onClose }: { releases: Release[]; onClose: () => void }) {
@@ -10,6 +10,7 @@ export default function WhatsNew({ releases, onClose }: { releases: Release[]; o
     ref.current?.showModal()
   }, [])
   const ko = getLang() === 'ko'
+  const url = releases[0] ? releaseUrl(releases[0].version) : null // 가장 새 버전의 릴리스 노트
   return (
     <dialog
       ref={ref}
@@ -38,7 +39,7 @@ export default function WhatsNew({ releases, onClose }: { releases: Release[]; o
         ))}
       </div>
       <div className="guide-foot">
-        <span />
+        {url ? <a className="btn btn-secondary btn-40" href={url} target="_blank" rel="noreferrer">{tr('자세히 보기')}</a> : <span />}
         <Button variant="primary" size={40} autoFocus onClick={onClose}>{tr('확인')}</Button>
       </div>
     </dialog>

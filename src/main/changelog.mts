@@ -1,80 +1,98 @@
 // 업데이트 내용: 버전마다 핵심만 (한·영). 새 버전을 낼 때 맨 위에 한 항목 추가
 export type Release = { version: string; ko: string[]; en: string[] }
 
+// 릴리스 노트 주소: 버전 문자열이 숫자.숫자.숫자일 때만 (앱이 임의 주소를 열지 않게)
+export const releaseUrl = (version: string): string | null => (/^\d+\.\d+\.\d+$/.test(version) ? `https://github.com/Dawnilove/JetDeck/releases/tag/v${version}` : null)
+
 export const RELEASES: Release[] = [
+  {
+    version: '5.5.0',
+    ko: [
+      '모음 탭: 서명된 목록에서 팩을 보고 설치해요',
+      '목록의 서명과 팩 파일 지문을 앱이 확인해요',
+      '설치할 때 명령을 읽고 허용해야 켜져요',
+      '처음 열 때 어떤 정보를 보내는지 안내해요'
+    ],
+    en: [
+      'Gallery tab: browse and install packs from a signed list',
+      'The app checks the list signature and each file fingerprint',
+      'Read the commands and allow them before a pack turns on',
+      'A first-use notice says what is sent'
+    ]
+  },
   {
     version: '5.4.0',
     ko: [
-      '공식 팩 "ROS2 실시간·launch·bag (베타)"에 항목이 늘었어요: launch 파일 실행, bag 재생, bag 녹화(모든 토픽·토픽 하나). 기본 꺼짐이고, 내장 ROS2 화면은 그대로 있어서 나란히 써 볼 수 있어요',
-      'launch와 bag 재생은 노드를 실행하거나 메시지를 다시 발행해서 로봇이 움직일 수 있어요. 그래서 앱이 읽기로 증명하지 못하고, 실행할 때마다 확인창이 떠요. bag 녹화는 터미널에 명령을 입력해요',
-      '팩 항목에 "정지 유예(stopGrace)"를 적을 수 있어요. 실시간 항목을 멈출 때 Ctrl-C를 보낸 뒤 기기의 프로그램이 정리할 시간을 주는 값이에요 (기본 3초, 직접 설치하는 팩은 10초까지, 공식 팩은 30초까지)',
-      '멈춤·화면 이동·연결 끊김·앱 강제 종료 뒤에 기기에 launch·bag 프로세스가 남지 않는지 실제 기기로 확인했어요. 팩 만드는 법(stopGrace·JSON Schema·예제)은 사이트의 plugins 문서에 추가됐어요'
+      '공식 팩 "ROS2 실시간·launch·bag"(베타, 기본 꺼짐)에 항목 추가',
+      'launch 실행·bag 재생·녹화는 실행할 때마다 확인창이 떠요',
+      '팩 항목에 정지 유예(stopGrace) 설정 추가',
+      '멈춘 뒤 기기에 프로세스가 남지 않는 것을 실기기로 확인'
     ],
     en: [
-      'The official pack "ROS2 live, launch and bag (beta)" has new items: run a launch file, play a bag, record a bag (all topics, or one topic). It is off by default, and the built-in ROS2 screen is unchanged so you can use both side by side',
-      'Launch and bag playback start nodes or publish messages again, so robots may move. The app cannot prove them read-only, so a confirm dialog appears every time. Recording a bag types the command into the terminal',
-      'Pack items can now set a stop grace time (stopGrace): after Ctrl-C is sent when you stop a live item, the program on the device gets this much time to shut down (default 3 s; up to 10 s for packs you install, up to 30 s for official packs)',
-      'We checked on a real device that no launch or bag process is left behind after stopping, leaving the screen, losing the connection or force-quitting the app. Writing stopGrace (JSON Schema, examples) is covered in the plugins docs on the website'
+      'Official pack "ROS2 live, launch and bag" (beta, off by default) has new items',
+      'Launch, bag play and bag record ask for confirmation every time',
+      'Pack items can set a stop grace time (stopGrace)',
+      'Checked on a real device: no process is left behind after stopping'
     ]
   },
   {
     version: '5.3.0',
     ko: [
-      '보안 수정: 5.0.0~5.2.0의 팩 항목이 실행하는 git 명령과, 4.1.0~5.2.0의 탐색기 Git 표시가 믿을 수 없는 저장소(받은 압축 파일, 남의 clone)가 든 기기에서 그 저장소 설정에 적힌 프로그램을 실행할 수 있었어요. 이제 저장소 설정이 프로그램을 실행할 수 있으면 git을 실행하지 않고(폴더에 ⚠ 표시), 훅·서명 확인 프로그램·페이저도 꺼요. 업데이트를 권해요',
-      '탐색기 배지: 팩이 폴더를 열 때 읽기 명령을 자동 실행해 파일·폴더 옆에 작은 표시(M·U 등)와 폴더 점(●), 기준 폴더 옆 태그(브랜치)를 붙여요. 앱이 읽기로 증명한 명령만 쓸 수 있고, 플러그인 관리의 "탐색기 배지" 스위치로 끌 수 있어요',
-      '새 공식 팩 "개발 도구 (베타)": Git 상태 배지. 기본 꺼짐이고, 켜면 탐색기가 내장 Git 표시를 건너뛰어요 (내장 표시는 그대로 있어요)',
-      '허용 창과 플러그인 관리 창에 배지 표시와 "폴더를 열 때" 줄이 생겼어요. 팩 만드는 법(배지 절·보안 절·JSON Schema·예제)은 사이트의 plugins 문서에 추가됐어요'
+      '보안 수정: 낯선 Git 저장소의 설정이 실행될 수 있던 문제',
+      '탐색기 배지: 파일·폴더 옆에 M·U 같은 표시',
+      '새 공식 팩 "개발 도구"(베타): Git 상태 배지',
+      '허용 창·플러그인 관리에 배지 표시 추가'
     ],
     en: [
-      'Security fix: Git commands run by plugin items (5.0.0–5.2.0) and the Explorer\'s Git marks (4.1.0–5.2.0) could run programs set up inside an untrusted repository (a downloaded archive, someone else\'s clone) on the connected device. JetDeck now refuses to run Git when a repository\'s own settings can run programs (the folder shows a ⚠) and turns off hooks, signature programs and pagers. Updating is recommended',
-      'Explorer badges: when you open a folder, a pack can run a read-only command by itself and add small marks (M, U…) next to files and folders, a dot (●) on folders, and a tag (the branch) beside the base folder. Only commands the app proves read-only are allowed, and the "Explorer badges" switch in the plugin manager turns them off',
-      'New official pack "Developer tools (beta)": a Git status badge. Off by default; when on, the Explorer skips its built-in Git marks (the built-in marks are unchanged)',
-      'The allow dialog and the plugin manager now show badges and a "When you open a folder" line. Writing badges (chapter, security chapter, JSON Schema, examples) is covered in the plugins docs on the website'
+      'Security fix: settings of an untrusted Git repository could run programs',
+      'Explorer badges: small marks such as M and U next to files and folders',
+      'New official pack "Developer tools" (beta): Git status badge',
+      'The allow dialog and plugin manager now show badges'
     ]
   },
   {
     version: '5.2.0',
     ko: [
-      '플러그인 시계열 그래프: 팩이 읽기 명령을 되풀이해서 숫자를 선 그래프로 그려 줘요 (시작·멈춤·일시정지·지우기). 화면을 나가거나 연결이 끊기거나 앱을 닫으면 멈추고, 데이터는 앱 메모리에만 있어요',
-      '새 공식 플러그인 "센서 그래프"(모니터·성능 팩): 온도·메모리·부하 평균·GPU 사용률·팬 속도. 모두 읽기 전용이고 시작을 눌러야 돌아요',
-      '그래프는 앱이 읽기로 증명한 명령만 쓸 수 있어요. 간격은 직접 설치하는 팩이면 1초 이상이고, 느리면 간격을 늘리고, 연속 5번 실패하면 멈춰요. 허용 창과 플러그인 관리 창에 그래프 표시와 "N초마다" 구역이 생겼어요',
-      '모니터 기록의 그래프 코드를 함께 쓰도록 정리했어요 (모양은 그대로). 팩 만드는 법(그래프 절·JSON Schema·예제)은 사이트의 plugins 문서에 추가됐어요'
+      '플러그인 시계열 그래프: 읽기 명령을 되풀이해 선 그래프로 그려요',
+      '새 공식 플러그인 "센서 그래프": 온도·메모리·부하·GPU·팬',
+      '읽기로 증명된 명령만 쓰고, 연속 실패하면 멈춰요',
+      '모니터 기록과 그래프 코드를 함께 쓰도록 정리했어요'
     ],
     en: [
-      'Plugin time-series charts: a pack can run a read-only command again and again and draw the numbers as a line chart (start, stop, pause, clear). Leaving the screen, losing the connection or closing the app stops it, and the data stays in the app\'s memory only',
-      'New official plugin "Sensor charts" (Monitor & performance pack): temperature, memory, load average, GPU load and fan speed. All read-only, and they run only after you press Start',
-      'A chart can use only commands the app proves read-only. For packs you install yourself the interval is at least 1 s, a slow command makes the interval longer, and 5 failures in a row stop it. The allow dialog and the plugin manager now mark charts and list "every N s" items',
-      'The chart code of the monitor history is now shared (the look is unchanged). Writing charts (chapter, JSON Schema, examples) is covered in the plugins docs on the website'
+      'Plugin time-series charts: a read-only command runs repeatedly and draws a line chart',
+      'New official plugin "Sensor charts": temperature, memory, load, GPU, fan',
+      'Only commands proven read-only run, and it stops after repeated failures',
+      'The monitor history and charts now share the same chart code'
     ]
   },
   {
     version: '5.1.0',
     ko: [
-      '플러그인 2단계: 팩이 끝나지 않는 출력을 실시간 로그 카드로 보여 줘요 (시작·멈춤·지우기·복사·찾기·일시정지·따라가기). 화면을 나가거나 연결이 끊기거나 앱을 닫으면 기기의 명령도 같이 끝나요',
-      '팩에 입력 칸을 넣을 수 있어요 (선택·글자·숫자·경로·체크). 입력한 값은 따옴표로 감싼 단어 하나로만 들어가고, 실행할 때마다 앱이 값을 채운 명령을 다시 분석해요. 값 때문에 위험해지면 확인창이 떠요',
-      '새 항목: 기기 관리 → 로그 보기의 "서비스 로그 따라 보기"(journalctl -f). 새 공식 팩 "ROS2 실시간 보기(베타)"는 토픽 echo·hz를 보여 주고 기본 꺼짐이에요 (내장 ROS2 화면은 그대로)',
-      '허용 창과 플러그인 관리 창에 "누르지 않아도 자동으로 실행되는 것" 구역과 실시간·입력 표시가 생겼어요. 팩 만드는 법은 사이트의 plugins 문서에 추가됐어요'
+      '플러그인 실시간 출력 카드: 시작·멈춤·찾기·따라가기',
+      '팩 입력 칸(선택·글자·숫자·경로·체크), 위험하면 확인창',
+      '새 항목 "서비스 로그 따라 보기", 공식 팩 "ROS2 실시간 보기"(베타)',
+      '허용 창·관리 창에 자동 실행 구역과 실시간·입력 표시'
     ],
     en: [
-      'Plugins stage 2: packs can show endless output in a live log card (start, stop, clear, copy, search, pause, follow). Leaving the screen, losing the connection or closing the app also ends the command on the device',
-      'Packs can add input fields (choice, text, number, path, checkbox). A value goes into the command only as one quoted word, and the app re-analyzes the filled command before every run. If the value makes it riskier, a confirmation box appears',
-      'New items: "Follow service log" (journalctl -f) under Device management → Logs. A new official pack "ROS2 live view (beta)" shows topic echo and hz and is off by default (the built-in ROS2 screen is unchanged)',
-      'The allow dialog and the plugin manager now have a section for things that run on their own, plus live and input tags. Writing packs is covered in the plugins docs on the website'
+      'Plugin live output card: start, stop, search, follow',
+      'Pack input fields (choice, text, number, path, checkbox); risky values ask first',
+      'New item "Follow service log" and official pack "ROS2 live view" (beta)',
+      'The allow dialog and manager show auto-run items and live/input tags'
     ]
   },
   {
     version: '5.0.0',
     ko: [
-      '플러그인: JSON 팩 파일에 명령·표시 방식(글자·표)·버튼·확인창을 적으면 화면에 기능이 생겨요. 내 PC에서 코드는 실행되지 않고, 읽기로 증명된 명령만 묻지 않고 실행돼요. 환경 설정 → "플러그인 관리…"에서 팩을 설치하고, 명령 전문을 읽은 뒤 허용해야 켜져요',
-      '앱에 팩이 함께 들어 있어요: 기기 관리(로그 보기·전원 모드 현재값 추가), ROS2 패키지·환경, 모니터·성능(젯슨 전용). 예제 팩(내 프로젝트·센서·학습 작업)은 꺼진 채로 들어 있어요. 스니펫은 "팩으로 내보내기"로 팩 파일로 저장할 수 있어요',
-      '기기 관리 화면이 탭 1개에서 탭 4개(apt 업데이트·디스크·전원·로그)로 바뀌었어요. 재부팅·종료 예약의 확인창은 위험(빨강)으로 올라갔어요. 팩 만드는 법은 사이트의 plugins 문서에 있어요',
-      '문제가 생기면 앱을 --safe-mode로 시작해 외부 팩을 모두 끌 수 있어요'
+      '플러그인: JSON 팩 파일로 명령과 버튼을 화면에 추가해요',
+      '읽기로 증명된 명령만 묻지 않고 실행하고, 나머지는 허용이 필요해요',
+      '공식 팩 포함, 기기 관리 화면이 탭 4개로 바뀌었어요',
+      '문제가 생기면 --safe-mode로 외부 팩을 끌 수 있어요'
     ],
     en: [
-      'Plugins: describe commands, how to show results (text or table), buttons and confirmation boxes in a JSON pack file and the feature appears. No code runs on your PC, and only commands proven read-only run without asking. Install packs from Settings → "Plugin manager…"; a pack turns on only after you read every command and allow it',
-      'Packs ship with the app: Device management (adds Logs and current power mode), ROS2 packages & env, Monitor & performance (Jetson only). An examples pack (my project, sensors, training job) is included but turned off. Snippets can be saved as a pack file with "Export as pack"',
-      'The Device management screen went from 1 tab to 4 tabs (apt updates, disk, power, logs). The scheduled reboot/shutdown confirmation is now danger (red). See the plugins docs on the website to write your own pack',
-      'If something goes wrong, start the app with --safe-mode to turn off all external packs'
+      'Plugins: add commands and buttons to the screen with a JSON pack file',
+      'Only commands proven read-only run without asking; the rest need your allow',
+      'Official packs included; Device management now has 4 tabs',
+      'If something goes wrong, start with --safe-mode to turn off external packs'
     ]
   },
   {
