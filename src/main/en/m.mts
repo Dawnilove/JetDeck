@@ -65,5 +65,6 @@ export const EN_M: Record<string, string> = {
   "오프라인 목록입니다 (마지막 갱신 {0}). 설치는 인터넷이 있을 때 할 수 있어요.": "Offline list (last updated {0}). You can install when you are online.",
   "이 JetDeck에는 목록을 확인할 열쇠가 아직 없어요": "This JetDeck has no key to verify the list yet",
   "인터넷에 연결되지 않았거나 서버에 닿지 않았어요": "No internet connection, or the server could not be reached",
-  "찾는 팩이 없어요.": "No matching packs."
+  "찾는 팩이 없어요.": "No matching packs.",
+  "검증": "Checks"
 }

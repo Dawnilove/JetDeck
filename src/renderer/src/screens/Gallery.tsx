@@ -98,6 +98,7 @@ export default function Gallery({ onCatalog, onCancel, onRevoked }: { onCatalog:
     setInstalling(true)
     try {
       onCatalog(await window.api.galleryInstall(rev.entry.id, rev.inspect.hash, enable))
+      window.api.galleryView().then(setView).catch(() => {}) // 설치됨 칩을 새로 (네트워크 없음)
       setMsg({ text: enable ? tr('설치하고 켰어요.') : tr('설치했어요. 꺼진 상태예요. 켜려면 허용이 필요해요.') })
       setRev(null)
     } catch (e) {
@@ -158,9 +159,11 @@ export default function Gallery({ onCatalog, onCancel, onRevoked }: { onCatalog:
               {it.update && <span className="tag" style={{ color: 'var(--accent-text)', borderColor: 'var(--accent-text)' }}>{tr('업데이트 있음')}</span>}
               <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
                 {reviewing === it.id && <Button size={36} onClick={() => window.api.galleryCancel().catch(() => {})}>{tr('취소')}</Button>}
-                <Button size={36} variant="primary" disabled={!!it.block || !!reviewing || installing} onClick={() => inspect(it.id)}>
-                  {reviewing === it.id ? tr('받는 중…') : tr('내용 보기')}
-                </Button>
+                {it.block !== 'revoked' && (
+                  <Button size={36} variant="primary" disabled={!!it.block || !!reviewing || installing} onClick={() => inspect(it.id)}>
+                    {reviewing === it.id ? tr('받는 중…') : tr('내용 보기')}
+                  </Button>
+                )}
               </span>
             </div>
             <p className="dim" style={{ fontSize: 13, overflowWrap: 'anywhere' }}>{lt(it.desc)}</p>
@@ -198,7 +201,7 @@ export default function Gallery({ onCatalog, onCancel, onRevoked }: { onCatalog:
               {rev.entry.author && <> · {tr('작성자(자칭)')}: {rev.entry.author}</>}
             </span>
             <span><strong>{tr('검토')}</strong> {rev.entry.reviewedAt.slice(0, 10)} {tr('관리자가 명령을 읽어 봤어요. 안전을 보증하지는 않아요.')}</span>
-            <span className="mono" style={{ fontSize: 12 }}><strong>{tr('확인')}</strong> {tr('목록 서명 확인됨')} ✔ · {tr('파일 지문')} ✔ {rev.inspect.hash.slice(0, 8)} · v{rev.entry.version}</span>
+            <span className="mono" style={{ fontSize: 12 }}><strong>{tr('검증')}</strong> {tr('목록 서명 확인됨')} ✔ · {tr('파일 지문')} ✔ {rev.inspect.hash.slice(0, 8)} · v{rev.entry.version}</span>
             <span className="dim" style={{ fontSize: 12 }}>{tr('이름과 작성자는 팩이 직접 적은 글자예요.')}</span>
           </div>
           {rev.inspect.existing && <ExistingNote existing={rev.inspect.existing} />}

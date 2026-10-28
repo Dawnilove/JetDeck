@@ -101,7 +101,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
         </div>
         <span style={{ fontSize: 12 }} className={e.enabled ? '' : 'dim'}>{e.enabled ? tr('켜짐') : tr('꺼짐')}{note && <> · <span className={e.approval === 'changed' || e.status !== 'ok' ? 'msg-err' : ''}>{e.approval === 'changed' ? '⚠ ' : ''}{note}</span></>}</span>
         {e.origin && e.pack && revoked.filter((r) => r.id === e.id && r.version === e.pack!.version).map((r) => (
-          <p key={r.id} className="msg-err" role="alert" style={{ fontSize: 13, overflowWrap: 'anywhere' }}>⛔ {tr('철회됨')} — {tr('관리자가 모음에서 내렸어요')}: "{lt(r.reason)}" {tr('아직 켜져 있을 수 있어요. 끄거나 제거해 주세요.')}</p>
+          <p key={r.id} className="msg-err" role="alert" style={{ fontSize: 13, overflowWrap: 'anywhere' }}>⛔ {tr('철회됨')} — {tr('관리자가 모음에서 내렸어요')}: "{lt(r.reason)}"{e.enabled ? ' ' + tr('아직 켜져 있을 수 있어요. 끄거나 제거해 주세요.') : ''}</p>
         ))}
         {e.pack?.desc && <p className="dim" style={{ fontSize: 13 }}>{lt(e.pack.desc)}</p>}
         {e.pack?.badges && e.pack.badges.length > 0 && (
@@ -153,7 +153,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', maxHeight: '60vh' }}>
-          <Segment label={tr('플러그인 관리')} value={tab} onChange={setTab} options={[{ value: 'mine', label: tr('내 팩') }, { value: 'gallery', label: tr('모음') }]} />
+          <div style={{ alignSelf: 'flex-start' }}><Segment label={tr('플러그인 관리')} value={tab} onChange={setTab} options={[{ value: 'mine', label: tr('내 팩') }, { value: 'gallery', label: tr('모음') }]} /></div>
           {tab === 'gallery' ? <Gallery onCatalog={apply} onCancel={() => setTab('mine')} onRevoked={setRevoked} /> : <>
           <p className="dim" style={{ fontSize: 13 }}>{tr('플러그인은 JSON 파일에 적은 명령을 Device에서 실행해요. 이 PC에서 코드를 실행하지 않아요. 켜기 전에 명령 전문을 확인할 수 있어요.')}</p>
           {cat?.safeMode && <p className="msg-err" role="status" style={{ fontSize: 13 }}>{tr('안전 모드예요. 내가 설치한 팩은 읽지 않아요.')}</p>}
