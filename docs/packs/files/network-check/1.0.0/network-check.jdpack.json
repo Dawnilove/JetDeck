@@ -1,0 +1,73 @@
+{
+  "$schema": "https://dawnilove.github.io/JetDeck/plugins/jdpack.schema.json",
+  "id": "network-check",
+  "format": 1,
+  "version": "1.0.0",
+  "minApp": "5.5.0",
+  "name": {
+    "ko": "네트워크 점검",
+    "en": "Network check"
+  },
+  "desc": {
+    "ko": "IP·경로·DNS·열린 포트를 읽기만 해서 확인해요.",
+    "en": "Read-only look at IP addresses, routes, DNS and listening ports."
+  },
+  "author": "JetDeck",
+  "license": "Apache-2.0",
+  "plugins": [
+    {
+      "id": "check",
+      "title": {
+        "ko": "네트워크",
+        "en": "Network"
+      },
+      "actions": [
+        {
+          "id": "addr",
+          "label": {
+            "ko": "IP 주소",
+            "en": "IP addresses"
+          },
+          "cmd": "ip -br addr",
+          "risk": "read"
+        },
+        {
+          "id": "route",
+          "label": {
+            "ko": "경로",
+            "en": "Routes"
+          },
+          "cmd": "ip route",
+          "risk": "read"
+        },
+        {
+          "id": "neigh",
+          "label": {
+            "ko": "이웃 기기 (ARP)",
+            "en": "Neighbors (ARP)"
+          },
+          "cmd": "ip neigh",
+          "risk": "read"
+        },
+        {
+          "id": "dns",
+          "label": {
+            "ko": "DNS 설정",
+            "en": "DNS settings"
+          },
+          "cmd": "cat /etc/resolv.conf",
+          "risk": "read"
+        },
+        {
+          "id": "ports",
+          "label": {
+            "ko": "열린 포트",
+            "en": "Listening ports"
+          },
+          "cmd": "ss -tuln",
+          "risk": "read"
+        }
+      ]
+    }
+  ]
+}

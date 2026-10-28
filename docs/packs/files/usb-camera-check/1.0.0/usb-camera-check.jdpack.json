@@ -1,0 +1,73 @@
+{
+  "$schema": "https://dawnilove.github.io/JetDeck/plugins/jdpack.schema.json",
+  "id": "usb-camera-check",
+  "format": 1,
+  "version": "1.0.0",
+  "minApp": "5.5.0",
+  "name": {
+    "ko": "USB·카메라 점검",
+    "en": "USB and camera check"
+  },
+  "desc": {
+    "ko": "USB 장치와 카메라(V4L2)를 읽기만 해서 확인해요.",
+    "en": "Read-only look at USB devices and V4L2 cameras."
+  },
+  "author": "JetDeck",
+  "license": "Apache-2.0",
+  "plugins": [
+    {
+      "id": "check",
+      "title": {
+        "ko": "USB·카메라",
+        "en": "USB and camera"
+      },
+      "actions": [
+        {
+          "id": "video-devices",
+          "label": {
+            "ko": "카메라 장치 파일",
+            "en": "Camera device files"
+          },
+          "cmd": "ls -l /dev/video*",
+          "risk": "read"
+        },
+        {
+          "id": "v4l2-list",
+          "label": {
+            "ko": "카메라 목록 (v4l2)",
+            "en": "Camera list (v4l2)"
+          },
+          "cmd": "v4l2-ctl --list-devices",
+          "risk": "read"
+        },
+        {
+          "id": "usb-list",
+          "label": {
+            "ko": "USB 장치",
+            "en": "USB devices"
+          },
+          "cmd": "lsusb",
+          "risk": "read"
+        },
+        {
+          "id": "usb-tree",
+          "label": {
+            "ko": "USB 연결 구조",
+            "en": "USB tree"
+          },
+          "cmd": "lsusb -t",
+          "risk": "read"
+        },
+        {
+          "id": "kernel-usb",
+          "label": {
+            "ko": "최근 커널 메시지 (USB)",
+            "en": "Recent kernel messages (USB)"
+          },
+          "cmd": "dmesg | grep -i -E \"usb|uvc|video\" | tail -n 40",
+          "risk": "read"
+        }
+      ]
+    }
+  ]
+}

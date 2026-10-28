@@ -244,3 +244,11 @@ test('게시 목록 페이지: 색인에서 만들고 글자는 이스케이프�
     cleanup(dir)
   }
 })
+
+test('docs/packs: 올릴 팩 목록이 앱 검증기를 통과하고, 모음 파일은 줄 끝 변환을 막아 둔다', () => {
+  const b = buildIndex(join(ROOT, 'docs/packs'), { now: NOW, serial: 1 })
+  assert.ok(b.ok, b.ok ? '' : b.problems.join('\n'))
+  if (b.ok) assert.ok(b.index.packs.length > 0)
+  const attr = readFileSync(join(ROOT, '.gitattributes'), 'utf8')
+  assert.match(attr, /^docs\/packs\/\*\* -text$/m) // 서명한 색인·지문 낸 팩이 CRLF로 바뀌면 앱이 거부함
+})

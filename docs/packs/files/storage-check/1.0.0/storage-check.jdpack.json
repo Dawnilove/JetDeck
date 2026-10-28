@@ -1,0 +1,73 @@
+{
+  "$schema": "https://dawnilove.github.io/JetDeck/plugins/jdpack.schema.json",
+  "id": "storage-check",
+  "format": 1,
+  "version": "1.0.0",
+  "minApp": "5.5.0",
+  "name": {
+    "ko": "저장 공간 점검",
+    "en": "Storage check"
+  },
+  "desc": {
+    "ko": "디스크·마운트·메모리를 읽기만 해서 확인해요.",
+    "en": "Read-only look at disks, mounts and memory."
+  },
+  "author": "JetDeck",
+  "license": "Apache-2.0",
+  "plugins": [
+    {
+      "id": "check",
+      "title": {
+        "ko": "저장 공간",
+        "en": "Storage"
+      },
+      "actions": [
+        {
+          "id": "df",
+          "label": {
+            "ko": "디스크 사용량",
+            "en": "Disk usage"
+          },
+          "cmd": "df -h",
+          "risk": "read"
+        },
+        {
+          "id": "lsblk",
+          "label": {
+            "ko": "블록 장치",
+            "en": "Block devices"
+          },
+          "cmd": "lsblk",
+          "risk": "read"
+        },
+        {
+          "id": "mounts",
+          "label": {
+            "ko": "마운트 지점",
+            "en": "Mounts"
+          },
+          "cmd": "findmnt",
+          "risk": "read"
+        },
+        {
+          "id": "var-top",
+          "label": {
+            "ko": "/var 아래 큰 폴더",
+            "en": "Largest folders under /var"
+          },
+          "cmd": "du -h --max-depth=1 /var 2>/dev/null | sort -rh | head -n 15",
+          "risk": "read"
+        },
+        {
+          "id": "free",
+          "label": {
+            "ko": "메모리",
+            "en": "Memory"
+          },
+          "cmd": "free -h",
+          "risk": "read"
+        }
+      ]
+    }
+  ]
+}

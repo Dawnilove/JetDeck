@@ -1,0 +1,8 @@
+{
+  "packs": [
+    { "id": "usb-camera-check", "version": "1.0.0", "submitter": "Dawnilove", "reviewedAt": "2026-10-29", "tags": ["usb", "camera", "v4l2"] },
+    { "id": "network-check", "version": "1.0.0", "submitter": "Dawnilove", "reviewedAt": "2026-10-29", "tags": ["network", "ip", "dns"] },
+    { "id": "storage-check", "version": "1.0.0", "submitter": "Dawnilove", "reviewedAt": "2026-10-29", "tags": ["disk", "memory"] }
+  ],
+  "revoked": []
+}
