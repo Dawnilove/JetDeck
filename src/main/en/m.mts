@@ -66,5 +66,6 @@ export const EN_M: Record<string, string> = {
   "이 JetDeck에는 목록을 확인할 열쇠가 아직 없어요": "This JetDeck has no key to verify the list yet",
   "인터넷에 연결되지 않았거나 서버에 닿지 않았어요": "No internet connection, or the server could not be reached",
   "찾는 팩이 없어요.": "No matching packs.",
-  "검증": "Checks"
+  "검증": "Checks",
+  "모음 동의 끄기": "Turn off Gallery consent"
 }

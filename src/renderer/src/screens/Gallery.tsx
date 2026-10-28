@@ -177,6 +177,10 @@ export default function Gallery({ onCatalog, onCancel, onRevoked }: { onCatalog:
         )
       })}
 
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Button size={36} variant="ghost" onClick={() => window.api.galleryConsent(false).then(setView).catch((e) => setMsg({ text: errText(e), err: true }))}>{tr('모음 동의 끄기')}</Button>
+      </div>
+
       {rev && (
         <Modal
           title={tr('"{0}" 팩을 설치할까요?', lt(rev.entry.name))}
