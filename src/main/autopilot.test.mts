@@ -56,8 +56,10 @@ test('오토파일럿 설정 로드 우선순위: CLI 스위치 > 환경 변수 
     writeFileSync(file, JSON.stringify({ autopilot: false }))
     assert.equal(loadAutopilotConfig(file, { JETDECK_AUTOPILOT: '1' }), true)
 
-    // 5. 환경 변수 미지정 시 파일 설정 사용
+    // 5. 환경 변수 미지정 시 파일 설정 사용 (autopilot 또는 enabled 키 지원)
     writeFileSync(file, JSON.stringify({ autopilot: true }))
+    assert.equal(loadAutopilotConfig(file, {}), true)
+    writeFileSync(file, JSON.stringify({ enabled: true }))
     assert.equal(loadAutopilotConfig(file, {}), true)
     writeFileSync(file, JSON.stringify({ autopilot: false }))
     assert.equal(loadAutopilotConfig(file, {}), false)

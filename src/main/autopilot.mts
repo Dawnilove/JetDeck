@@ -38,7 +38,7 @@ export function loadAutopilotConfig(
     try {
       if (existsSync(filePath)) {
         const data = JSON.parse(readFileSync(filePath, 'utf8'))
-        const val = data?.autopilot
+        const val = data?.autopilot ?? data?.enabled
         if (val === true || val === 'true' || val === 1) return true
         if (val === false || val === 'false' || val === 0) return false
       }
