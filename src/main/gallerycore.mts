@@ -161,7 +161,7 @@ export function parseIndex(bytes: Uint8Array, sigText: string, o: ParseOpts): Pa
 }
 
 // ───────────── 철회·앱 버전·팩 파일 확인 ─────────────
-export function revokedFor(index: GalleryIndex, id: string, version: string, sha256: string): Revoked | null {
+export function revokedFor(index: Pick<GalleryIndex, 'revoked'>, id: string, version: string, sha256: string): Revoked | null {
   return index.revoked.find((r) => r.id === id && (!r.version || r.version === version) && (!r.sha256 || r.sha256 === sha256)) ?? null
 }
 export const appVersionOk = (p: { minApp?: string }, appVersion: string) => !p.minApp || compareSemver(appVersion, p.minApp) >= 0

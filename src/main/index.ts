@@ -13,6 +13,7 @@ import { registerDockerIpc } from './docker'
 import { registerSvcIpc } from './svc'
 import { registerHealthIpc } from './health'
 import { registerPackIpc } from './pack'
+import { registerGalleryIpc } from './gallery'
 import { registerSettingsIpc } from './settingsfile'
 import { registerTermLogIpc } from './termlog'
 import { registerDiagIpc } from './diag'
@@ -135,6 +136,7 @@ function startApp(): void {
     registerSvcIpc()
     registerHealthIpc()
     registerPackIpc()
+    registerGalleryIpc()
     registerSettingsIpc()
     registerTermLogIpc()
     registerDiagIpc()

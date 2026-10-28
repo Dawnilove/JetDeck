@@ -11,5 +11,6 @@ import { EN_I } from './i.mts'
 import { EN_J } from './j.mts'
 import { EN_K } from './k.mts'
 import { EN_L } from './l.mts'
+import { EN_M } from './m.mts'
 
-export const EN: Record<string, string> = { ...EN_A, ...EN_B, ...EN_C, ...EN_D, ...EN_E, ...EN_F, ...EN_G, ...EN_H, ...EN_I, ...EN_J, ...EN_K, ...EN_L }
+export const EN: Record<string, string> = { ...EN_A, ...EN_B, ...EN_C, ...EN_D, ...EN_E, ...EN_F, ...EN_G, ...EN_H, ...EN_I, ...EN_J, ...EN_K, ...EN_L, ...EN_M }

@@ -20,7 +20,9 @@ export type PackState = {
   approvedAt?: string
   approvedCmds?: Record<string, string> // '플러그인/항목' → 허용한 명령 (다음에 파일이 바뀌면 "바뀐 명령"을 보여 주려고)
   badgesOff?: string[] // 5.3.0: 팩은 켠 채 탐색기 배지(자동 실행)만 끈 배지 id
+  origin?: PackOrigin // 5.5.0: 모음에서 받은 팩이면 출처 기록 (파일 지문이 sha256과 같을 때만 유효)
 }
+export type PackOrigin = { kind: 'gallery'; serial: number; sha256: string }
 export type StateFile = { version: 1; packs: Record<string, PackState> }
 const ID = /^[a-z][a-z0-9-]{0,39}$/
 
@@ -45,6 +47,8 @@ export function readState(file: string): StateFile {
         const ids = [...new Set(v.badgesOff.filter((x): x is string => typeof x === 'string' && ID.test(x)))].slice(0, 20)
         if (ids.length) s.badgesOff = ids
       }
+      const o = v.origin as Record<string, unknown> | undefined
+      if (o && typeof o === 'object' && o.kind === 'gallery' && Number.isInteger(o.serial) && (o.serial as number) >= 0 && typeof o.sha256 === 'string' && /^[0-9a-f]{64}$/.test(o.sha256)) s.origin = { kind: 'gallery', serial: o.serial as number, sha256: o.sha256 }
       out.packs[id] = s
     }
   } catch {
@@ -101,6 +105,7 @@ export type PackEntry = {
   approvedAt?: string
   changes?: CommandDiff // approval이 changed일 때: 허용했던 명령 대비
   badgesOff: string[] // 5.3.0: 꺼 둔 탐색기 배지 id (팩이 켜져 있어도 이 배지는 실행 안 함)
+  origin?: PackOrigin // 5.5.0: 모음에서 받은 파일 그대로일 때만 (파일이 바뀌면 "직접 설치"로 돌아감)
 }
 
 // 사용자 폴더 안 팩 파일 읽기: 이 폴더 바로 아래의 *.jdpack.json 일반 파일만 (하위 폴더·심볼릭 링크 제외), 512KB 초과는 읽지 않음
@@ -186,6 +191,7 @@ export function buildCatalog(inp: CatalogInput): PackEntry[] {
     const st = u.pack ? inp.state.packs[u.id] : undefined
     u.wantEnabled = !!st?.enabled
     u.badgesOff = st?.badgesOff ?? []
+    if (st?.origin && st.origin.sha256 === u.hash) u.origin = st.origin
     u.approvedVersion = st?.approvedVersion
     u.approvedAt = st?.approvedAt
     if (st?.approvedHash && st.approvedHash === u.hash) u.approval = 'approved'
@@ -207,7 +213,7 @@ export function approveAndEnable(st: StateFile, e: PackEntry, shownHash: string,
   if (e.source !== 'user') throw new Error(tr('공식 팩은 허용이 필요 없어요'))
   if (e.status !== 'ok' || !e.pack) throw new Error(tr('문제가 있는 팩은 켤 수 없어요'))
   if (!shownHash || shownHash !== e.hash) throw new Error(tr('팩 파일이 바뀌었어요. 다시 확인해 주세요'))
-  return { ...st, packs: { ...st.packs, [e.id]: { enabled: true, approvedHash: e.hash, approvedVersion: e.pack.version, approvedAt: now.toISOString(), approvedCmds: commandMap(e.pack), badgesOff: st.packs[e.id]?.badgesOff } } }
+  return { ...st, packs: { ...st.packs, [e.id]: { enabled: true, approvedHash: e.hash, approvedVersion: e.pack.version, approvedAt: now.toISOString(), approvedCmds: commandMap(e.pack), badgesOff: st.packs[e.id]?.badgesOff, origin: st.packs[e.id]?.origin } } }
 }
 export function setEnabled(st: StateFile, e: PackEntry, on: boolean): StateFile {
   if (!e.pack) throw new Error(tr('쓸 수 없는 팩이에요'))
@@ -221,6 +227,11 @@ export function setBadgesOff(st: StateFile, e: PackEntry, ids: string[]): StateF
   const off = [...new Set(ids.map(String))].filter((i) => known.has(i)).slice(0, 20)
   const cur = st.packs[e.id] ?? { enabled: e.wantEnabled }
   return { ...st, packs: { ...st.packs, [e.id]: { ...cur, badgesOff: off.length ? off : undefined } } }
+}
+// 설치한 팩의 출처 기록 (모음에서 받음). origin이 없으면 지움 — 내 PC의 파일로 직접 덮어썼을 때
+export function setOrigin(st: StateFile, id: string, origin: PackOrigin | undefined): StateFile {
+  const cur = st.packs[id] ?? { enabled: false }
+  return { ...st, packs: { ...st.packs, [id]: { ...cur, origin } } }
 }
 export function forgetPack(st: StateFile, id: string): StateFile {
   const packs = { ...st.packs }

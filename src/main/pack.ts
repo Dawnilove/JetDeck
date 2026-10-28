@@ -17,7 +17,7 @@ import { startPoll, stopAllPolls, stopPoll } from './packpoll.mts'
 import { sanitizeOutput } from './packsafe.mts'
 import { buildFrom, buildPoll, buildPreview, buildRun, buildStream, buildTerminal, fill, hasUnsafeMark, parseResult, resolveParams, unsafeNotice, type PackResult } from './packrun.mts'
 import { startStream, stopAll, stopStream } from './packstream.mts'
-import { approveAndEnable, buildCatalog, enabledPacks, ensureDir, forgetPack, inspectPackBytes, installPackBytes, readState, readUserDir, setBadgesOff, setEnabled, writeState, type Inspect, type PackEntry, type StateFile } from './packstore.mts'
+import { approveAndEnable, buildCatalog, enabledPacks, ensureDir, forgetPack, inspectPackBytes, installPackBytes, readState, readUserDir, setBadgesOff, setEnabled, setOrigin, writeState, type Inspect, type PackEntry, type PackOrigin, type StateFile } from './packstore.mts'
 import { LIMITS, type Pack, type PackAction, type Reason, type Risk } from './packschema.mts'
 import { analyzeWithInput } from './risk.mts'
 import { requireClient as client } from './session'
@@ -85,6 +85,22 @@ function prepareAction(pack: Pack, pluginId: string, a: PackAction, values: Reco
 // 확인이 필요한 실행인데 확인한 명령과 다르거나 확인 없이 왔으면 거부 (스트림·입력 폼 항목)
 function requireConfirmed(a: PackAction, p: Prepared, token: unknown): void {
   if ((a.mode === 'stream' || a.fields) && p.needConfirm && token !== p.token) throw new Error(tr('확인한 명령과 달라요. 다시 확인해 주세요'))
+}
+
+// 모음 연결(gallery.ts)용: 지금 팩 목록, 안전 모드 여부, 모음에서 받은 파일 설치.
+// 설치는 꺼진 채로 들어오고(파일이 바뀌면 허용도 풀림), enable이면 사용자가 방금 확인한 지문(shownHash)과 같을 때만 허용·켜기까지 한 번에 함
+export const packEntries = (): PackEntry[] => entries
+export const isSafeMode = (): boolean => safeMode
+export function installFromGallery(bytes: Uint8Array, origin: PackOrigin, enable: boolean, shownHash: string): Catalog {
+  const r = installPackBytes(userDir(), bytes, app.getVersion(), entries)
+  rescan()
+  save(setOrigin(state, r.pack.id, origin))
+  rescan()
+  if (enable) {
+    save(approveAndEnable(state, entryOf(r.pack.id), shownHash))
+    rescan()
+  }
+  return catalog()
 }
 
 export function registerPackIpc(): void {

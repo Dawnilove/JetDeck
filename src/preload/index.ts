@@ -10,6 +10,8 @@ import type { RemoteResult } from '../main/remote'
 import type { Guide } from '../main/vncparse.mts'
 import type { Catalog as PackCatalog, Prepared as PackPrepared } from '../main/pack'
 import type { Pack, Reason, Risk } from '../main/packschema.mts'
+import type { GalleryInspect } from '../main/gallery'
+import type { GalleryView } from '../main/galleryflow.mts'
 import type { Inspect as PackInspect } from '../main/packstore.mts'
 import type { PackResult } from '../main/packrun.mts'
 import type { BadgeResult } from '../main/packbadgecore.mts'
@@ -150,6 +152,14 @@ const api = {
   packPollStop: (pollId: string): Promise<void> => ipcRenderer.invoke('pack:poll-stop', pollId),
   onPackPollData: (cb: (id: string, t: number, samples: PollSample[], every: number, hint?: string) => void) => on('pack:poll-data', cb),
   packBadges: (connId: string, dir: string): Promise<BadgeResult[] | null> => ipcRenderer.invoke('pack:badges', connId, dir),
+  // 모음 (5.5.0): 서명된 색인을 보고 설치. 내려받기는 main만 함
+  galleryView: (): Promise<GalleryView> => ipcRenderer.invoke('gallery:view'),
+  galleryCached: (): Promise<GalleryView> => ipcRenderer.invoke('gallery:cached'),
+  galleryConsent: (on: boolean): Promise<GalleryView> => ipcRenderer.invoke('gallery:consent', on),
+  galleryRefresh: (): Promise<GalleryView> => ipcRenderer.invoke('gallery:refresh'),
+  galleryInspect: (id: string): Promise<GalleryInspect> => ipcRenderer.invoke('gallery:inspect', id),
+  galleryInstall: (id: string, hash: string, enable: boolean): Promise<PackCatalog> => ipcRenderer.invoke('gallery:install', id, hash, enable),
+  galleryCancel: (): Promise<void> => ipcRenderer.invoke('gallery:cancel'),
   packBadgesOff: (packId: string, ids: string[]): Promise<PackCatalog> => ipcRenderer.invoke('pack:badges-off', packId, ids),
   onPackPollEnd: (cb: (id: string, reason: PollEndReason, detail?: string) => void) => on('pack:poll-end', cb),
   // 기기 점검 (읽기 전용). smart=false면 SMART 생략
