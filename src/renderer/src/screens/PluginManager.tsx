@@ -1,33 +1,21 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { tr } from '../../../main/i18n.mts'
 import type { Catalog } from '../../../main/pack'
 import { trErr } from '../../../main/packerr.mts'
 import type { Inspect, PackEntry } from '../../../main/packstore.mts'
 import { summarizePack } from '../../../main/packschema.mts'
 import Button from '../components/Button'
+import Segment from '../components/Segment'
 import Switch from '../components/Switch'
 import { errText } from '../util'
-import { lt, PackBody } from './PackUi'
+import Gallery from './Gallery'
+import Modal from './PackModal'
+import { ExistingNote, lt, PackBody } from './PackUi'
 
 // 켜진 팩이 바뀌었음을 활동 막대·팔레트에 알림 (Workspace가 듣고 다시 읽음)
 export const PACKS_CHANGED = 'jetdeck:packs-changed'
 
 type Sub = { kind: 'view'; e: PackEntry } | { kind: 'allow'; e: PackEntry } | { kind: 'install'; ins: Inspect } | { kind: 'remove'; e: PackEntry }
-
-// 모달 하나: 닫기는 Esc·버튼. 안쪽 창이 위에 겹쳐 열림(네이티브 dialog 최상위 층)
-function Modal({ title, wide, onClose, children, foot }: { title: string; wide?: boolean; onClose: () => void; children: ReactNode; foot: ReactNode }) {
-  const ref = useRef<HTMLDialogElement>(null)
-  useEffect(() => {
-    ref.current?.showModal()
-  }, [])
-  return (
-    <dialog ref={ref} className="hk" aria-label={title} style={wide ? { maxWidth: 720 } : undefined} onCancel={(ev) => { ev.preventDefault(); onClose() }}>
-      <h1 style={{ fontSize: 20, fontWeight: 600, overflowWrap: 'anywhere' }}>{title}</h1>
-      {children}
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 10 }}>{foot}</div>
-    </dialog>
-  )
-}
 
 const statusNote = (e: PackEntry): string => {
   if (e.status === 'conflict') return tr('같은 id의 팩 파일이 여러 개예요. 폴더에서 정리한 뒤 다시 시도하세요')
@@ -43,6 +31,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
   const [sub, setSub] = useState<Sub | null>(null)
   const [msg, setMsg] = useState<{ text: string; err?: boolean } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [tab, setTab] = useState<'mine' | 'gallery'>('mine')
 
   const apply = (c: Catalog) => {
     setCat(c)
@@ -94,7 +83,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
           <strong style={{ overflowWrap: 'anywhere' }}>{name}</strong>
           {e.pack && <span className="dim mono" style={{ fontSize: 12 }}>v{e.pack.version}</span>}
           {e.pack?.author && <span className="dim" style={{ fontSize: 12 }}>{tr('작성자')}: {e.pack.author}</span>}
-          {e.source === 'official' && <span className="tag">{tr('공식')}</span>}
+          <span className="tag">{e.source === 'official' ? tr('공식') : e.origin ? tr('모음') : tr('직접 설치')}</span>
           {e.pack && summarizePack(e.pack).stream > 0 && <span className="tag">{tr('실시간')}</span>}
           {e.pack && summarizePack(e.pack).form > 0 && <span className="tag">{tr('입력')}</span>}
           {e.pack && summarizePack(e.pack).chart > 0 && <span className="tag">{tr('그래프')}</span>}
@@ -145,21 +134,28 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
         wide
         onClose={onClose}
         foot={
+          tab === 'gallery' ? (
+            <Button size={36} variant="primary" onClick={onClose}>{tr('닫기')}</Button>
+          ) : (
           <>
             <Button size={36} onClick={pick} disabled={busy}>{tr('팩 설치…')}</Button>
             <Button size={36} onClick={() => act(() => window.api.packRescan())} disabled={busy}>{tr('다시 읽기')}</Button>
             <Button size={36} onClick={() => window.api.packOpenDir().catch((e) => setMsg({ text: errText(e), err: true }))}>{tr('폴더 열기')}</Button>
             <Button size={36} variant="primary" onClick={onClose}>{tr('닫기')}</Button>
           </>
+          )
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', maxHeight: '60vh' }}>
+          <Segment label={tr('플러그인 관리')} value={tab} onChange={setTab} options={[{ value: 'mine', label: tr('내 팩') }, { value: 'gallery', label: tr('모음') }]} />
+          {tab === 'gallery' ? <Gallery onCatalog={apply} onCancel={() => setTab('mine')} /> : <>
           <p className="dim" style={{ fontSize: 13 }}>{tr('플러그인은 JSON 파일에 적은 명령을 Device에서 실행해요. 이 PC에서 코드를 실행하지 않아요. 켜기 전에 명령 전문을 확인할 수 있어요.')}</p>
           {cat?.safeMode && <p className="msg-err" role="status" style={{ fontSize: 13 }}>{tr('안전 모드예요. 내가 설치한 팩은 읽지 않아요.')}</p>}
           {msg && <p className={msg.err ? 'msg-err' : 'dim'} role="status" style={{ fontSize: 13, overflowWrap: 'anywhere' }}>{msg.text}</p>}
           {section(tr('공식 (앱에 포함)'), official)}
           {section(tr('내가 설치한 팩'), mine, cat?.safeMode ? undefined : tr('설치한 팩이 없어요. "팩 설치…"를 누르거나 폴더에 파일을 넣고 "다시 읽기"를 눌러 주세요.'))}
           {examples.length > 0 && section(tr('예제'), examples)}
+          </>}
         </div>
       </Modal>
 
@@ -198,12 +194,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
             </>
           }
         >
-          {sub.ins.existing && (
-            <p className={sub.ins.existing.relation === 'downgrade' ? 'msg-err' : ''} style={{ fontSize: 13 }}>
-              {sub.ins.existing.relation === 'upgrade' ? tr('이미 설치된 v{0}을(를) 새 버전으로 바꿔요.', sub.ins.existing.version) : sub.ins.existing.relation === 'downgrade' ? tr('이미 설치된 v{0}보다 낮은 버전이에요.', sub.ins.existing.version) : tr('이미 같은 버전 v{0}이(가) 설치되어 있어요.', sub.ins.existing.version)}{' '}
-              {tr('바뀐 명령 {0}개 · 추가 {1}개 · 빠진 {2}개', sub.ins.existing.diff.changed.length, sub.ins.existing.diff.added.length, sub.ins.existing.diff.removed.length)}
-            </p>
-          )}
+          {sub.ins.existing && <ExistingNote existing={sub.ins.existing} />}
           {sub.ins.errors.length > 0 && (
             <ul className="msg-err" style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>
               {sub.ins.errors.map((p, i) => <li key={i} style={{ overflowWrap: 'anywhere' }}>{trErr(p)}</li>)}

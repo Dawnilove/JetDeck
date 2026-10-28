@@ -1,5 +1,5 @@
 import { getLang, tr } from '../../../main/i18n.mts'
-import type { CommandDiff } from '../../../main/packstore.mts'
+import type { CommandDiff, Inspect } from '../../../main/packstore.mts'
 import { summarizePack, type L10n, type Pack, type PackAction, type Risk } from '../../../main/packschema.mts'
 import type { Field } from '../../../main/packfields.mts'
 import { REASON_TEXT } from '../../../main/risk.mts'
@@ -136,5 +136,15 @@ export function PackBody({ pack, hash, size, changes }: { pack: Pack; hash: stri
         ))}
       </div>
     </div>
+  )
+}
+
+// 이미 설치된 같은 id 팩과의 비교 (직접 설치·모음 설치 확인 창이 같이 씀)
+export function ExistingNote({ existing }: { existing: NonNullable<Inspect['existing']> }) {
+  return (
+    <p className={existing.relation === 'downgrade' ? 'msg-err' : ''} style={{ fontSize: 13 }}>
+      {existing.relation === 'upgrade' ? tr('이미 설치된 v{0}을(를) 새 버전으로 바꿔요.', existing.version) : existing.relation === 'downgrade' ? tr('이미 설치된 v{0}보다 낮은 버전이에요.', existing.version) : tr('이미 같은 버전 v{0}이(가) 설치되어 있어요.', existing.version)}{' '}
+      {tr('바뀐 명령 {0}개 · 추가 {1}개 · 빠진 {2}개', existing.diff.changed.length, existing.diff.added.length, existing.diff.removed.length)}
+    </p>
   )
 }
