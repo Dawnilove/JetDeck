@@ -11,13 +11,15 @@ export const RELEASES: Release[] = [
       '모음 탭: 서명된 목록에서 팩을 보고 설치해요',
       '목록의 서명과 팩 파일 지문을 앱이 확인해요',
       '설치할 때 명령을 읽고 허용해야 켜져요',
-      '처음 열 때 어떤 정보를 보내는지 안내해요'
+      '처음 열 때 어떤 정보를 보내는지 안내해요',
+      '오프라인·철회·만료 상태를 모음 탭 안에서 알려요'
     ],
     en: [
       'Gallery tab: browse and install packs from a signed list',
       'The app checks the list signature and each file fingerprint',
       'Read the commands and allow them before a pack turns on',
-      'A first-use notice says what is sent'
+      'A first-use notice says what is sent',
+      'Offline, withdrawn and expired states show inside the tab'
     ]
   },
   {
