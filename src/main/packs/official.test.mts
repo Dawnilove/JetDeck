@@ -117,12 +117,27 @@ test('ros2live.json: 검증 통과, 한·영, 스트림 읽기 증명, 기본 �
   assert.deepEqual(r.warnings, [])
   walk(raw, 'ros2live')
   const all = r.pack!.plugins.flatMap((p) => p.actions)
-  assert.deepEqual(all.map((a) => a.id), ['topic-echo', 'topic-hz'])
-  for (const a of all) {
-    assert.equal(a.mode, 'stream', a.id)
-    assert.equal(a.computed, 'read', a.id)
-    assert.equal(a.understated, false, a.id)
+  assert.equal(r.pack!.minApp, '5.4.0')
+  assert.deepEqual(all.map((a) => a.id), ['topic-echo', 'topic-hz', 'launch-file', 'bag-play', 'bag-record-all', 'bag-record-topic'])
+  const by = (id: string) => all.find((a) => a.id === id)!
+  for (const id of ['topic-echo', 'topic-hz']) {
+    assert.equal(by(id).mode, 'stream', id)
+    assert.equal(by(id).computed, 'read', id)
   }
+  // 5.4.0 launch·bag: 앱이 읽기로 증명하지 못하는 명령 — 바꿈, 확인창(confirm) 필수. 팩이 낮게 적은 것도 없음
+  for (const id of ['launch-file', 'bag-play', 'bag-record-all', 'bag-record-topic']) {
+    assert.equal(by(id).computed, 'change', id)
+    assert.equal(by(id).risk, 'change', id)
+    assert.ok(by(id).confirm, id)
+  }
+  for (const a of all) assert.equal(a.understated, false, a.id)
+  assert.equal(by('launch-file').mode, 'stream')
+  assert.equal(by('launch-file').stopGrace, 10)
+  assert.equal(by('bag-play').mode, 'stream')
+  assert.equal(by('bag-play').stopGrace, 5)
+  assert.equal(by('bag-record-all').mode, 'terminal')
+  assert.equal(by('bag-record-topic').mode, 'terminal')
+  assert.ok(all.every((a) => !a.auto && !a.sudo)) // 자동 실행·sudo 없음
   assert.ok(OFFICIAL_DEFAULT_OFF.has('ros2-live'))
 })
 

@@ -1,9 +1,9 @@
 {
   "id": "ros2-live",
   "format": 1,
-  "version": "5.1.0",
-  "minApp": "5.1.0",
-  "name": { "ko": "ROS2 실시간 보기 (베타)", "en": "ROS2 live view (beta)" },
+  "version": "5.4.0",
+  "minApp": "5.4.0",
+  "name": { "ko": "ROS2 실시간·launch·bag (베타)", "en": "ROS2 live, launch and bag (beta)" },
   "author": "JetDeck",
   "license": "Apache-2.0",
   "plugins": [
@@ -42,6 +42,91 @@
               "from": { "cmd": "ros2 topic list", "shell": "bash-i", "timeout": 15, "charset": "ros", "max": 200 } }
           ],
           "display": { "type": "log", "maxLines": 500 }
+        }
+      ]
+    },
+    {
+      "id": "ros2-launch",
+      "group": "dev",
+      "title": { "ko": "ROS2 launch (베타)", "en": "ROS2 launch (beta)" },
+      "desc": { "ko": "launch 파일을 고르면 ros2 launch를 실행하고 출력을 계속 보여 줘요. 내장 ROS2 화면의 launch 탭과 나란히 써 보는 베타예요. 멈추면 launch가 노드를 정리할 시간을 10초까지 줘요.", "en": "Pick a launch file to run ros2 launch and keep showing its output. A beta to try next to the launch tab of the built-in ROS2 screen. When you stop it, launch gets up to 10 seconds to shut its nodes down." },
+      "actions": [
+        {
+          "id": "launch-file",
+          "label": { "ko": "launch 파일 실행", "en": "Run a launch file" },
+          "desc": { "ko": "ros2 launch — 선택한 launch 파일을 실행해요. 목록에는 홈 폴더 아래 파일과 설치된 ROS 패키지의 파일이 나와요.", "en": "ros2 launch — runs the chosen launch file. The list shows files under the home folder and files of installed ROS packages." },
+          "mode": "stream",
+          "cmd": "ros2 launch {file}",
+          "risk": "change",
+          "confirm": { "ko": "launch 파일은 노드와 프로그램을 실행해요. 이 기기에서 그 파일에 적힌 코드가 돌아가고, 로봇이나 장치가 움직일 수 있어요. 파일 내용을 믿을 수 있는지 먼저 확인하세요. 멈추거나 화면을 나가면 정지 신호를 보내요.", "en": "A launch file starts nodes and programs. The code in that file runs on this Device, and robots or hardware may move. Check first that you trust the file. Stopping, or leaving this screen, sends a stop signal." },
+          "shell": "bash-i",
+          "timeout": 3600,
+          "stopGrace": 10,
+          "fields": [
+            { "name": "file", "label": { "ko": "launch 파일", "en": "Launch file" }, "type": "select",
+              "from": { "cmd": "find ~ /opt/ros -maxdepth 7 \\( -name build -o -name install -o -name log -o -name '.*' \\) -prune -o -type f \\( -name '*launch.py' -o -name '*launch.xml' -o -name '*launch.yaml' -o -name '*launch.yml' \\) -print 2>/dev/null | head -200", "shell": "sh", "timeout": 15, "charset": "path", "max": 200 } }
+          ],
+          "display": { "type": "log", "maxLines": 2000 }
+        }
+      ]
+    },
+    {
+      "id": "ros2-bag",
+      "group": "dev",
+      "title": { "ko": "ROS2 bag (베타)", "en": "ROS2 bag (beta)" },
+      "desc": { "ko": "bag 파일을 재생하거나 새로 녹화해요. 내장 ROS2 화면의 bag 탭과 나란히 써 보는 베타예요. 재생은 이 화면에서 출력을 보여 주고, 녹화는 터미널에 명령을 입력해요.", "en": "Play a bag file or record a new one. A beta to try next to the bag tab of the built-in ROS2 screen. Playback shows its output on this screen. Recording types the command into the terminal." },
+      "actions": [
+        {
+          "id": "bag-play",
+          "label": { "ko": "bag 재생", "en": "Play a bag" },
+          "desc": { "ko": "ros2 bag play — 선택한 bag의 메시지를 다시 발행해요. 홈 폴더 아래에서 찾은 bag이 목록에 나와요.", "en": "ros2 bag play — publishes the messages of the chosen bag again. Bags found under the home folder are in the list." },
+          "mode": "stream",
+          "cmd": "ros2 bag play {bag} -r {rate} {loop}",
+          "risk": "change",
+          "confirm": { "ko": "재생하면 bag에 담긴 메시지가 토픽으로 다시 발행돼요. 이 기기의 노드가 그 메시지를 받으면 로봇이나 장치가 움직일 수 있어요. 멈추거나 화면을 나가면 재생이 끝나요.", "en": "Playing publishes the messages stored in the bag to topics again. If nodes on this Device receive them, robots or hardware may move. Stopping, or leaving this screen, ends playback." },
+          "shell": "bash-i",
+          "timeout": 3600,
+          "stopGrace": 5,
+          "fields": [
+            { "name": "bag", "label": { "ko": "bag 폴더", "en": "Bag folder" }, "type": "select",
+              "from": { "cmd": "find ~ -maxdepth 6 \\( -name build -o -name install -o -name log -o -name '.*' \\) -prune -o -type f -name metadata.yaml -printf '%h\\n' 2>/dev/null | head -200", "shell": "sh", "timeout": 15, "charset": "path", "max": 200 } },
+            { "name": "rate", "label": { "ko": "재생 속도", "en": "Speed" }, "type": "select",
+              "choices": [
+                { "value": "1", "label": { "ko": "1배", "en": "1x" } },
+                { "value": "0.5", "label": { "ko": "0.5배 (느리게)", "en": "0.5x (slower)" } },
+                { "value": "2", "label": { "ko": "2배 (빠르게)", "en": "2x (faster)" } }
+              ] },
+            { "name": "loop", "label": { "ko": "끝나면 처음부터 반복", "en": "Repeat from the start" }, "type": "flag", "on": "-l", "default": false }
+          ],
+          "display": { "type": "log", "maxLines": 1000 }
+        },
+        {
+          "id": "bag-record-all",
+          "label": { "ko": "bag 녹화 — 모든 토픽", "en": "Record a bag — all topics" },
+          "desc": { "ko": "ros2 bag record -a — 모든 토픽을 녹화해요. 현재 터미널에 명령을 입력하고, 멈출 때는 그 터미널에서 Ctrl+C를 눌러요. 터미널의 현재 폴더에 bag 폴더가 만들어져요.", "en": "ros2 bag record -a — records all topics. Types the command into the current terminal. To stop, press Ctrl+C in that terminal. The bag folder is created in the terminal's current folder." },
+          "mode": "terminal",
+          "cmd": "ros2 bag record -o {name} -a",
+          "risk": "change",
+          "confirm": { "ko": "녹화하면 터미널의 현재 폴더에 bag 파일이 만들어지고, 오래 두면 저장 공간을 많이 써요. 멈추려면 그 터미널에서 Ctrl+C를 눌러요.", "en": "Recording creates a bag file in the terminal's current folder, and it uses a lot of storage if left running. To stop, press Ctrl+C in that terminal." },
+          "shell": "bash-i",
+          "fields": [
+            { "name": "name", "label": { "ko": "bag 이름", "en": "Bag name" }, "type": "text", "charset": "word", "maxLen": 40, "default": "jdbag" }
+          ]
+        },
+        {
+          "id": "bag-record-topic",
+          "label": { "ko": "bag 녹화 — 토픽 하나", "en": "Record a bag — one topic" },
+          "desc": { "ko": "ros2 bag record — 고른 토픽만 녹화해요. 현재 터미널에 명령을 입력하고, 멈출 때는 그 터미널에서 Ctrl+C를 눌러요.", "en": "ros2 bag record — records only the chosen topic. Types the command into the current terminal. To stop, press Ctrl+C in that terminal." },
+          "mode": "terminal",
+          "cmd": "ros2 bag record -o {name} {topic}",
+          "risk": "change",
+          "confirm": { "ko": "녹화하면 터미널의 현재 폴더에 bag 파일이 만들어지고, 오래 두면 저장 공간을 많이 써요. 멈추려면 그 터미널에서 Ctrl+C를 눌러요.", "en": "Recording creates a bag file in the terminal's current folder, and it uses a lot of storage if left running. To stop, press Ctrl+C in that terminal." },
+          "shell": "bash-i",
+          "fields": [
+            { "name": "topic", "label": { "ko": "토픽", "en": "Topic" }, "type": "select",
+              "from": { "cmd": "ros2 topic list", "shell": "bash-i", "timeout": 15, "charset": "ros", "max": 200 } },
+            { "name": "name", "label": { "ko": "bag 이름", "en": "Bag name" }, "type": "text", "charset": "word", "maxLen": 40, "default": "jdbag" }
+          ]
         }
       ]
     }
