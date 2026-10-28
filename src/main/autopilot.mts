@@ -1,5 +1,5 @@
 // MCP 오토파일럿(전문가) 모드: 위험한 명령 대화형 승인 팝업 생략
-import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { dangerous } from './danger.mts'
 
@@ -49,23 +49,31 @@ export function loadAutopilotConfig(
 
 // 오토파일럿 상태 저장 (0o600 권한)
 export function saveAutopilotConfig(filePath: string, enabled: boolean): void {
+  const tmpPath = `${filePath}.${process.pid}.tmp`
   try {
     const dir = dirname(filePath)
     mkdirSync(dir, { recursive: true, mode: 0o700 })
-    const tmpPath = `${filePath}.${process.pid}.tmp`
     writeFileSync(tmpPath, JSON.stringify({ autopilot: enabled, enabled }, null, 2), { mode: 0o600 })
     try {
       chmodSync(tmpPath, 0o600)
     } catch {}
     renameSync(tmpPath, filePath)
   } catch (e) {
+    try {
+      rmSync(tmpPath, { force: true })
+    } catch {}
     console.error('오토파일럿 상태 저장 실패:', (e as Error).message)
   }
 }
 
-// 명령 실행 전 사용자 승인(팝업)이 필요한지 판단
-// 오토파일럿 모드가 켜져 있으면 위험 명령이어도 승인이 필요하지 않음 (자동 승인)
+// 명령 실행 전 사용자 승인 이유를 반환 (승인 불필요 시 null)
+// 오토파일럿 모드가 켜져 있으면 위험 명령이어도 승인을 요구하지 않음 (null 반환)
+export function getApprovalReason(command: string, enabled = autopilot): string | null {
+  if (enabled) return null
+  return dangerous(command)
+}
+
+// 명령 실행 전 사용자 승인(팝업)이 필요한지 판별
 export function requiresApproval(command: string, enabled = autopilot): boolean {
-  if (enabled) return false
-  return dangerous(command) !== null
+  return getApprovalReason(command, enabled) !== null
 }

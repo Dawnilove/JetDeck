@@ -106,11 +106,17 @@ export function useMcpAutopilot(): [boolean, (val: boolean) => Promise<void>] {
   }, [])
 
   const update = async (next: boolean) => {
+    const prev = autopilot
     setAutopilot(next)
     localStorage.setItem(AUTOPILOT_KEY, next ? '1' : '0')
     try {
-      await window.api.mcpSetAutopilot(next)
-    } catch {}
+      const confirmed = await window.api.mcpSetAutopilot(next)
+      setAutopilot(confirmed)
+      localStorage.setItem(AUTOPILOT_KEY, confirmed ? '1' : '0')
+    } catch {
+      setAutopilot(prev)
+      localStorage.setItem(AUTOPILOT_KEY, prev ? '1' : '0')
+    }
   }
 
   return [autopilot, update]

@@ -7,7 +7,7 @@ import { track } from './activity'
 import { exitStatus, redact, type ToolResult } from './activitylog.mts'
 import { tr } from './i18n.mts'
 import { dangerous } from './danger.mts'
-import { checkInitialAutopilot, isAutopilot, loadAutopilotConfig, requiresApproval, saveAutopilotConfig, setAutopilot } from './autopilot.mts'
+import { checkInitialAutopilot, getApprovalReason, isAutopilot, loadAutopilotConfig, saveAutopilotConfig, setAutopilot } from './autopilot.mts'
 import { latest } from './monitor'
 import { getClient, listConns, listShells } from './session'
 import { call, listDir, readText, sftpOf, writeText } from './sftp'
@@ -183,7 +183,7 @@ function notifyApproval(host: string, command: string, reason: string, kind?: 't
 // 위험한 명령: 화면에 승인 창을 띄우고 답을 기다림 (2분 안에 답이 없으면 거부)
 // 오토파일럿 모드가 켜져 있으면 대화형 승인 창 및 데스크톱 알림 없이 즉시 승인(true)
 function approve(host: string, command: string, reason: string, kind?: 'terminal'): Promise<boolean> {
-  if (isAutopilot()) return Promise.resolve(true)
+  if (kind !== 'terminal' && isAutopilot()) return Promise.resolve(true)
   if (!wc || wc.isDestroyed()) return Promise.resolve(false)
   const id = randomUUID()
   wc.send('mcp:approve', { id, host, command, reason, kind })
@@ -305,8 +305,8 @@ async function toolText(name: string, a: Args, client: string): Promise<string |
       const id = pick(a.session)
       const command = str(a.command).trim()
       if (!command) throw new Error('command가 비어 있어요')
-      const reason = dangerous(command)
-      if (reason && !isAutopilot()) {
+      const reason = getApprovalReason(command)
+      if (reason) {
         const host = sshHosts().find((h) => h.id === listConns().find((c) => c.id === id)?.hostId)?.name ?? id
         if (!(await approve(host, command, reason))) return { text: `사용자가 실행을 허용하지 않았어요 (${reason}). 이 명령은 실행되지 않았어요`, status: 'denied' }
       }

@@ -7,6 +7,7 @@ import { test } from 'node:test'
 import {
   checkInitialAutopilot,
   isAutopilot,
+  getApprovalReason,
   loadAutopilotConfig,
   requiresApproval,
   saveAutopilotConfig,
@@ -118,6 +119,13 @@ test('오토파일럿 켜짐 시 위험한 명령도 승인 없이 통과', () =
     assert.equal(requiresApproval(cmd, true), false, `오토파일럿 모드에서는 승인이 생략되어야 함: ${cmd}`)
   }
   setAutopilot(false)
+})
+
+test('getApprovalReason: 오토파일럿 꺼짐 시 위험 사유 반환, 켜짐 시 null', () => {
+  assert.ok(getApprovalReason('sudo rm -rf /', false) !== null)
+  assert.equal(getApprovalReason('sudo rm -rf /', true), null)
+  assert.equal(getApprovalReason('ls -la', false), null)
+  assert.equal(getApprovalReason('ls -la', true), null)
 })
 
 test('일반 명령은 오토파일럿 여부와 무관하게 승인 불필요', () => {
