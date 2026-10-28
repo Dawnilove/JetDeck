@@ -64,7 +64,7 @@
           "stopGrace": 10,
           "fields": [
             { "name": "file", "label": { "ko": "launch 파일", "en": "Launch file" }, "type": "select",
-              "from": { "cmd": "find ~ /opt/ros -maxdepth 7 \\( -name build -o -name install -o -name log -o -name '.*' \\) -prune -o -type f \\( -name '*launch.py' -o -name '*launch.xml' -o -name '*launch.yaml' -o -name '*launch.yml' \\) -print 2>/dev/null | head -200", "shell": "sh", "timeout": 15, "charset": "path", "max": 200 } }
+              "from": { "cmd": "find ~ /opt/ros -maxdepth 7 \\( -name build -o -name install -o -name log -o -name site-packages -o -name node_modules -o -name '.*' \\) -prune -o -type f \\( -name '*launch.py' -o -name '*launch.xml' -o -name '*launch.yaml' -o -name '*launch.yml' \\) -print 2>/dev/null | head -200", "shell": "sh", "timeout": 15, "charset": "path", "max": 200 } }
           ],
           "display": { "type": "log", "maxLines": 2000 }
         }
