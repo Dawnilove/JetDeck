@@ -12,7 +12,11 @@
     "dist": "npm run licenses && npm run build && electron-builder --win --publish never",
     "dist:linux": "npm run licenses && npm run build && electron-builder --linux --publish never",
     "dist:linux:arm64": "npm run licenses && npm run build && electron-builder --linux --arm64 --config electron-builder.arm64.cjs --publish never",
-    "licenses": "node scripts/licenses.mjs"
+    "licenses": "node scripts/licenses.mjs",
+    "gallery:keygen": "node scripts/gallery-keygen.mjs",
+    "gallery:build": "node scripts/gallery-build.mjs",
+    "gallery:sign": "node scripts/gallery-sign.mjs",
+    "gallery:verify": "node scripts/gallery-verify.mjs"
   },
   "keywords": [],
   "author": "Dawnilove",

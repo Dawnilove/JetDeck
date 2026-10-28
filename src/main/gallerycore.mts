@@ -134,6 +134,12 @@ export function parseIndex(bytes: Uint8Array, sigText: string, o: ParseOpts): Pa
   } catch {
     return { ok: false, code: 'bad-json' }
   }
+  const r = readIndex(raw, o)
+  return r.ok ? { ...r, keyIndex } : r
+}
+
+// 서명을 이미 확인한 JSON(또는 게시 도구가 막 만든 JSON)이 색인 규칙에 맞는지: 형식 → serial → 만료
+export function readIndex(raw: unknown, o: Omit<ParseOpts, 'keys'>): Omit<ParseOk, 'keyIndex'> | ParseFail {
   const fail = (detail: string): ParseFail => ({ ok: false, code: 'bad-format', detail })
   if (!isObj(raw) || raw.format !== 1) return fail('format')
   if (!int(raw.serial, Number.MAX_SAFE_INTEGER)) return fail('serial')
@@ -157,7 +163,7 @@ export function parseIndex(bytes: Uint8Array, sigText: string, o: ParseOpts): Pa
     revoked.push(x)
   }
   if (raw.serial < o.lastSerial) return { ok: false, code: 'rollback', detail: `${raw.serial} < ${o.lastSerial}` } // 옛 목록 되돌리기 방지
-  return { ok: true, index: { format: 1, serial: raw.serial, generatedAt: raw.generatedAt, expires: raw.expires, packs, revoked }, expired: Date.parse(raw.expires) < o.now.getTime(), keyIndex }
+  return { ok: true, index: { format: 1, serial: raw.serial, generatedAt: raw.generatedAt, expires: raw.expires, packs, revoked }, expired: Date.parse(raw.expires) < o.now.getTime() }
 }
 
 // ───────────── 철회·앱 버전·팩 파일 확인 ─────────────
