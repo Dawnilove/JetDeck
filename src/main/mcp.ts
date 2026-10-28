@@ -127,6 +127,14 @@ export const loadAutopilotState = (): boolean =>
   loadAutopilotConfig(autopilotFile(), process.env, (sw) => app?.commandLine?.hasSwitch(sw))
 export const saveAutopilotState = (enabled: boolean): void => saveAutopilotConfig(autopilotFile(), enabled)
 
+let cachedIconPath: string | undefined | null = null
+function getNotificationIcon(): string | undefined {
+  if (cachedIconPath !== null) return cachedIconPath
+  const p = join(app.getAppPath(), 'resources', 'icon.png')
+  cachedIconPath = existsSync(p) ? p : undefined
+  return cachedIconPath
+}
+
 // 승인 팝업이 뜰 때 사용자에게 OS 데스크톱 알림(소리 및 토스트) 발송
 function notifyApproval(host: string, command: string, reason: string, kind?: 'terminal'): Notification | null {
   try {
@@ -140,11 +148,10 @@ function notifyApproval(host: string, command: string, reason: string, kind?: 't
         : tr('{0}: {1}', host, command)
 
     // Windows Toast XML은 PNG/JPEG 형식을 권장함 (ico는 Windows 알림 센터에서 누락될 수 있음)
-    const iconPath = join(app.getAppPath(), 'resources', 'icon.png')
     const notif = new Notification({
       title,
       body: body.length > 250 ? body.slice(0, 250) + '…' : body,
-      icon: existsSync(iconPath) ? iconPath : undefined,
+      icon: getNotificationIcon(),
       silent: false
     })
 
@@ -190,10 +197,13 @@ function approve(host: string, command: string, reason: string, kind?: 'terminal
       clearTimeout(t)
       waits.delete(id)
       try {
+        notif?.removeAllListeners()
         notif?.close()
       } catch {}
       try {
-        win?.flashFrame(false)
+        if (waits.size === 0 && win && !win.isDestroyed()) {
+          win.flashFrame(false)
+        }
       } catch {}
       resolve(ok)
     }
@@ -296,7 +306,7 @@ async function toolText(name: string, a: Args, client: string): Promise<string |
       const command = str(a.command).trim()
       if (!command) throw new Error('command가 비어 있어요')
       const reason = dangerous(command)
-      if (reason && requiresApproval(command)) {
+      if (reason && !isAutopilot()) {
         const host = sshHosts().find((h) => h.id === listConns().find((c) => c.id === id)?.hostId)?.name ?? id
         if (!(await approve(host, command, reason))) return { text: `사용자가 실행을 허용하지 않았어요 (${reason}). 이 명령은 실행되지 않았어요`, status: 'denied' }
       }
@@ -437,6 +447,9 @@ export function registerMcpIpc(): void {
   ipcMain.handle('mcp:set-autopilot', (_e, enabled: boolean): boolean => {
     const next = setAutopilot(enabled === true)
     saveAutopilotState(next)
+    if (next) {
+      for (const answer of [...waits.values()]) answer(true)
+    }
     if (wc && !wc.isDestroyed()) wc.send('mcp:autopilot', next)
     return next
   })

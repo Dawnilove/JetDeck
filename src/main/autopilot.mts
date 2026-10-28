@@ -1,5 +1,5 @@
 // MCP 오토파일럿(전문가) 모드: 위험한 명령 대화형 승인 팝업 생략
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { dangerous } from './danger.mts'
 
@@ -52,7 +52,12 @@ export function saveAutopilotConfig(filePath: string, enabled: boolean): void {
   try {
     const dir = dirname(filePath)
     mkdirSync(dir, { recursive: true, mode: 0o700 })
-    writeFileSync(filePath, JSON.stringify({ autopilot: enabled }, null, 2), { mode: 0o600 })
+    const tmpPath = `${filePath}.${process.pid}.tmp`
+    writeFileSync(tmpPath, JSON.stringify({ autopilot: enabled, enabled }, null, 2), { mode: 0o600 })
+    try {
+      chmodSync(tmpPath, 0o600)
+    } catch {}
+    renameSync(tmpPath, filePath)
   } catch (e) {
     console.error('오토파일럿 상태 저장 실패:', (e as Error).message)
   }
