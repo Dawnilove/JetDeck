@@ -9,6 +9,7 @@ JetDeck 5.0은 **팩**으로 기능을 늘릴 수 있어요. 팩은 Device에서
 * [보안 · Security](security.md)
 * [JSON Schema](jdpack.schema.json) — `"$schema"` 한 줄로 VS Code 자동 완성
 * [예제 · Examples](examples/examples.jdpack.json) — 내 프로젝트·센서·학습 작업 템플릿
+* [모음 게시 절차 · Publishing to the gallery](publish.md) — 관리자용
 
 ## 5분 만에 첫 팩 만들기
 
@@ -64,6 +65,12 @@ JetDeck 5.0은 **팩**으로 기능을 늘릴 수 있어요. 팩은 Device에서
 5. If you edit the file later, JetDeck notices the change and asks you to allow it again.
 
 Tip: copy an example pack and change the `id`, paths and commands. If unsure about `risk`, write `change` — JetDeck always uses the higher of your value and its own analysis.
+
+## 모음 · Gallery (5.5.0)
+
+**플러그인 관리 → 모음** 탭에서 관리자가 읽어 본 팩을 내려받을 수 있어요. 앱이 목록의 서명과 파일 지문을 확인하고, 설치한 팩도 허용 창에서 명령을 읽고 허용해야 켜져요. "검토됨"은 관리자가 명령을 읽었다는 뜻이고 안전을 보증하지는 않아요. 목록 페이지: <https://dawnilove.github.io/JetDeck/packs/>
+
+Open **Plugin manager → Gallery** to download packs the maintainer has read. The app checks the list signature and each file fingerprint, and you still read and allow the commands before a pack turns on. "Reviewed" means the maintainer read the commands; it is not a guarantee of safety. List page: <https://dawnilove.github.io/JetDeck/packs/>
 
 ## Share a pack · 팩 공유
 Pack contributions are welcome: see "팩 기여 / Contributing packs" in [CONTRIBUTING.md](https://github.com/Dawnilove/JetDeck/blob/main/CONTRIBUTING.md).

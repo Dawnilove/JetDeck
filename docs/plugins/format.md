@@ -278,6 +278,16 @@ A smaller one, without Git (marks `.py` and `.sh` files in the opened folder):
 }
 ```
 
+## Gallery packs (5.5.0)
+
+A pack listed in the [gallery](publish.md) is a normal pack with a few extra rules, checked when the list is built:
+
+* `id` has 3–40 characters, and `version` is not changed after publishing (a fix is a new version).
+* `license` and `desc` are required, and the file is at most 128 KB.
+* The pack passes the app's validator with **no errors and no warnings**: no item rated lower than the app computes, no item the app cannot read.
+* `author` is shown with the label "self-declared". The gallery adds a separate `submitter` (the GitHub account that sent the pack).
+* The app downloads the file, checks its fingerprint, and shows the allow dialog as usual. Installing from the gallery changes nothing about risk: **Install only** adds the pack turned off, **Allow and turn on** counts as having read the commands that were shown.
+
 ## Risk
 
 JetDeck does **not** trust the `risk` you write. It analyzes every command (all choice combinations) and uses the **higher** of the two:
