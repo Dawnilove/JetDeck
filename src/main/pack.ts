@@ -178,7 +178,7 @@ export function registerPackIpc(): void {
     if (!/^[\w-]{1,64}$/.test(String(streamId))) throw new Error(tr('올바르지 않은 요청이에요'))
     const values = resolveParams(a, given ?? {})
     requireConfirmed(a, prepareAction(pack, pluginId, a, values), token)
-    return startStream(e.sender, client(connId), String(streamId), pack.id, buildStream(a, values), a.timeout ?? LIMITS.timeoutStreamDefault)
+    return startStream(e.sender, client(connId), String(streamId), pack.id, buildStream(a, values), a.timeout ?? LIMITS.timeoutStreamDefault, a.stopGrace)
   })
   ipcMain.handle('pack:stream-stop', (_e, streamId: string): void => stopStream(String(streamId)))
   // 동적 선택지(select의 from): 읽기로 증명된 목록 명령을 실행해 줄마다 글자 종류를 검사한 값만 돌려줌

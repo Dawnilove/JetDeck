@@ -14,6 +14,9 @@ test('schema: 제한 값이 검사기와 같음', () => {
   assert.equal(D.plugin.properties.actions.maxItems, LIMITS.actionsPerPlugin)
   assert.equal(D.action.properties.cmd.maxLength, LIMITS.cmd)
   assert.equal(D.action.properties.timeout.maximum, LIMITS.timeoutStreamExternal)
+  assert.equal(D.action.properties.stopGrace.minimum, LIMITS.stopGraceMin)
+  assert.equal(D.action.properties.stopGrace.maximum, LIMITS.stopGraceOfficial) // 외부 팩의 10초 상한은 설명 글로만 표현
+  assert.match(D.action.properties.stopGrace.description, new RegExp(`max ${LIMITS.stopGraceExternal}`))
   assert.equal(D.field.properties.choices.maxItems, LIMITS.choices)
   assert.equal(D.action.properties.fields.maxItems, FIELD_LIMITS.fields)
   assert.equal(D.display.properties.maxLines.maximum, LIMITS.logMax)

@@ -10,7 +10,7 @@ import { Batcher, LineAssembler, STREAM_LIMITS, Throttle, type EndReason } from 
 // 팩 흐르는 출력 실행기 (5.1.0). 내장 ROS·빌드·서비스 화면이 쓰는 ptystream.ts는 건드리지 않고 LiveSet만 같이 씀.
 // 끝내는 순서: ① pty에 Ctrl-C(SIGINT) ② 3초 안에 안 끝나면 채널 닫기(SIGHUP) — 둘 다 pty의 앞면 프로세스 그룹에 가서 파이프라인 전체가 끝남.
 // 화면이 사라지거나(닫기·새로고침·이동)·앱이 끝나면 그 화면이 시작한 스트림을 모두 끝냄. 연결이 끊기면 채널이 저절로 닫힘
-type Entry = { id: string; wc: Pick<WebContents, 'send' | 'isDestroyed'>; packId: string; ch?: ClientChannel; reason?: EndReason; exit?: number; timer?: NodeJS.Timeout; kill?: NodeJS.Timeout; done: boolean }
+type Entry = { id: string; wc: Pick<WebContents, 'send' | 'isDestroyed'>; packId: string; graceMs?: number; ch?: ClientChannel; reason?: EndReason; exit?: number; timer?: NodeJS.Timeout; kill?: NodeJS.Timeout; done: boolean }
 const entries = new Map<string, Entry>()
 const live = new LiveSet<ClientChannel>()
 
@@ -34,7 +34,7 @@ export function stopStream(id: string, reason: EndReason = 'stopped'): void {
   } catch {
     /* 채널이 이미 닫힘 */
   }
-  e.kill ??= setTimeout(() => live.stop(id), STREAM_LIMITS.stopGraceMs)
+  e.kill ??= setTimeout(() => live.stop(id), e.graceMs ?? STREAM_LIMITS.stopGraceMs) // 항목의 stopGrace(5.4.0)가 있으면 그 시간, 없으면 기본 3초
 }
 // 시험용: 정리가 끝났는지(남은 스트림이 없는지) 확인
 export const activeCount = () => entries.size
@@ -50,14 +50,14 @@ export function stopAll(): void {
 onOwnerGone(stopOwnedBy)
 
 // c: 이 연결의 SSH 클라이언트 (호출하는 쪽이 session에서 찾아 넘김 → 이 모듈은 Electron 없이 시험할 수 있음)
-export function startStream(wc: Pick<WebContents, 'send' | 'isDestroyed' | 'once' | 'on'>, c: Pick<Client, 'exec'>, id: string, packId: string, command: string, timeoutSec: number): Promise<void> {
+export function startStream(wc: Pick<WebContents, 'send' | 'isDestroyed' | 'once' | 'on'>, c: Pick<Client, 'exec'>, id: string, packId: string, command: string, timeoutSec: number, graceSec?: number): Promise<void> {
   if (entries.has(id)) throw new Error(tr('같은 항목이 이미 실행 중이에요'))
   let perPack = 0
   for (const e of entries.values()) if (e.packId === packId) perPack++
   if (perPack >= STREAM_LIMITS.perPack) throw new Error(tr('이 팩은 실시간 보기를 동시에 {0}개까지만 할 수 있어요', STREAM_LIMITS.perPack))
   if (entries.size >= STREAM_LIMITS.perApp) throw new Error(tr('실시간 보기는 동시에 {0}개까지만 할 수 있어요', STREAM_LIMITS.perApp))
   watchOwner(wc)
-  const e: Entry = { id, wc, packId, done: false }
+  const e: Entry = { id, wc, packId, graceMs: graceSec === undefined ? undefined : graceSec * 1000, done: false }
   entries.set(id, e)
   live.begin(id)
   return new Promise<void>((resolve, reject) =>

@@ -65,6 +65,7 @@ export type PackAction = {
   auto?: boolean // 화면을 열 때 바로 실행 (실질 위험도가 read일 때만, 팩당 5개)
   display?: Display
   timeout?: number // 초
+  stopGrace?: number // 5.4.0 stream 전용: Ctrl-C 뒤 채널을 닫기까지 기다리는 초 (없으면 앱 기본 3초)
   disconnects?: boolean // 실행하면 연결이 끊김 (재부팅·종료)
   mode: 'exec' | 'terminal' | 'stream' // terminal: 결과를 받지 않고 현재 터미널에 명령을 입력 (스니펫 방식), stream: 끝나지 않는 출력을 실시간으로 받음 (5.1.0)
   enter?: boolean // terminal에서 끝에 Enter (기본 true)
@@ -95,9 +96,12 @@ export const LIMITS = { fileBytes: 512 * 1024, plugins: 20, actionsPerPlugin: 50
   chartEveryExternal: 1, chartEveryOfficial: 0.5, chartEveryMax: 60, chartEveryDefault: 2, chartPointsMin: 10, chartPointsMax: 3600, chartPointsDefault: 300, chartLines: 8, chartCols: 50, chartUnit: 8,
   chartTimeoutDefault: 10, chartTimeoutMax: 30, chartReadLines: 1000, chartReadLineChars: 1000, chartValueMax: 1e9, chartPerPack: 5, chartPerApp: 10,
   // 5.3.0 탐색기 배지: 팩당 개수, 코드 수, 표시 글자, 실행 간격·시간, 읽는 결과 한도
-  badges: 2, badgesOfficial: 4, badgeCodes: 30, badgeShow: 2, badgeTtlMin: 3, badgeTtlMax: 300, badgeTtlDefault: 5, badgeTimeoutMax: 15, badgeTimeoutDefault: 10, badgeRecords: 5000, badgeLineChars: 4096, badgeTag: 40, badgeDir: 1024 }
+  badges: 2, badgesOfficial: 4, badgeCodes: 30, badgeShow: 2, badgeTtlMin: 3, badgeTtlMax: 300, badgeTtlDefault: 5, badgeTimeoutMax: 15, badgeTimeoutDefault: 10, badgeRecords: 5000, badgeLineChars: 4096, badgeTag: 40, badgeDir: 1024,
+  // 5.4.0 stopGrace: 스트림 정지 유예(초). 정리에 시간이 걸리는 launch를 위해 길게 허용하되 외부 팩은 짧게
+  stopGraceMin: 3, stopGraceExternal: 10, stopGraceOfficial: 30 }
 export const CHART_MIN_APP = '5.2.0'
 export const BADGE_MIN_APP = '5.3.0'
+export const STOP_GRACE_MIN_APP = '5.4.0'
 export const RESERVED_IDS = ['device', 'ros2', 'monitor', 'perf', 'devtools', 'examples', 'ros2-live', 'jetdeck', 'official', 'app', 'core', 'snippets']
 // 공식 팩에서 읽기로 증명되지 않아도 읽기로 인정하는 항목 (팩id/항목id → 고정된 명령). 새 공식 항목을 추가하면 여기와 시험을 고쳐야 함 = 리뷰 강제
 export const OFFICIAL_UNPROVEN_READS = new Map<string, string>([
@@ -576,6 +580,13 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
     if (!(typeof a.timeout === 'number' && a.timeout >= 1 && a.timeout <= cap)) return bad(`timeout은 1~${cap}초예요`)
     timeout = a.timeout
   }
+  let stopGrace: number | undefined
+  if (a.stopGrace !== undefined) {
+    if (!stream) return bad('stopGrace는 mode가 stream인 항목에서만 쓸 수 있어요')
+    const cap = S ? LIMITS.stopGraceOfficial : LIMITS.stopGraceExternal
+    if (!(typeof a.stopGrace === 'number' && Number.isFinite(a.stopGrace) && a.stopGrace >= LIMITS.stopGraceMin && a.stopGrace <= cap)) return bad(`stopGrace는 ${LIMITS.stopGraceMin}~${cap}초예요`)
+    stopGrace = a.stopGrace
+  }
   if (stream) timeout ??= LIMITS.timeoutStreamDefault // 스트림은 항상 최대 실행 시간이 있음
   if (chart) timeout ??= LIMITS.chartTimeoutDefault // 그래프는 한 번 실행이 짧게 끝나야 함
   ctx.seen.add(id)
@@ -589,6 +600,7 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
       auto: auto || undefined,
       display,
       timeout,
+      stopGrace,
       disconnects: a.disconnects === true || undefined,
       mode,
       enter: terminal ? a.enter !== false : undefined,
@@ -669,6 +681,8 @@ export function validatePack(raw: unknown, opts: ValidateOptions = {}): Validate
   if (badges.length && !(typeof raw.minApp === 'string' && compareSemver(raw.minApp, BADGE_MIN_APP) >= 0)) warnings.push(`badges가 있어요: minApp을 "${BADGE_MIN_APP}" 이상으로 적어 주세요`)
   // 옛 앱은 chart 항목만 숨기고 팩은 열어 버림 → 그래프를 쓰는 팩은 minApp으로 옛 앱이 팩 전체를 거부하게 해야 함
   if (plugins.some((p) => p.actions.some((a) => a.display?.type === 'chart')) && !(typeof raw.minApp === 'string' && compareSemver(raw.minApp, CHART_MIN_APP) >= 0)) warnings.push(`chart 항목이 있어요: minApp을 "${CHART_MIN_APP}" 이상으로 적어 주세요`)
+  // 옛 앱은 stopGrace를 모르고 3초로 끝냄 → 정리에 시간이 걸리는 팩이 옛 앱에서 기기 프로세스를 남길 수 있음
+  if (plugins.some((p) => p.actions.some((a) => a.stopGrace !== undefined)) && !(typeof raw.minApp === 'string' && compareSemver(raw.minApp, STOP_GRACE_MIN_APP) >= 0)) warnings.push(`stopGrace가 있어요: minApp을 "${STOP_GRACE_MIN_APP}" 이상으로 적어 주세요`)
   return {
     pack: {
       id: raw.id, format: 1, version: raw.version, name, desc,

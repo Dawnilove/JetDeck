@@ -103,6 +103,22 @@ test('멈춤: 먼저 Ctrl-C, 유예 안에 안 끝나면 채널을 닫음, 이�
   assert.equal(wc.of('pack:stream-data').length, 0)
 })
 
+test('멈춤: stopGrace가 있으면 기본 유예보다 오래 기다린 뒤 닫음 (5.4.0)', async () => {
+  await settle()
+  fast() // 기본 유예 30ms
+  const wc = new FakeWc()
+  const chs: FakeChannel[] = []
+  await startStream(asWc(wc), asClient(fakeClient(chs)), 's3g', 'pk', 'x', 60, 5)
+  stopStream('s3g')
+  assert.deepEqual(chs[0].written, ['\x03'])
+  await wait(150) // 기본 유예(30ms)는 지났지만 5초 유예는 아직
+  assert.equal(chs[0].closed, false)
+  assert.equal(wc.of('pack:stream-end').length, 0)
+  stopAll() // 5초를 기다리지 않고 정리 (앱 종료 경로는 유예 없이 닫음)
+  await until(() => wc.of('pack:stream-end').length > 0)
+  assert.equal(chs[0].closed, true)
+})
+
 test('멈춤: Ctrl-C로 곧바로 끝나면 채널을 따로 닫지 않아도 end 한 번', async () => {
   await settle()
   fast()

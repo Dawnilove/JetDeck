@@ -97,6 +97,7 @@
         "auto": { "type": "boolean" },
         "display": { "$ref": "#/definitions/display" },
         "timeout": { "type": "number", "minimum": 1, "maximum": 3600, "description": "Seconds. exec: default 60, max 600. stream: the longest it may run, default 600, max 3600." },
+        "stopGrace": { "type": "number", "minimum": 3, "maximum": 30, "description": "stream only (5.4.0, needs minApp 5.4.0). Seconds to wait after Ctrl-C before the channel is closed. Default 3. External packs: max 10. Official packs: max 30." },
         "disconnects": { "type": "boolean" },
         "shell": { "enum": ["sh", "bash-i"], "default": "sh" },
         "when": { "const": "jetson" }
