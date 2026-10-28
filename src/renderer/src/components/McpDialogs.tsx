@@ -51,9 +51,14 @@ export function McpApprove({ ask, onAnswer }: { ask: McpAsk; onAnswer: (ok: bool
         <dt>{ask.kind === 'terminal' ? tr('읽을 내용') : tr('명령')}</dt>
         <dd style={{ whiteSpace: 'pre-wrap' }}>{ask.command}</dd>
       </dl>
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 10, paddingTop: 4 }}>
-        <Button style={{ padding: '0 18px' }} data-autofocus onClick={() => onAnswer(false)}>{tr('거부')}</Button>
-        <Button variant="warn" style={{ padding: '0 18px' }} onClick={() => onAnswer(true)}>{ask.kind === 'terminal' ? tr('읽기 허용') : tr('실행 허용')}</Button>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 10, paddingTop: 4 }}>
+        <span className="dim" style={{ fontSize: 12 }}>
+          {tr('Tip: MCP 설정에서 오토파일럿 모드를 켜면 승인 창 없이 즉시 실행할 수 있어요.')}
+        </span>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <Button style={{ padding: '0 18px' }} data-autofocus onClick={() => onAnswer(false)}>{tr('거부')}</Button>
+          <Button variant="warn" style={{ padding: '0 18px' }} onClick={() => onAnswer(true)}>{ask.kind === 'terminal' ? tr('읽기 허용') : tr('실행 허용')}</Button>
+        </div>
       </div>
     </dialog>
   )
@@ -82,6 +87,35 @@ export function useMcpClients(): string[] {
   return names
 }
 
+const AUTOPILOT_KEY = 'mcp-autopilot'
+
+// 오토파일럿 모드 (전문가 모드): 위험한 명령 승인 팝업 생략 상태 관리
+export function useMcpAutopilot(): [boolean, (val: boolean) => Promise<void>] {
+  const [autopilot, setAutopilot] = useState<boolean>(() => localStorage.getItem(AUTOPILOT_KEY) === '1')
+
+  useEffect(() => {
+    window.api.mcpGetAutopilot().then((v) => {
+      setAutopilot(v)
+      localStorage.setItem(AUTOPILOT_KEY, v ? '1' : '0')
+    }, () => {})
+    const off = window.api.onMcpAutopilot((v) => {
+      setAutopilot(v)
+      localStorage.setItem(AUTOPILOT_KEY, v ? '1' : '0')
+    })
+    return () => off()
+  }, [])
+
+  const update = async (next: boolean) => {
+    setAutopilot(next)
+    localStorage.setItem(AUTOPILOT_KEY, next ? '1' : '0')
+    try {
+      await window.api.mcpSetAutopilot(next)
+    } catch {}
+  }
+
+  return [autopilot, update]
+}
+
 type Ai = 'desktop' | 'code' | 'cursor' | 'vscode' | 'codex' | 'gemini' | 'other'
 const AIS: { value: Ai; label: string }[] = [
   { value: 'desktop', label: 'Claude Desktop' },
@@ -98,6 +132,7 @@ const AI_KEY = 'mcp-ai' // 마지막으로 고른 탭 (다시 열면 그 탭부�
 export function McpSetup({ onClose }: { onClose: () => void }) {
   const ref = useModal()
   const clients = useMcpClients()
+  const [autopilot, setAutopilot] = useMcpAutopilot()
   const [info, setInfo] = useState<{ command: string; args: string[]; persists: boolean } | null>(null)
   const [ai, setAi] = useState<Ai>(() => AIS.find((a) => a.value === localStorage.getItem(AI_KEY))?.value ?? 'desktop')
   const [copied, setCopied] = useState(false)
@@ -167,6 +202,39 @@ export function McpSetup({ onClose }: { onClose: () => void }) {
         <span className={clients.length ? 'dot' : 'dot offline'} aria-hidden />
         {clients.length ? tr('연결됨: {0}', clients.join(', ')) : tr('아직 연결된 AI가 없어요. 아래 설정을 넣은 프로그램을 다시 켜거나, 그 AI가 JetDeck 도구를 한 번 쓰면 여기에 표시돼요.')}
       </p>
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', borderRadius: 'var(--r-card)', background: 'var(--panel-2)', border: autopilot ? '1px solid var(--warn)' : '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 600 }}>{tr('오토파일럿 모드 (전문가 모드)')}</span>
+              {autopilot ? (
+                <span style={{ fontSize: 11, background: 'var(--warn)', color: '#000', borderRadius: 4, padding: '1px 6px', fontWeight: 700 }}>
+                  ⚡ {tr('켜짐')}
+                </span>
+              ) : (
+                <span className="tag">{tr('기본값: 꺼짐')}</span>
+              )}
+            </div>
+            <p className="dim" style={{ fontSize: 12, lineHeight: 1.5, margin: 0 }}>
+              {tr('위험한 명령(sudo, rm, kill 등)도 화면 승인 팝업 없이 즉시 실행합니다. 미응답 시 120초 타임아웃을 방지하지만, AI의 실수를 되돌릴 수 없으니 주의하세요.')}
+            </p>
+          </div>
+          <Button
+            variant={autopilot ? 'warn' : 'secondary'}
+            size={36}
+            style={{ minWidth: 72, fontWeight: 600, flexShrink: 0 }}
+            onClick={() => setAutopilot(!autopilot)}
+          >
+            {autopilot ? tr('끄기') : tr('켜기')}
+          </Button>
+        </div>
+        {autopilot && (
+          <div style={{ fontSize: 12, color: 'var(--warn)', display: 'flex', alignItems: 'center', gap: 6, lineHeight: 1.4 }}>
+            <span>⚠️</span>
+            <span>{tr('주의: AI가 루트 권한 및 시스템 변경 명령을 단독으로 실행할 수 있습니다.')}</span>
+          </div>
+        )}
+      </section>
       <Segment options={AIS} value={ai} onChange={pick} label={tr('연결할 AI 선택')} />
       <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>

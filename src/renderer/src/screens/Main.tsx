@@ -6,7 +6,7 @@ import type { Host, HostInfo } from '../../../main/store'
 import Button from '../components/Button'
 import Input from '../components/Input'
 import Logo from '../components/Logo'
-import { useMcpClients } from '../components/McpDialogs'
+import { useMcpAutopilot, useMcpClients } from '../components/McpDialogs'
 import Segment from '../components/Segment'
 import { currentMascot, currentTheme, mascotHidden, setMascotHidden, themeList, useThemeTick } from '../themes'
 import { parseSnippets } from './snippets.mts'
@@ -40,6 +40,7 @@ type Props = {
 export default function Main({ onConnect, theme, onTheme, onGuide, onNews, onMcp, onLang, top }: Props) {
   useThemeTick() // 마스코트 숨기기 체크 상태 반영
   const mcp = useMcpClients()
+  const [autopilot] = useMcpAutopilot()
   const [hosts, setHosts] = useState<HostInfo[]>([])
   const [online, setOnline] = useState<Record<string, number | null>>({})
   const [query, setQuery] = useState('')
@@ -234,7 +235,12 @@ export default function Main({ onConnect, theme, onTheme, onGuide, onNews, onMcp
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <Button size={40} onClick={onMcp} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }} title={mcp.length ? tr('{0} 연결됨', mcp.join(', ')) : tr('Claude·Cursor·Codex 등 AI에서 JetDeck을 쓰도록 설정 (아직 연결된 AI 없음)')}>
           <span className={mcp.length ? 'dot' : 'dot offline'} aria-hidden />
-          {tr('MCP 연결')}
+          <span>{tr('MCP 연결')}</span>
+          {autopilot && (
+            <span style={{ fontSize: 10, background: 'var(--warn)', color: '#000', borderRadius: 4, padding: '1px 5px', fontWeight: 700 }} title={tr('오토파일럿 모드 활성화됨 (위험 명령 자동 승인)')}>
+              ⚡ AUTO
+            </span>
+          )}
         </Button>
         <Button size={40} onClick={onGuide}>{tr('도움말')}</Button>
         <Button size={40} onClick={onNews}>{tr('업데이트 내용')}</Button>

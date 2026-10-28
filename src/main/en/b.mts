@@ -192,6 +192,15 @@ export const EN_B: Record<string, string> = {
   'JetDeck이 꺼져 있으면 AI가 처음 도구를 쓸 때 자동으로 켜져요. 설치 위치를 옮기면 설정을 다시 복사하세요.': 'If JetDeck is closed, it starts automatically when the AI first uses a tool. If you move the install location, copy the settings again.',
   'JetDeck을 업데이트하는 동안에도 AI와의 연결은 유지돼요 (AI가 JetDeck이 다시 켜질 때까지 기다려요). 예전 방식(JetDeck.exe)으로 등록했다면 위 설정으로 한 번 다시 등록하세요.': 'The connection with the AI stays alive while JetDeck updates (the AI waits until JetDeck restarts). If you registered the old way (JetDeck.exe), register again with the settings above.',
   'JetDeck을 업데이트할 때 AI와의 연결이 끊길 수 있어요. 끊기면 Claude Code는 /mcp에서 다시 연결하고, Claude Desktop·Cursor 등은 그 프로그램을 다시 켜세요. 연결 불은 다시 연결되면 자동으로 켜져요.': 'The connection with the AI may drop when JetDeck updates. If it does, reconnect in Claude Code with /mcp, or restart Claude Desktop, Cursor, etc. The status dot lights up again once reconnected.',
+  'Tip: MCP 설정에서 오토파일럿 모드를 켜면 승인 창 없이 즉시 실행할 수 있어요.': 'Tip: Turn on Autopilot Mode in MCP settings to run without approval prompts.',
+  '오토파일럿 모드 (전문가 모드)': 'Autopilot Mode (Expert Mode)',
+  '기본값: 꺼짐': 'Default: Off',
+  '위험한 명령(sudo, rm, kill 등)도 화면 승인 팝업 없이 즉시 실행합니다. 미응답 시 120초 타임아웃을 방지하지만, AI의 실수를 되돌릴 수 없으니 주의하세요.': 'Executes dangerous commands (sudo, rm, kill, etc.) immediately without approval popups. Prevents 120s timeouts, but exercise caution as AI actions cannot be undone.',
+  '주의: AI가 루트 권한 및 시스템 변경 명령을 단독으로 실행할 수 있습니다.': 'Warning: The AI can independently execute root and system-altering commands.',
+  '오토파일럿 모드 활성화됨 (위험 명령 자동 승인)': 'Autopilot mode enabled (automatic approval of dangerous commands)',
+  'JetDeck 명령 실행 승인 필요': 'JetDeck command execution approval required',
+  'AI 터미널 읽기 승인 필요': 'AI terminal read approval required',
+  '{0} 기기의 터미널 화면 읽기 요청': 'Request to read terminal screen on {0}',
 
   // HostKeyDialog.tsx
   '호스트 키가 바뀌었어요': 'The host key has changed',

@@ -1,4 +1,4 @@
-import { app, ipcMain, type WebContents } from 'electron'
+import { app, BrowserWindow, ipcMain, Notification, type WebContents } from 'electron'
 import { randomBytes, randomUUID, timingSafeEqual } from 'crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { createServer } from 'http'
@@ -7,6 +7,7 @@ import { track } from './activity'
 import { exitStatus, redact, type ToolResult } from './activitylog.mts'
 import { tr } from './i18n.mts'
 import { dangerous } from './danger.mts'
+import { checkInitialAutopilot, isAutopilot, setAutopilot } from './autopilot.mts'
 import { latest } from './monitor'
 import { getClient, listConns, listShells } from './session'
 import { call, listDir, readText, sftpOf, writeText } from './sftp'
@@ -22,7 +23,7 @@ export const mcpFile = () => (app.commandLine.hasSwitch('user-data-dir') ? join(
 export const appExe = () => process.env.PORTABLE_EXECUTABLE_FILE || process.env.APPIMAGE || process.execPath
 
 export const INSTRUCTIONS =
-  'JetDeck에 저장된 Device(NVIDIA Jetson 등)에 SSH로 접속해 명령 실행·파일 읽기/쓰기·상태 확인을 합니다. 먼저 list_hosts로 호스트를 보고, 연결이 없으면 connect를 호출하세요. 위험한 명령은 사용자가 JetDeck 화면에서 허용해야 실행됩니다.'
+  'JetDeck에 저장된 Device(NVIDIA Jetson 등)에 SSH로 접속해 명령 실행·파일 읽기/쓰기·상태 확인을 합니다. 먼저 list_hosts로 호스트를 보고, 연결이 없으면 connect를 호출하세요. 위험한 명령은 사용자가 JetDeck 화면에서 허용해야 실행됩니다 (오토파일럿 모드 활성화 시 자동 허용).'
 
 export const TOOLS = [
   { name: 'list_hosts', description: 'JetDeck에 저장된 Device 호스트 목록과 지금 연결 상태', inputSchema: { type: 'object', properties: {} } },
@@ -34,7 +35,7 @@ export const TOOLS = [
   {
     name: 'run_command',
     description:
-      '연결된 Device에서 셸 명령을 실행하고 출력(stdout·stderr)과 종료 코드를 돌려줌. 대화형 명령(vim, top)은 안 됨. rm·sudo·reboot 같은 위험한 명령은 JetDeck 화면에서 사용자가 허용해야 실행됨',
+      '연결된 Device에서 셸 명령을 실행하고 출력(stdout·stderr)과 종료 코드를 돌려줌. 대화형 명령(vim, top)은 안 됨. rm·sudo·reboot 같은 위험한 명령은 JetDeck 화면에서 사용자가 허용해야 실행됨 (오토파일럿 모드 활성화 시 자동 허용)',
     inputSchema: {
       type: 'object',
       properties: {
@@ -121,14 +122,89 @@ async function abs(connId: string, path: string): Promise<string> {
   return path
 }
 
+export const autopilotFile = () => join(dirname(mcpFile()), 'autopilot.json')
+
+export function loadAutopilotState(): boolean {
+  if (checkInitialAutopilot()) return true
+  if (app?.commandLine?.hasSwitch('autopilot')) return true
+  try {
+    const f = autopilotFile()
+    if (existsSync(f)) {
+      const data = JSON.parse(readFileSync(f, 'utf8'))
+      return data?.autopilot === true
+    }
+  } catch {}
+  return false
+}
+
+export function saveAutopilotState(enabled: boolean): void {
+  try {
+    const dir = dirname(mcpFile())
+    mkdirSync(dir, { recursive: true, mode: 0o700 })
+    writeFileSync(autopilotFile(), JSON.stringify({ autopilot: enabled }, null, 2), { mode: 0o600 })
+  } catch (e) {
+    console.error('오토파일럿 상태 저장 실패:', (e as Error).message)
+  }
+}
+
+// 승인 팝업이 뜰 때 사용자에게 OS 데스크톱 알림(소리 및 토스트) 발송
+function notifyApproval(host: string, command: string, reason: string, kind?: 'terminal'): Notification | null {
+  try {
+    if (!Notification.isSupported()) return null
+    const isTerm = kind === 'terminal'
+    const title = isTerm ? tr('AI 터미널 읽기 승인 필요') : tr('JetDeck 명령 실행 승인 필요')
+    const body = isTerm
+      ? tr('{0} 기기의 터미널 화면 읽기 요청', host)
+      : reason
+        ? tr('{0} ({1}): {2}', host, reason, command)
+        : tr('{0}: {1}', host, command)
+
+    const iconPath = join(app.getAppPath(), 'resources', process.platform === 'win32' ? 'icon.ico' : 'icon.png')
+    const notif = new Notification({
+      title,
+      body: body.length > 250 ? body.slice(0, 250) + '…' : body,
+      icon: existsSync(iconPath) ? iconPath : undefined,
+      silent: false
+    })
+
+    notif.on('click', () => {
+      if (wc && !wc.isDestroyed()) {
+        const win = BrowserWindow.fromWebContents(wc)
+        if (win) {
+          if (win.isMinimized()) win.restore()
+          win.show()
+          win.focus()
+        }
+      }
+    })
+
+    notif.show()
+    return notif
+  } catch (e) {
+    console.error('승인 요청 데스크톱 알림 표시 실패:', (e as Error).message)
+    return null
+  }
+}
+
 // 위험한 명령: 화면에 승인 창을 띄우고 답을 기다림 (2분 안에 답이 없으면 거부)
+// 오토파일럿 모드가 켜져 있으면 대화형 승인 창 및 데스크톱 알림 없이 즉시 승인(true)
 function approve(host: string, command: string, reason: string, kind?: 'terminal'): Promise<boolean> {
+  if (isAutopilot()) return Promise.resolve(true)
   if (!wc || wc.isDestroyed()) return Promise.resolve(false)
   const id = randomUUID()
   wc.send('mcp:approve', { id, host, command, reason, kind })
+  const notif = notifyApproval(host, command, reason, kind)
   return new Promise((resolve) => {
-    const t = setTimeout(() => (waits.delete(id), resolve(false)), 120_000)
-    waits.set(id, (ok) => (clearTimeout(t), waits.delete(id), resolve(ok)))
+    const finish = (ok: boolean) => {
+      clearTimeout(t)
+      waits.delete(id)
+      try {
+        notif?.close()
+      } catch {}
+      resolve(ok)
+    }
+    const t = setTimeout(() => finish(false), 120_000)
+    waits.set(id, finish)
   })
 }
 
@@ -276,6 +352,8 @@ async function toolText(name: string, a: Args, client: string): Promise<string |
 
 export function startMcp(target: WebContents): void {
   wc = target
+  setAutopilot(loadAutopilotState())
+  if (!wc.isDestroyed()) wc.send('mcp:autopilot', isAutopilot())
   const token = randomBytes(24).toString('hex')
   const server = createServer((req, res) => {
     const done = (code: number, body: unknown) => {
@@ -359,5 +437,12 @@ export function registerMcpIpc(): void {
       return { command: 'powershell.exe', args: ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', bridgeScript()], persists: true }
     }
     return { command: appExe(), args: app.isPackaged ? ['--mcp'] : [app.getAppPath(), '--mcp'], persists: false }
+  })
+  ipcMain.handle('mcp:get-autopilot', (): boolean => isAutopilot())
+  ipcMain.handle('mcp:set-autopilot', (_e, enabled: boolean): boolean => {
+    const next = setAutopilot(enabled === true)
+    saveAutopilotState(next)
+    if (wc && !wc.isDestroyed()) wc.send('mcp:autopilot', next)
+    return next
   })
 }

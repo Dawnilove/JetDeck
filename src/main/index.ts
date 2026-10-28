@@ -121,6 +121,7 @@ function startApp(): void {
   })
   captureConsole()
   app.whenReady().then(() => {
+    if (process.platform === 'win32') app.setAppUserModelId(app.isPackaged ? 'io.github.dawnilove.jetdeck' : process.execPath)
     // 배포판은 기본 메뉴(개발자 도구 Ctrl+Shift+I 등)를 없앰. 개발 중(npm run dev)엔 그대로
     if (app.isPackaged) Menu.setApplicationMenu(null)
     registerStoreIpc()
