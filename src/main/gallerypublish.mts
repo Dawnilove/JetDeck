@@ -4,6 +4,7 @@ import { createPrivateKey, createPublicKey } from 'node:crypto'
 import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { EXPIRES_DAYS, GALLERY_LIMITS, checkPackFile, checkPackIdentity, fileOf, parseIndex, readIndex, readPack, sha256Hex, type GalleryIndex, type GalleryPack, type Revoked } from './gallerycore.mts'
+import { renderIndexHtml } from './gallerypage.mts'
 import { signBytes } from './gallerykit.mts'
 import { summarizePack, validatePack } from './packschema.mts'
 
@@ -125,11 +126,12 @@ export function summarize(prev: GalleryIndex | null, next: GalleryIndex): string
   return out
 }
 
-// 새 색인을 쓰고, 이전 서명은 지움 (내용이 바뀌었으니 서명도 다시 해야 함)
+// 새 색인과 사람이 읽는 목록 페이지(index.html)를 쓰고, 이전 서명은 지움 (내용이 바뀌었으니 서명도 다시 해야 함)
 export function writeBuild(dir: string, b: BuildOk): void {
   const tmp = join(dir, 'index.json.tmp')
   writeFileSync(tmp, b.text, 'utf8')
   renameSync(tmp, join(dir, 'index.json'))
+  writeFileSync(join(dir, 'index.html'), renderIndexHtml(b.index), 'utf8')
   rmSync(join(dir, 'index.json.sig'), { force: true })
 }
 

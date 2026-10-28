@@ -228,3 +228,19 @@ test('scripts: keygen은 비밀 열쇠를 출력하지 않고 저장소 안·기
     cleanup(tmp)
   }
 })
+
+test('게시 목록 페이지: 색인에서 만들고 글자는 이스케이프한다', () => {
+  const dir = setup([{ id: 'sensor-check', pack: pack('sensor-check', { name: { ko: '<b>이름</b>', en: 'A & "B"' } }) }], { revoked: [{ id: 'old-pack', reason: { ko: '문제', en: '<script>x</script>' }, at: '2026-10-30' }] })
+  try {
+    const b = buildIndex(dir, { now: NOW })
+    assert.ok(b.ok)
+    if (!b.ok) return
+    writeBuild(dir, b)
+    const html = readFileSync(join(dir, 'index.html'), 'utf8')
+    assert.ok(html.includes('A &amp; &quot;B&quot;') && html.includes('&lt;b&gt;이름&lt;/b&gt;') && html.includes('&lt;script&gt;'))
+    assert.ok(!html.includes('<script>') && !html.includes('<b>'))
+    assert.ok(html.includes('files/sensor-check/1.0.0/sensor-check.jdpack.json') && html.includes('serial 1'))
+  } finally {
+    cleanup(dir)
+  }
+})
