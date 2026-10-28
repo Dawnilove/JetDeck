@@ -53,6 +53,7 @@ External packs appear under the **Plugins** button of the activity bar. (Only pa
 | `auto` | boolean | no | Run when the screen opens. Only when the app-computed risk is `read`. Max 5 per pack. |
 | `display` | object | no | `{ "type": "text" }`, a table (see below), `{ "type": "log" }` for `stream`, or `{ "type": "chart" }` ([5.2.0](#charts-520)). |
 | `timeout` | number | no | Seconds. Default 60, max 600 for external packs. For `stream`: the longest run time, default 600, max 3600. |
+| `stopGrace` | number | no | `stream` only ([5.4.0](#stop-grace-stopgrace-540)). Seconds to wait after Ctrl-C before the channel is closed. Default 3, 3–10 for external packs. |
 | `disconnects` | boolean | no | The action ends the connection (reboot, power off). |
 | `shell` | `sh` \| `bash-i` | no | `bash-i` loads `~/.bashrc` (for example ROS2). |
 | `when` | `jetson` | no | Show only on a Jetson. |
@@ -91,11 +92,26 @@ Put `"minApp": "5.1.0"` in a pack that uses anything in this section. An older a
 A `stream` action starts a command that does not end by itself (`journalctl -f`, `ros2 topic echo`) and shows its lines as they arrive. Use `"display": { "type": "log", "maxLines": 1000 }`. `maxLines` is how many lines stay on screen (100–5000, default 1000).
 
 * The user presses **Start** and **Stop**. A stream never starts by itself, so `auto` is not allowed.
-* **Leaving the screen, disconnecting, or closing the app stops it** on the Device too. The app sends Ctrl-C, closes the channel after 3 seconds, and stops it when `timeout` ends.
+* **Leaving the screen, disconnecting, or closing the app stops it** on the Device too. The app sends Ctrl-C, closes the channel after 3 seconds (or `stopGrace`), and stops it when `timeout` ends.
 * `timeout` is the longest run time. Default 600; external packs max 3600.
 * Not allowed with a stream: `sudo`, `preview`, `auto`, and delete/install/disk commands.
 * Limits: 2 running streams per pack, 4 in the whole app. A stream stops by itself when output is faster than 1 MB/s (5-second average) or passes 20 MB.
 * Only a short list of endless commands counts as **read** in a stream: `journalctl -f`, `tail -f`/`-F`, `dmesg -w`, `top -b`, `iostat`, `mpstat`, `tegrastats`, `ros2 topic echo|hz|bw|delay` (safe options only; no `--filter`), `ip monitor`, `udevadm monitor`. Any other stream (`ros2 launch`, `colcon build`, …) is not read and asks first.
+
+### Stop grace: `stopGrace` (5.4.0)
+
+When the user stops a stream, the app first sends Ctrl-C, then waits and closes the channel (which sends SIGHUP). The wait is 3 seconds. A program that needs longer to shut down, such as `ros2 launch` with many nodes, can ask for more:
+
+```json
+{ "id": "launch-file", "mode": "stream", "cmd": "ros2 launch {file}", "risk": "change",
+  "confirm": { "en": "A launch file starts programs on this Device." },
+  "shell": "bash-i", "stopGrace": 10, "fields": [ ... ] }
+```
+
+* `stopGrace` is in seconds, and only `stream` actions may use it. External packs: 3–10. Official packs: 3–30.
+* It only moves the moment the channel is closed. Leaving the screen, losing the connection and closing the app still clean up the Device. When the app is closed, it does not wait.
+* Put `"minApp": "5.4.0"` in the pack. An older app ignores the field and waits 3 seconds.
+* The official pack `ros2-live` (off by default) shows the pattern: `ros2 launch {file}` with a file list read by `find`, and `ros2 bag play` with a speed choice and a repeat flag. Both ask first.
 
 ### Input forms: `fields`
 
@@ -283,6 +299,7 @@ If you write `read` but the app computes more, the action stays, the app uses th
 | Parallel runs per pack | 3 |
 | Running streams per pack / in the app | 2 / 4 |
 | Fields per action | 6 |
+| Stop grace (`stopGrace`) | 3–10 s (official 3–30), default 3 |
 | Stream output | stops above 1 MB/s (5 s average) or 20 MB; the screen keeps 100–5000 lines |
 | Auto-run actions (`auto`, `from`, auto-start charts) | 5 per pack, counted together |
 | Chart interval / points / lines | 1–60 s (official 0.5–60) / 10–3600 / 8 |
@@ -293,4 +310,4 @@ If you write `read` but the app computes more, the action stays, the app uses th
 
 `format: 1` is fixed for 5.x. New 5.x versions only **add** fields. Use `minApp` when you need one of them.
 
-A 5.0.0 app that opens a 5.1 pack hides actions that use `stream`, `log` or `fields` ("needs a newer app"), or refuses the whole pack when `minApp` is higher. The same holds for a 5.1 app and a 5.2 pack with `chart`. It never runs them in a riskier way. 5.0 and 5.1 packs run unchanged in 5.2. Likewise a 5.2 app refuses a pack that sets `minApp` 5.3.0, and ignores `badges` in a pack without `minApp` (no marks, no risk). 5.0–5.2 packs run unchanged in 5.3.
+A 5.0.0 app that opens a 5.1 pack hides actions that use `stream`, `log` or `fields` ("needs a newer app"), or refuses the whole pack when `minApp` is higher. The same holds for a 5.1 app and a 5.2 pack with `chart`. It never runs them in a riskier way. 5.0 and 5.1 packs run unchanged in 5.2. Likewise a 5.2 app refuses a pack that sets `minApp` 5.3.0, and ignores `badges` in a pack without `minApp` (no marks, no risk). 5.0–5.2 packs run unchanged in 5.3. A 5.3 app refuses a pack that sets `minApp` 5.4.0 and ignores `stopGrace` in a pack without `minApp` (the stream stops after 3 seconds as before). 5.0–5.3 packs run unchanged in 5.4.

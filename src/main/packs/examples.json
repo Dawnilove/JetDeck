@@ -3,8 +3,8 @@
   "$comment": "Example pack: copy this file, change the id (the name examples is reserved), the paths (~/my-project) and names, and install the copy. 예제 팩: 이 파일을 복사해 id(examples는 예약어), 경로(~/my-project)와 이름을 바꿔 쓰세요.",
   "id": "examples",
   "format": 1,
-  "version": "5.3.0",
-  "minApp": "5.3.0",
+  "version": "5.4.0",
+  "minApp": "5.4.0",
   "name": { "ko": "예제 모음", "en": "Examples" },
   "desc": { "ko": "복사해서 고쳐 쓰는 템플릿이에요. 경로는 ~/my-project 처럼 내 것으로 바꾸세요.", "en": "Templates to copy and edit. Change paths such as ~/my-project to your own." },
   "author": "JetDeck",
@@ -145,6 +145,22 @@
           "fields": [
             { "name": "topic", "label": { "ko": "토픽", "en": "Topic" }, "type": "select",
               "from": { "cmd": "ros2 topic list", "shell": "bash-i", "timeout": 15, "charset": "ros", "max": 200 } }
+          ],
+          "display": { "type": "log" }
+        },
+        {
+          "id": "run-launch",
+          "$comment": "A stream the app cannot prove read-only (change): it asks first. stopGrace gives the program 10 s to shut down after Ctrl-C. 읽기로 증명되지 않는 스트림(change)이라 먼저 묻고, stopGrace로 Ctrl-C 뒤 정리할 시간을 10초 줘요.",
+          "label": { "ko": "ROS2 launch 파일 실행", "en": "Run a ROS2 launch file" },
+          "mode": "stream",
+          "cmd": "ros2 launch {file}",
+          "risk": "change",
+          "confirm": { "ko": "launch 파일은 이 기기에서 프로그램을 실행해요. 믿을 수 있는 파일인지 확인하세요.", "en": "A launch file runs programs on this Device. Check that you trust the file." },
+          "shell": "bash-i",
+          "timeout": 3600,
+          "stopGrace": 10,
+          "fields": [
+            { "name": "file", "label": { "ko": "launch 파일 (절대 경로)", "en": "Launch file (absolute path)" }, "type": "path" }
           ],
           "display": { "type": "log" }
         }

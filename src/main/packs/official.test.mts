@@ -62,8 +62,12 @@ test('examples: 앱 동봉본 = 공개 문서 원본, 검증 통과, 선언과 �
     assert.equal(a.computed, 'read', id)
     assert.ok(!a.auto, id)
   }
-  assert.equal(r.pack!.minApp, '5.3.0')
+  assert.equal(r.pack!.minApp, '5.4.0')
   assert.deepEqual(r.pack!.badges!.map((b) => b.id), ['script-files'])
+  const rl = all.find((a) => a.id === 'run-launch')! // 5.4.0: 읽기가 아닌 스트림 + stopGrace
+  assert.equal(rl.mode, 'stream')
+  assert.equal(rl.computed, 'change')
+  assert.equal(rl.stopGrace, 10)
   for (const id of ['follow-log', 'follow-train-log', 'topic-echo']) {
     const a = all.find((x) => x.id === id)!
     assert.equal(a.mode, 'stream', id)
