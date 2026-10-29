@@ -228,7 +228,10 @@ const api = {
   mcpStatus: (): Promise<string[]> => ipcRenderer.invoke('mcp:status'),
   onMcpOpen: (cb: (r: { id: string; hostId: string }) => void) => on('mcp:open', cb),
   onMcpApprove: (cb: (a: { id: string; host: string; command: string; reason: string; kind?: 'terminal' }) => void) => on('mcp:approve', cb),
-  mcpAnswer: (id: string, ok: boolean) => ipcRenderer.send('mcp:answer', id, ok)
+  mcpAnswer: (id: string, ok: boolean) => ipcRenderer.send('mcp:answer', id, ok),
+  mcpGetAutopilot: (): Promise<boolean> => ipcRenderer.invoke('mcp:get-autopilot'),
+  mcpSetAutopilot: (enabled: boolean): Promise<boolean> => ipcRenderer.invoke('mcp:set-autopilot', enabled),
+  onMcpAutopilot: (cb: (enabled: boolean) => void) => on('mcp:autopilot', cb)
 }
 
 // main → 화면 이벤트 구독. 반환값을 호출하면 구독 해제

@@ -29,7 +29,7 @@ import Terminal, { terms as xterms } from '../components/Terminal'
 import TermSearch from '../components/TermSearch'
 import { toLog } from './termsearch.mts'
 import Logo from '../components/Logo'
-import { useMcpClients } from '../components/McpDialogs'
+import { useMcpAutopilot, useMcpClients } from '../components/McpDialogs'
 import Palette, { type PaletteItem } from '../components/Palette'
 import { currentMascot, currentTheme, groupOf, mascotHidden, setMascotHidden, themeLabel, themeList } from '../themes'
 import SnippetDialog from '../components/SnippetDialog'
@@ -163,6 +163,7 @@ const toggle = (p: PanelImperativeHandle | null) => (p?.isCollapsed() ? p.expand
 
 export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect, onReconnect, onTheme, onGuide, onNews, onMcp, focused, compact, paneStyle, onFocus, onUnsplit, onLang }: Props) {
   const mcp = useMcpClients()
+  const [autopilot] = useMcpAutopilot()
   const { host } = sess
   // 패널 크기·접힘 상태는 호스트별로 저장
   const outer = useDefaultLayout({ id: `ws-${host.id}`, storage: localStorage })
@@ -615,8 +616,13 @@ export default function Workspace({ sess, active, onPatch, onHosts, onDisconnect
             </button>
           )}
           <button type="button" className="ws-mini" onClick={onHosts} title={tr('연결 관리 열기')}>{tr('연결 관리')}</button>
-          <button type="button" className="ws-mini" onClick={onMcp}style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} title={mcp.length ? tr('{0} 연결됨', mcp.join(', ')) : tr('연결된 AI 없음 (눌러서 연결 방법 보기)')}>
+          <button type="button" className="ws-mini" onClick={onMcp} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} title={mcp.length ? tr('{0} 연결됨', mcp.join(', ')) : tr('연결된 AI 없음 (눌러서 연결 방법 보기)')}>
             <span className={mcp.length ? 'dot' : 'dot offline'} style={{ width: 7, height: 7 }} aria-hidden />MCP
+            {autopilot && (
+              <span style={{ fontSize: 9, background: 'var(--warn)', color: '#000', borderRadius: 3, padding: '0 4px', fontWeight: 700 }} title={tr('오토파일럿 모드 활성화됨 (위험 명령 자동 승인)')}>
+                ⚡ AUTO
+              </span>
+            )}
           </button>
           {compact && <button type="button" className="ws-mini" onClick={onUnsplit} title={tr('이 칸을 분할에서 빼기 (연결은 그대로 유지)')}>{tr('칸 닫기')}</button>}
           <button type="button" className="ws-mini" onClick={onDisconnect}>{sess.status === 'offline' ? tr('닫기') : tr('연결 해제')}</button>
