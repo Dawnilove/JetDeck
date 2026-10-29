@@ -5,8 +5,10 @@ import { bucket, HOLD_MS, push, toCsv, toSample, type Sample } from './historyfm
 
 const stats = (cpu: (number | null)[], gpu: number | null, mw: number | null): Stats => ({
   ram: { used: 3000, total: 7000 },
+  ramMhz: null,
   cpu: cpu.map((pct) => ({ pct, mhz: 1000 })),
   gpu,
+  gpuMhz: null,
   temps: { cpu: 45.55, gpu: null, board: 47, boardName: 'tj' },
   powerMw: mw
 })

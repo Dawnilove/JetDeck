@@ -94,7 +94,14 @@ export function startMonitor(connId: string, hostId: string, client: Client, wc:
       ch.on('close', () => !got && send({ kind: 'info', info: { generic: false } }))
     })
   }
-  client.exec('tegrastats --interval 500', (err, ch) => {
+  const cmd =
+    'GPU_DEV=$(ls -d /sys/devices/platform/bus@0/*17000000.gpu/devfreq/* /sys/devices/gpu.0/devfreq/* 2>/dev/null | head -1); ' +
+    'EMC_DEV=$(ls -d /sys/devices/platform/bwmgr/devfreq/* 2>/dev/null | head -1); ' +
+    'tegrastats --interval 500 | while read -r line; do ' +
+    'g=$(cat "$GPU_DEV/cur_freq" 2>/dev/null); ' +
+    'e=$(cat "$EMC_DEV/cur_freq" 2>/dev/null); ' +
+    'echo "$line GPU_CUR=$g EMC_CUR=$e"; done'
+  client.exec(cmd, (err, ch) => {
     if (err) return startGeneric()
     ch.on('error', () => {})
     let buf = ''

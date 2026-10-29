@@ -5,13 +5,23 @@
 export type Core = { pct: number | null; mhz: number | null } // pct null = 꺼진 코어(off)
 export type Stats = {
   ram: { used: number; total: number } | null // MB
+  ramMhz?: number | null // MHz (EMC / 램 클럭)
   cpu: Core[]
   gpu: number | null // %
+  gpuMhz?: number | null // MHz (GPU 클럭)
   temps: { cpu: number | null; gpu: number | null; board: number | null; boardName: string | null } // °C
   powerMw: number | null // 보드 전체 입력 전력
 }
 
 const num = (s: string | undefined) => (s === undefined ? null : Number(s))
+const toMhz = (raw: string | undefined): number | null => {
+  if (!raw) return null
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n <= 0) return null
+  if (n >= 100_000_000) return Math.round(n / 1_000_000) // Hz -> MHz (예: 1020000000 -> 1020)
+  if (n >= 100_000) return Math.round(n / 1_000) // KHz -> MHz (예: 1020000 -> 1020)
+  return Math.round(n) // 이미 MHz
+}
 
 export function parseTegrastats(line: string): Stats {
   const ram = line.match(/RAM (\d+)\/(\d+)MB/)
@@ -29,10 +39,20 @@ export function parseTegrastats(line: string): Stats {
   for (const m of line.matchAll(/(?:^|\s)([A-Za-z][\w]*)@(-?\d+(?:\.\d+)?)C/g)) if (Number(m[2]) > -40) t[m[1].toLowerCase()] = Number(m[2])
   const boardName = ['thermal', 'tj', 'soc0', 'ao', 'pmic'].find((k) => k in t) ?? null
   const power = line.match(/(?:VDD_IN|POM_5V_IN) (\d+)(?:mW)?\//)
+  const gr3d = line.match(/(?:GR3D_FREQ|GR3D)\s+(\d+)%(?:@(\d+))?/)
+  const gpuCur = line.match(/GPU_CUR=(\d+)/)?.[1]
+  const gpuMhz = gr3d?.[2] ? Number(gr3d[2]) : toMhz(gpuCur)
+
+  const emc = line.match(/(?:EMC_FREQ|EMC)\s+(?:\d+%)?@(\d+)/)
+  const emcCur = line.match(/EMC_CUR=(\d+)/)?.[1]
+  const ramMhz = emc?.[1] ? Number(emc[1]) : toMhz(emcCur)
+
   return {
     ram: ram ? { used: Number(ram[1]), total: Number(ram[2]) } : null,
+    ramMhz,
     cpu,
-    gpu: num(line.match(/GR3D_FREQ (\d+)%/)?.[1]),
+    gpu: gr3d ? Number(gr3d[1]) : num(line.match(/GR3D_FREQ (\d+)%/)?.[1]),
+    gpuMhz,
     temps: { cpu: t.cpu ?? null, gpu: t.gpu ?? null, board: boardName ? t[boardName] : null, boardName },
     powerMw: num(power?.[1])
   }
@@ -95,8 +115,10 @@ export function parseProc(out: string, prev: CpuTimes): { stats: Stats | null; t
   return {
     stats: {
       ram: Number.isFinite(total) && Number.isFinite(avail) ? { used: Math.round((total - avail) / 1024), total: Math.round(total / 1024) } : null,
+      ramMhz: null,
       cpu,
       gpu: null,
+      gpuMhz: null,
       temps: { cpu: cpuZ?.c ?? null, gpu: gpuZ?.c ?? null, board: boardZ?.c ?? null, boardName: boardZ?.type || null },
       powerMw: null
     },

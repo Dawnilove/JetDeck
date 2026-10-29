@@ -68,8 +68,8 @@ export default function Monitor({ stats, info, online, onRun, forwards }: Props)
               </div>
             ))}
           </div>
-          {stats.gpu != null && <Meter label="GPU" value={`${stats.gpu}%`} pct={stats.gpu} />}
-          {stats.ram && <Meter label={tr('메모리')} value={`${gb(stats.ram.used)} / ${gb(stats.ram.total)} GB`} pct={(stats.ram.used / stats.ram.total) * 100} />}
+          {stats.gpu != null && <Meter label={stats.gpuMhz ? `GPU · ${stats.gpuMhz} MHz` : 'GPU'} value={`${stats.gpu}%`} pct={stats.gpu} />}
+          {stats.ram && <Meter label={stats.ramMhz ? `${tr('메모리')} · ${stats.ramMhz} MHz` : tr('메모리')} value={`${gb(stats.ram.used)} / ${gb(stats.ram.total)} GB`} pct={(stats.ram.used / stats.ram.total) * 100} />}
           {info.disk && <Meter label={tr('저장공간')} value={`${gb(info.disk.used / 1024)} / ${gb(info.disk.total / 1024)} GB`} pct={(info.disk.used / info.disk.total) * 100} />}
           <div className="mon-tiles">
             <div><span className="dim">CPU</span><span className="mono">{deg(stats.temps.cpu)}</span></div>
