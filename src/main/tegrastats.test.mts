@@ -31,6 +31,26 @@ test('Orin Nano Super 실제 출력 (6코어, 소문자 온도, mW 단위)', () 
   assert.equal(s.powerMw, 4694)
 })
 
+test('RAM/GPU 클럭 파싱 (devfreq sysfs 값 및 레거시 @mhz)', () => {
+  const s1 = parseTegrastats(
+    '10-22-2026 18:53:33 RAM 3083/7485MB CPU [1%@883] GR3D_FREQ 15% cpu@46C VDD_IN 4694mW GPU_CUR=1020000000 EMC_CUR=3199000000'
+  )
+  assert.equal(s1.gpu, 15)
+  assert.equal(s1.gpuMhz, 1020)
+  assert.equal(s1.ramMhz, 3199)
+
+  const s2 = parseTegrastats(
+    'RAM 2000/8000MB CPU [10%@1000] EMC_FREQ 12%@1600 GR3D_FREQ 40%@1300'
+  )
+  assert.equal(s2.gpu, 40)
+  assert.equal(s2.gpuMhz, 1300)
+  assert.equal(s2.ramMhz, 1600)
+
+  const s3 = parseTegrastats('RAM 1000/4000MB CPU [5%@500] GR3D_FREQ 0%')
+  assert.equal(s3.gpuMhz, null)
+  assert.equal(s3.ramMhz, null)
+})
+
 test('꺼진 코어(off)와 빈 줄', () => {
   assert.deepEqual(parseTegrastats('CPU [12%@1200,off,off,5%@1200]').cpu, [
     { pct: 12, mhz: 1200 },
