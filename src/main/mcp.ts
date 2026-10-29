@@ -98,7 +98,7 @@ const alive = (pid: number) => {
 }
 
 let wc: WebContents | null = null
-const waits = new Map<string, (ok: boolean) => void>()
+const waits = new Map<string, { answer: (ok: boolean) => void; kind?: 'terminal' }>()
 
 // 세션 고르기: id → 호스트 이름/IP → 연결이 하나뿐이면 그것
 function pick(session: unknown): string {
@@ -208,14 +208,14 @@ function approve(host: string, command: string, reason: string, kind?: 'terminal
       resolve(ok)
     }
     const t = setTimeout(() => finish(false), 120_000)
-    waits.set(id, finish)
+    waits.set(id, { answer: finish, kind })
   })
 }
 
 
 // 화면이 새로 불러와지면 승인 창이 사라지므로 기다리던 요청은 거부로 끝냄
 export function cancelApprovals(): void {
-  for (const answer of [...waits.values()]) answer(false)
+  for (const w of [...waits.values()]) w.answer(false)
 }
 
 function exec(connId: string, command: string, timeoutSec: number): Promise<ToolResult> {
@@ -429,7 +429,7 @@ export function ensureBridgeFiles(): void {
 }
 
 export function registerMcpIpc(): void {
-  ipcMain.on('mcp:answer', (_e, id: string, ok: boolean) => waits.get(String(id))?.(ok === true))
+  ipcMain.on('mcp:answer', (_e, id: string, ok: boolean) => waits.get(String(id))?.answer(ok === true))
   // Claude 설정에 넣을 실행 명령: 설치판은 JetDeck.exe --mcp, 개발 중엔 electron.exe <앱 폴더> --mcp
   // 포터블판은 임시 폴더에 풀려 실행되므로 원래 exe 경로(PORTABLE_EXECUTABLE_FILE, electron-builder가 넣어 줌)를 씀
   ipcMain.handle('mcp:status', (): string[] => {
@@ -448,7 +448,8 @@ export function registerMcpIpc(): void {
     const next = setAutopilot(enabled === true)
     saveAutopilotState(next)
     if (next) {
-      for (const answer of [...waits.values()]) answer(true)
+      // 오토파일럿은 run_command에만 적용: 터미널 읽기 승인은 사용자가 직접 답함
+      for (const w of [...waits.values()]) if (w.kind !== 'terminal') w.answer(true)
     }
     if (wc && !wc.isDestroyed()) wc.send('mcp:autopilot', next)
     return next
