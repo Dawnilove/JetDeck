@@ -1,8 +1,8 @@
 {
   "format": 1,
-  "serial": 3,
-  "generatedAt": "2026-10-29T01:03:36.420Z",
-  "expires": "2126-10-05T01:03:36.420Z",
+  "serial": 6,
+  "generatedAt": "2026-10-29T01:10:36.632Z",
+  "expires": "2027-10-29T01:10:36.632Z",
   "packs": [
     {
       "id": "usb-camera-check",
