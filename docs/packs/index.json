@@ -1,0 +1,119 @@
+{
+  "format": 1,
+  "serial": 1,
+  "generatedAt": "2026-10-29T00:25:23.370Z",
+  "expires": "2027-01-27T00:25:23.370Z",
+  "packs": [
+    {
+      "id": "usb-camera-check",
+      "version": "1.0.0",
+      "name": {
+        "ko": "USB·카메라 점검",
+        "en": "USB and camera check"
+      },
+      "desc": {
+        "ko": "USB 장치와 카메라(V4L2)를 읽기만 해서 확인해요.",
+        "en": "Read-only look at USB devices and V4L2 cameras."
+      },
+      "author": "JetDeck",
+      "submitter": "Dawnilove",
+      "license": "Apache-2.0",
+      "tier": "reviewed",
+      "minApp": "5.5.0",
+      "file": "files/usb-camera-check/1.0.0/usb-camera-check.jdpack.json",
+      "sha256": "86568dfb597ada3d990b1f751b5ec2d0f9de1f1c1ec8a0df552623520963f25f",
+      "size": 1781,
+      "caps": {
+        "read": 5,
+        "change": 0,
+        "danger": 0,
+        "stream": 0,
+        "form": 0,
+        "chart": 0,
+        "badge": 0,
+        "autoRun": 0,
+        "perms": []
+      },
+      "tags": [
+        "usb",
+        "camera",
+        "v4l2"
+      ],
+      "reviewedAt": "2026-10-29"
+    },
+    {
+      "id": "network-check",
+      "version": "1.0.0",
+      "name": {
+        "ko": "네트워크 점검",
+        "en": "Network check"
+      },
+      "desc": {
+        "ko": "IP·경로·DNS·열린 포트를 읽기만 해서 확인해요.",
+        "en": "Read-only look at IP addresses, routes, DNS and listening ports."
+      },
+      "author": "JetDeck",
+      "submitter": "Dawnilove",
+      "license": "Apache-2.0",
+      "tier": "reviewed",
+      "minApp": "5.5.0",
+      "file": "files/network-check/1.0.0/network-check.jdpack.json",
+      "sha256": "3198aae665f06d7337003f2e436feb0b8d95ce94fbe01134cfd135473a90eafb",
+      "size": 1636,
+      "caps": {
+        "read": 5,
+        "change": 0,
+        "danger": 0,
+        "stream": 0,
+        "form": 0,
+        "chart": 0,
+        "badge": 0,
+        "autoRun": 0,
+        "perms": []
+      },
+      "tags": [
+        "network",
+        "ip",
+        "dns"
+      ],
+      "reviewedAt": "2026-10-29"
+    },
+    {
+      "id": "storage-check",
+      "version": "1.0.0",
+      "name": {
+        "ko": "저장 공간 점검",
+        "en": "Storage check"
+      },
+      "desc": {
+        "ko": "디스크·마운트·메모리를 읽기만 해서 확인해요.",
+        "en": "Read-only look at disks, mounts and memory."
+      },
+      "author": "JetDeck",
+      "submitter": "Dawnilove",
+      "license": "Apache-2.0",
+      "tier": "reviewed",
+      "minApp": "5.5.0",
+      "file": "files/storage-check/1.0.0/storage-check.jdpack.json",
+      "sha256": "6cb436f39d119777a7f10953d8c9fe9d3a5eb2bf5e7576e93a840364e61440d1",
+      "size": 1672,
+      "caps": {
+        "read": 5,
+        "change": 0,
+        "danger": 0,
+        "stream": 0,
+        "form": 0,
+        "chart": 0,
+        "badge": 0,
+        "autoRun": 0,
+        "perms": []
+      },
+      "tags": [
+        "disk",
+        "memory"
+      ],
+      "reviewedAt": "2026-10-29"
+    }
+  ],
+  "revoked": []
+}
