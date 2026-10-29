@@ -75,7 +75,7 @@ test('verify: 서명 뒤에 색인·팩 파일을 1바이트 바꾸면 실패, �
   const dir = setup()
   try {
     const k = newKeyPair()
-    built(dir)
+    built(dir, { expiresDays: 90 }) // 만료 시험은 90일짜리 색인으로
     assert.ok(signDir(dir, k.secretPem, { keys: [k.publicB64] }).ok)
     assert.equal(verifyDir(dir, { keys: [newKeyPair().publicB64], now: NOW }).ok, false)
     assert.equal(verifyDir(dir, { keys: [k.publicB64], now: new Date('2027-03-01T00:00:00Z') }).ok, false)
@@ -101,7 +101,7 @@ test('verify: 만료 임박은 경고, 능력 요약(caps)이 팩과 다르면 �
   const dir = setup()
   try {
     const k = newKeyPair()
-    built(dir)
+    built(dir, { expiresDays: 90 }) // 만료 시험은 90일짜리 색인으로
     signDir(dir, k.secretPem, { keys: [k.publicB64] })
     const soon = verifyDir(dir, { keys: [k.publicB64], now: new Date('2027-01-20T00:00:00Z') })
     assert.ok(soon.ok && soon.warnings.length === 1)
@@ -251,4 +251,15 @@ test('docs/packs: 올릴 팩 목록이 앱 검증기를 통과하고, 모음 파
   if (b.ok) assert.ok(b.index.packs.length > 0)
   const attr = readFileSync(join(ROOT, '.gitattributes'), 'utf8')
   assert.match(attr, /^docs\/packs\/\*\* -text$/m) // 서명한 색인·지문 낸 팩이 CRLF로 바뀌면 앱이 거부함
+})
+
+test('게시 목록은 사실상 영구(만료가 50년보다 먼 미래)', () => {
+  const dir = setup()
+  try {
+    const b = buildIndex(dir, { now: NOW })
+    assert.ok(b.ok)
+    if (b.ok) assert.ok(Date.parse(b.index.expires) - Date.parse(b.index.generatedAt) > 50 * 365 * 86400_000)
+  } finally {
+    cleanup(dir)
+  }
 })

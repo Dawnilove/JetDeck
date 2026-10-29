@@ -15,7 +15,7 @@ export type BuildOk = { ok: true; index: GalleryIndex; text: string; summary: st
 export type BuildFail = { ok: false; problems: string[] }
 
 // catalog.json(관리자가 쓰는 목록) + files/ 아래 팩 파일 → 색인. 팩은 앱과 같은 검증기로 검사하고, 오류·경고·낮게 적힌 위험도가 있으면 실패
-export function buildIndex(dir: string, o: { now?: Date; serial?: number } = {}): BuildOk | BuildFail {
+export function buildIndex(dir: string, o: { now?: Date; serial?: number; expiresDays?: number } = {}): BuildOk | BuildFail {
   const now = o.now ?? new Date()
   const problems: string[] = []
   const catFile = join(dir, 'catalog.json')
@@ -102,7 +102,7 @@ export function buildIndex(dir: string, o: { now?: Date; serial?: number } = {})
   else for (const r of revRaw) revoked.push(r as Revoked)
   if (problems.length) return { ok: false, problems }
 
-  const index: GalleryIndex = { format: 1, serial, generatedAt: now.toISOString(), expires: new Date(now.getTime() + EXPIRES_DAYS * 86400_000).toISOString(), packs, revoked }
+  const index: GalleryIndex = { format: 1, serial, generatedAt: now.toISOString(), expires: new Date(now.getTime() + (o.expiresDays ?? EXPIRES_DAYS) * 86400_000).toISOString(), packs, revoked }
   const text = JSON.stringify(index, null, 2) + '\n'
   const chk = readIndex(JSON.parse(text), { lastSerial: 0, now }) // 앱이 읽는 규칙(철회 항목 포함)을 통과하는지 서명 전에 확인
   if (!chk.ok) return { ok: false, problems: [`만든 색인을 앱이 거부할 거예요: ${chk.code}${chk.detail ? ' ' + chk.detail : ''}`] }

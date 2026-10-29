@@ -1,6 +1,8 @@
 // 모음 시험·스크립트 공용 도구: 열쇠 쌍 만들기, 색인 만들기, 서명. 앱 코드는 이 파일을 쓰지 않음 (scripts/gallery-*.mjs와 시험이 씀)
 import { createPrivateKey, generateKeyPairSync, sign, type KeyObject } from 'node:crypto'
-import { EXPIRES_DAYS, fileOf, sha256Hex, type GalleryIndex, type GalleryPack } from './gallerycore.mts'
+import { fileOf, sha256Hex, type GalleryIndex, type GalleryPack } from './gallerycore.mts'
+
+const TEST_EXPIRES_DAYS = 90 // 시험용 기본 만료 (만료 시험이 쓰는 값). 실제 게시 만료는 gallerycore의 EXPIRES_DAYS
 
 // 새 ed25519 열쇠 쌍: 공개 열쇠는 32바이트 base64, 비밀 열쇠는 PKCS8 PEM
 export function newKeyPair(): { publicB64: string; secretPem: string; secret: KeyObject } {
@@ -20,6 +22,6 @@ export function packEntry(id: string, version: string, bytes: Uint8Array, over: 
   }
 }
 export function makeIndex(packs: GalleryPack[], over: Partial<GalleryIndex> = {}, now = new Date('2026-10-28T00:00:00Z')): GalleryIndex {
-  return { format: 1, serial: 1, generatedAt: now.toISOString(), expires: new Date(now.getTime() + EXPIRES_DAYS * 86400_000).toISOString(), packs, revoked: [], ...over }
+  return { format: 1, serial: 1, generatedAt: now.toISOString(), expires: new Date(now.getTime() + TEST_EXPIRES_DAYS * 86400_000).toISOString(), packs, revoked: [], ...over }
 }
 export const indexBytes = (idx: unknown): Uint8Array => Buffer.from(JSON.stringify(idx, null, 2) + '\n', 'utf8')
