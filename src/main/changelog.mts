@@ -6,6 +6,21 @@ export const releaseUrl = (version: string): string | null => (/^\d+\.\d+\.\d+$/
 
 export const RELEASES: Release[] = [
   {
+    version: '5.5.1',
+    ko: [
+      'MCP 오토파일럿: 승인 창 없이 명령 실행 (기본 꺼짐)',
+      '승인 요청이 오면 데스크톱 알림과 창 깜빡임',
+      '시스템 모니터에 GPU·메모리 클럭(MHz) 표시',
+      '오토파일럿을 켜도 터미널 읽기는 직접 허용해야 해요'
+    ],
+    en: [
+      'MCP autopilot: run commands without the approval dialog (off by default)',
+      'Desktop notification and window flash when an approval is needed',
+      'System monitor shows GPU and memory clocks (MHz)',
+      'Terminal reads still need your approval when autopilot is on'
+    ]
+  },
+  {
     version: '5.5.0',
     ko: [
       '모음 탭: 서명된 목록에서 팩을 보고 설치해요',
