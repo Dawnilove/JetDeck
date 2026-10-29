@@ -253,12 +253,12 @@ test('docs/packs: 올릴 팩 목록이 앱 검증기를 통과하고, 모음 파
   assert.match(attr, /^docs\/packs\/\*\* -text$/m) // 서명한 색인·지문 낸 팩이 CRLF로 바뀌면 앱이 거부함
 })
 
-test('게시 목록은 사실상 영구(만료가 50년보다 먼 미래)', () => {
+test('게시 목록 만료는 만든 날에서 1년', () => {
   const dir = setup()
   try {
     const b = buildIndex(dir, { now: NOW })
     assert.ok(b.ok)
-    if (b.ok) assert.ok(Date.parse(b.index.expires) - Date.parse(b.index.generatedAt) > 50 * 365 * 86400_000)
+    if (b.ok) assert.equal(Date.parse(b.index.expires) - Date.parse(b.index.generatedAt), 365 * 86400_000)
   } finally {
     cleanup(dir)
   }

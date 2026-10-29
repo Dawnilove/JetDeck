@@ -4,7 +4,7 @@ import { createHash, createPublicKey, verify } from 'node:crypto'
 import { compareSemver, type L10n } from './packschema.mts'
 
 export const GALLERY_LIMITS = { index: 1024 * 1024, sig: 200, pack: 128 * 1024, packs: 500, revoked: 1000, tags: 5, tagChars: 20, name: 60, desc: 300, author: 100, license: 60, reason: 300, perms: 10, permChars: 40, capMax: 1000 }
-export const EXPIRES_DAYS = 36500 // 색인 만료: 사실상 영구(100년). 5.5.0 앱이 expires를 필수로 읽어서 필드는 남기고 날짜만 먼 미래로 둠 (2026-10-29 사용자 결정). 앱의 만료 처리는 그대로라 나중에 짧게 게시할 수 있음
+export const EXPIRES_DAYS = 365 // 색인 만료: 만든 날에서 1년 (gallery:build). 만료되면 목록은 보이고 새 설치만 막힘 → 1년에 한 번 재서명 (2026-10-29 사용자 결정: 90일은 번거롭고 영구는 과함)
 
 const ID = /^[a-z][a-z0-9-]{2,39}$/ // 모음 팩 id는 3자 이상 (설계안 §8-9)
 const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/

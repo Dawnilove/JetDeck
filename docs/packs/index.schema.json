@@ -9,7 +9,7 @@
     "format": { "const": 1 },
     "serial": { "type": "integer", "minimum": 0, "description": "Raised on every publish. The app rejects a lower value than it has seen." },
     "generatedAt": { "type": "string", "format": "date-time" },
-    "expires": { "type": "string", "format": "date-time", "description": "100 years after generatedAt (the list does not expire in practice). After this the list is shown but new installs are blocked." },
+    "expires": { "type": "string", "format": "date-time", "description": "1 year after generatedAt. After this the list is shown but new installs are blocked." },
     "packs": { "type": "array", "maxItems": 500, "items": { "$ref": "#/$defs/pack" }, "description": "One version per pack id." },
     "revoked": { "type": "array", "maxItems": 1000, "items": { "$ref": "#/$defs/revoked" } }
   },
