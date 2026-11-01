@@ -1,0 +1,31 @@
+{
+  "$schema": "https://dawnilove.github.io/JetDeck/plugins/jdpack.schema.json",
+  "$comment": "Example serial pack: copy this file, change the id and the baud rate, and install the copy. 시리얼 예제 팩: 복사해서 id와 보율을 바꿔 쓰세요. Read-only; you pick the port every time. 읽기 전용이고 포트는 실행할 때 직접 골라요.",
+  "id": "my-serial-log",
+  "format": 1,
+  "version": "1.0.0",
+  "minApp": "6.1.0",
+  "name": { "ko": "내 시리얼 로그", "en": "My serial log" },
+  "desc": { "ko": "이 PC에 연결한 보드의 시리얼 로그(115200)를 읽기만 하는 예제예요.", "en": "Example: only read the serial log (115200) of a board plugged into this PC." },
+  "author": "Your name",
+  "license": "Apache-2.0",
+  "permissions": [
+    {
+      "id": "uart",
+      "kind": "serial.read",
+      "baud": 115200,
+      "maxMinutes": 10,
+      "maxBytes": 5242880,
+      "why": { "ko": "보드의 시리얼 로그(115200)를 화면에 보여요. 포트는 실행할 때 직접 골라요", "en": "Show the board's serial log (115200) on screen. You pick the port each time" }
+    }
+  ],
+  "plugins": [
+    {
+      "id": "serial",
+      "title": { "ko": "시리얼 로그", "en": "Serial log" },
+      "actions": [
+        { "id": "read", "label": { "ko": "시리얼 읽기", "en": "Read serial" }, "mode": "app", "perm": "uart", "op": "read" }
+      ]
+    }
+  ]
+}

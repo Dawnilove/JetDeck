@@ -290,7 +290,7 @@ A pack listed in the [gallery](publish.md) is a normal pack with a few extra rul
 
 ## Permissions (6.0.0)
 
-`permissions[]` and `mode: "app"` items let a pack use SFTP and tunnels inside a declared range. They need `minApp` 6.0.0. Full description: [permissions.md](permissions.md).
+`permissions[]` and `mode: "app"` items let a pack use SFTP and tunnels inside a declared range. They need `minApp` 6.0.0. `serial.read` (6.1.0, read a serial port of this PC) needs `minApp` 6.1.0. Full description: [permissions.md](permissions.md).
 
 ## Risk
 
@@ -326,4 +326,4 @@ If you write `read` but the app computes more, the action stays, the app uses th
 
 A 5.0.0 app that opens a 5.1 pack hides actions that use `stream`, `log` or `fields` ("needs a newer app"), or refuses the whole pack when `minApp` is higher. The same holds for a 5.1 app and a 5.2 pack with `chart`. It never runs them in a riskier way. 5.0 and 5.1 packs run unchanged in 5.2. Likewise a 5.2 app refuses a pack that sets `minApp` 5.3.0, and ignores `badges` in a pack without `minApp` (no marks, no risk). 5.0–5.2 packs run unchanged in 5.3. A 5.3 app refuses a pack that sets `minApp` 5.4.0 and ignores `stopGrace` in a pack without `minApp` (the stream stops after 3 seconds as before). 5.0–5.3 packs run unchanged in 5.4.
 
-A 5.6 app refuses a pack that sets `minApp` 6.0.0. Packs with `permissions` or `mode: "app"` must set `minApp` 6.0.0 (without it the 6.0 app refuses the whole pack). 5.0–5.6 packs run unchanged in 6.0.
+A 5.6 app refuses a pack that sets `minApp` 6.0.0. Packs with `permissions` or `mode: "app"` must set `minApp` 6.0.0 (without it the 6.0 app refuses the whole pack). 5.0–5.6 packs run unchanged in 6.0. A pack with `serial.read` must set `minApp` 6.1.0; a 6.0 app refuses it.

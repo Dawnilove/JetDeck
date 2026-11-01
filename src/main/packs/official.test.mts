@@ -172,6 +172,15 @@ for (const [id, file] of [['file-transfer', 'filetransfer'], ['web-tunnel', 'web
   })
 }
 
+test('docs 시리얼 예제 팩: 6.1.0에서 통과, 6.0.0 앱은 거부', () => {
+  const raw = JSON.parse(readFileSync(new URL('../../../docs/plugins/examples/serial.jdpack.json', import.meta.url), 'utf8'))
+  const r = validatePack(raw, { appVersion: '6.1.0' })
+  assert.deepEqual(r.errors, [])
+  assert.deepEqual(r.warnings, [])
+  assert.equal(r.pack?.permissions?.[0].kind, 'serial.read')
+  assert.notDeepEqual(validatePack(raw, { appVersion: '6.0.0' }).errors, [])
+})
+
 test('docs 권한 예제 팩: 외부 팩으로 검증 통과', () => {
   const raw = JSON.parse(readFileSync(new URL('../../../docs/plugins/examples/permissions.jdpack.json', import.meta.url), 'utf8'))
   const r = validatePack(raw, { appVersion: '6.0.0' })

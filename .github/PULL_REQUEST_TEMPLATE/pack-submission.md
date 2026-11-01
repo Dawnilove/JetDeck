@@ -9,7 +9,7 @@
 <!-- Only if the pack has items rated "danger": say why each one is needed (at least 20 characters). The CI check fails without it. -->
 
 ## Permissions
-<!-- Only if the pack has "permissions": say why each one is needed and why the folder or port is as narrow as it can be (at least 20 characters). The CI check fails without it. -->
+<!-- Only if the pack has "permissions": say why each one is needed and why the folder, port or serial baud rate is as narrow as it can be (at least 20 characters). The CI check fails without it. -->
 
 ## Checks
 - [ ] I added **one** file: `docs/packs/files/<id>/<version>/<id>.jdpack.json` (nothing else under `docs/packs/`)

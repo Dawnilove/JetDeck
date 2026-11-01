@@ -8,8 +8,8 @@ JetDeck 5.0은 **팩**으로 기능을 늘릴 수 있어요. 팩은 Device에서
 * [형식 설명서 (한국어)](format.ko.md) · [Format reference (English)](format.md)
 * [보안 · Security](security.md)
 * [JSON Schema](jdpack.schema.json) — `"$schema"` 한 줄로 VS Code 자동 완성
-* [권한 · Permissions (6.0.0)](permissions.md) — 파일 전송·터널 권한 선언
-* [예제 · Examples](examples/examples.jdpack.json) — 내 프로젝트·센서·학습 작업 템플릿 · [권한 예제](examples/permissions.jdpack.json)
+* [권한 · Permissions (6.0.0)](permissions.md) — 파일 전송·터널·시리얼 읽기(6.1.0) 권한 선언
+* [예제 · Examples](examples/examples.jdpack.json) — 내 프로젝트·센서·학습 작업 템플릿 · [권한 예제](examples/permissions.jdpack.json) · [시리얼 예제](examples/serial.jdpack.json)
 * [모음 게시 절차 · Publishing to the gallery](publish.md) — 관리자용
 * [팩 심사 기준 · Reviewing a pack](review.md) — 제출 검사와 관리자가 읽는 것
 

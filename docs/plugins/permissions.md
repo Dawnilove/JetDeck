@@ -1,10 +1,12 @@
-# Pack permissions (6.0.0) · 팩 권한
+# Pack permissions (6.0.0, serial 6.1.0) · 팩 권한
 
 > Back to [README](README.md) · [format](format.md) · [security](security.md). 한국어 요약은 아래에 있어요.
 
-Before 6.0.0 a pack could only run commands on the Device. From 6.0.0 a pack can also **ask to use three app features**: list and download files (`sftp.read`), upload files (`sftp.write`), and connect one Device port to this PC (`tunnel`). The pack declares **what** and **how far**. The app keeps the pack inside that range.
+Before 6.0.0 a pack could only run commands on the Device. From 6.0.0 a pack can also **ask to use app features**: list and download files (`sftp.read`), upload files (`sftp.write`), and connect one Device port to this PC (`tunnel`). From 6.1.0 it can also read a serial port of this PC (`serial.read`, read-only). The pack declares **what** and **how far**. The app keeps the pack inside that range.
 
 **This changes the security model.** Until 5.6.0 nothing in a pack touched your PC. A pack with permissions can now write a file to your PC (a download you save), read a file from your PC (an upload you pick), and open a port on `127.0.0.1` of your PC (a tunnel). The pack never chooses the PC path, and every use needs your click. Read the permission lines in the allow dialog.
+
+**Serial (6.1.0) is different again:** it touches a device plugged into your PC. The pack never sends anything to the device, but opening a port can restart some boards. See [Serial read](#serial-read-610).
 
 ## Declaring permissions
 
@@ -24,15 +26,16 @@ Needs `"minApp": "6.0.0"` (a pack with `permissions` or `mode: "app"` items and 
 | Field | Used by | Rule |
 |---|---|---|
 | `id` | all | `a-z`, digits, `-`; 2–30 characters; unique in the pack |
-| `kind` | all | `sftp.read`, `sftp.write` or `tunnel`. Unknown = error |
+| `kind` | all | `sftp.read`, `sftp.write`, `tunnel` or `serial.read`. Unknown = error |
 | `why` | all | text (or `{ko, en}`), up to 300 characters. Shown under the label "Pack description (author's words)" |
 | `root` | sftp.* | starts with `~/`, at least one folder below the home folder, no `..`, no `//`, up to 200 characters |
 | `maxBytes` | sftp.* | integer, up to 20 MB, default 5 MB |
 | `overwrite` | sftp.write | `"ask"` (default) or `"never"`. There is no `"always"` |
 | `remotePort` | tunnel | integer 1024–65535, not in the denied list below |
-| `maxMinutes` | tunnel | 1–60, default 10 |
+| `maxMinutes` | tunnel, serial.read | 1–60, default 10 |
+| `baud` | serial.read | required; one of 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600 |
 
-`risk` is computed by the app from the kind: `sftp.read` = read, `sftp.write` and `tunnel` = change. A permission cannot be rated `danger`; a range that is too wide (outside the home folder, a sensitive folder, a denied port) makes the **pack refused** instead.
+`risk` is computed by the app from the kind: `sftp.read` = read, `sftp.write`, `tunnel` and `serial.read` = change. A permission cannot be rated `danger`; a range that is too wide (outside the home folder, a sensitive folder, a denied port) makes the **pack refused** instead.
 
 A permission that no item uses is a warning (the gallery build and the pack check fail on warnings).
 
@@ -47,7 +50,7 @@ A permission that no item uses is a warning (the gallery build and the pack chec
 | Field | Rule |
 |---|---|
 | `perm` | the `id` of a permission in this pack |
-| `op` | `sftp.read`: `list`, `text`, `get`. `sftp.write`: `put`. `tunnel`: `open` |
+| `op` | `sftp.read`: `list`, `text`, `get`. `sftp.write`: `put`. `tunnel`: `open`. `serial.read`: `read` |
 | `path` | path **below `root`**, with `{name}` slots filled from `fields`. `list` may leave it empty. `open` has no `path` |
 | `fields` | only `select` (fixed `choices`), `text` (`word` or `free`) and `int`. Every field must appear in `path` |
 | not allowed | `cmd`, `sudo`, `auto`, `chart`, `from`, `badges`, `params`, `preview`, `confirm`, `timeout` and the other command fields. Permissions run only when a person clicks |
@@ -79,15 +82,30 @@ What each `op` does:
 * The upload rename needs the OpenSSH `posix-rename` extension on the Device. Without it, an upload over an existing file fails instead of falling back to a risky method.
 * Not tested here: browser attacks on a local port (DNS rebinding), other users on the same PC, antivirus reactions, and a real Windows "downloaded from the internet" mark on saved files.
 
+## Serial read (6.1.0)
+
+```json
+{ "id": "uart", "kind": "serial.read", "baud": 115200, "maxMinutes": 10, "maxBytes": 5242880,
+  "why": "Read the boot log of a board plugged into this PC" }
+```
+
+with the item `{ "mode": "app", "perm": "uart", "op": "read" }`. Needs `"minApp": "6.1.0"` (a lower `minApp` is an error; a 6.0 app refuses the whole pack). `maxBytes` is up to 20 MB, default 5 MB.
+
+* **Read-only by construction.** The code that opens the port has no write function, and the pack has no way to ask for one. Flow control is off. 8N1 only. `serial.write` and control-line settings do not exist.
+* **You pick the port every time.** The pack cannot name a port (`port`, `path`, `device` are errors). A system dialog lists the ports of this PC and you choose one, then a confirm window written by the app shows the port, the baud rate and the limits. The app does not remember the port.
+* **The app lowers DTR and RTS** after opening (Linux) and keeps the port lock, so another program using the port makes the open fail. The text shows on screen only (last 2000 lines); the pack never receives it. Secret-looking values (`password`, `secret`, `token`, `api_key`, `psk`, `pass` followed by `=` or `:`) are masked, which also masks a few harmless lines.
+* **Limits:** 1 reader per pack, 2 in the app. It stops at `maxMinutes`, at `maxBytes`, on the stop button, when you leave the screen, when the connection drops, when the pack is turned off or changed, and when the app quits. The SSH connection must be open.
+* **What stays open.** **Opening a port can restart some devices** (many Arduino boards, some USB-serial adapters): the open itself changes DTR, and the app cannot always prevent that, especially on Linux. **Do not open the port of a 3D printer, CNC, PLC or any machine that is working.** The gallery rejects packs for such devices. Not tested here: real hardware, Bluetooth COM ports, RS-485 adapters where a low RTS turns on the transmitter.
+
 ## Old apps
 
-An app older than 6.0.0 refuses a pack that sets `minApp` 6.0.0 ("JetDeck 6.0.0 or newer is needed"). Settings files do not change, so going back to 5.x is safe: permission packs are refused and stay off.
+An app older than 6.1.0 refuses a pack that sets `minApp` 6.1.0 (any pack with `serial.read`). An app older than 6.0.0 refuses a pack that sets `minApp` 6.0.0 ("JetDeck 6.0.0 or newer is needed"). Settings files do not change, so going back to 5.x is safe: permission packs are refused and stay off.
 
 ## Gallery and review
 
-The gallery index lists permissions in `caps.perms` (for example `sftp.read`, `tunnel:8888`). The build computes them from the pack file, `gallery:verify` compares them, and the app shows the values it computes from the downloaded file. A pack with permissions needs a **Permissions** section (20 characters or more) in the pull request. See [review.md](review.md).
+The gallery index lists permissions in `caps.perms` (for example `sftp.read`, `tunnel:8888`, `serial.read:115200`). The build computes them from the pack file, `gallery:verify` compares them, and the app shows the values it computes from the downloaded file. A pack with permissions needs a **Permissions** section (20 characters or more) in the pull request. See [review.md](review.md).
 
-An example you can copy: [examples/permissions.jdpack.json](examples/permissions.jdpack.json).
+An example you can copy: [examples/permissions.jdpack.json](examples/permissions.jdpack.json) and [examples/serial.jdpack.json](examples/serial.jdpack.json) (serial read).
 
 ---
 
@@ -99,4 +117,5 @@ An example you can copy: [examples/permissions.jdpack.json](examples/permissions
 * 항목은 `mode: "app"` + `perm` + `op`(`list`·`text`·`get`·`put`·`open`) + `path`(root 아래 상대 경로). `cmd`·`auto`·그래프·배지에는 쓸 수 없어요.
 * 앱이 매번 지켜요: 경로 이탈(`..`·링크) 거부, 민감 폴더·파일 거부, 쓰기는 숨김 폴더·시작 파일 거부, 실행 파일 형식 저장 거부, 올린 파일은 `0644`, 터널은 `127.0.0.1`만·포트는 앱이 고름·시간 제한·화면을 나가면 닫힘.
 * **한계**: 거부 목록은 이름 기반이에요(이름을 바꾼 비밀 파일은 못 막음). 덮어쓰면 파일 권한이 `0644`로 바뀌어요. 터널이 열려 있는 동안 이 PC의 다른 프로그램도 접속할 수 있어요. 새 버전이 같은 권한 이름으로 범위를 넓힐 수 있으니(허용 창이 빨간 줄로 알려요) 모음 목록은 종류만 보여요. 브라우저 공격(DNS rebinding)·백신 반응은 시험하지 못했어요.
+* **시리얼 읽기 (6.1.0, `serial.read`)**: 이 PC의 시리얼 포트를 **읽기만** 해요(`minApp` 6.1.0 필수, `baud`는 9600~921600의 8개 중 하나). 앱의 열기 코드에 쓰기 함수가 없고, 흐름 제어는 꺼요. **포트는 팩이 못 정하고 실행할 때마다 내가 시스템 창에서 골라요.** 앱이 만든 확인 창을 거치고, 글자는 화면에만 보여요(팩은 못 받음, 비밀처럼 보이는 값은 가림). 한도: 팩당 1개·앱 전체 2개, 기본 10분·5MB(최대 60분·20MB), 정지·화면 나감·연결 끊김·앱 종료 때 닫혀요. **일부 장치(아두이노 등)는 포트를 열 때 다시 시작해요.** 작업 중인 3D 프린터·CNC·PLC의 포트는 열지 마세요(모음은 이런 팩을 거부해요). 실제 장치·블루투스 COM·RS-485 변환기는 시험하지 못했어요.
 * 모음 팩은 PR에 `Permissions` 절(20자 이상)이 필요하고, 관리자가 root·포트·`why`를 이전 버전과 비교해 읽어요.
