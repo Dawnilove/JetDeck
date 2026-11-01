@@ -12,6 +12,7 @@ import ros2Json from './packs/ros2.json'
 import ros2LiveJson from './packs/ros2live.json'
 import { parseFromOutput } from './packfields.mts'
 import { dropConn, runBadges } from './packbadge.mts'
+import { appReconcile, registerPackAppIpc } from './packapp'
 import type { BadgeResult } from './packbadgecore.mts'
 import { startPoll, stopAllPolls, stopPoll } from './packpoll.mts'
 import { sanitizeOutput } from './packsafe.mts'
@@ -48,6 +49,7 @@ function rescan(): Catalog {
   state = readState(stateFile())
   entries = buildCatalog({ official: OFFICIAL, user: safeMode ? [] : readUserDir(userDir()), state, appVersion: app.getVersion() })
   for (const e of entries) for (const x of [...e.errors, ...e.warnings]) console.warn(`[pack] ${e.id}:`, x)
+  appReconcile(entries) // 꺼졌거나 파일이 바뀐 팩이 시작한 앱 기능 전송은 즉시 멈춤
   return catalog()
 }
 const save = (st: StateFile) => {
@@ -60,13 +62,13 @@ const entryOf = (id: string): PackEntry => {
   return e
 }
 // 실행할 항목 찾기: 켜진 팩 안에서만, 숨겨진(이 앱이 모르는 방식) 항목은 못 씀
-function find(packId: string, pluginId: string, actionId: string): { pack: Pack; action: PackAction } {
+function find(packId: string, pluginId: string, actionId: string): { pack: Pack; action: PackAction; hash: string } {
   const e = entryOf(packId)
   if (!e.enabled || !e.pack) throw new Error(tr('이 팩은 켜져 있지 않아요'))
   const a = e.pack.plugins.find((p) => p.id === String(pluginId))?.actions.find((x) => x.id === String(actionId))
   if (!a) throw new Error(tr('알 수 없는 항목이에요'))
   if (a.hidden) throw new Error(tr('이 항목은 이 앱 버전에서 쓸 수 없어요'))
-  return { pack: e.pack, action: a }
+  return { pack: e.pack, action: a, hash: e.hash }
 }
 
 const previewed = new Map<string, number>() // `${connId}:${팩/플러그인/항목}` → 미리보기 본 시각. 실행하면 지우고, 10분이 지나면 다시 봐야 함
@@ -255,6 +257,7 @@ export function registerPackIpc(): void {
     save(setBadgesOff(state, entryOf(packId), Array.isArray(ids) ? ids : []))
     return rescan()
   })
+  registerPackAppIpc(find) // 6.0.0: 앱 기능 권한 (mode:'app' 항목)
   app.on('before-quit', stopAll)
   app.on('before-quit', stopAllPolls)
 }

@@ -1,9 +1,11 @@
 // 시험용 가짜 Device 파일 시스템 (메모리). 심볼릭 링크·FIFO·큰 파일 같은 나쁜 상황을 직접 만들어 넣는다. 앱 코드에서는 쓰지 않음
-import type { FsStat, PathFs } from './permpath.mts'
+import { Readable, Writable } from 'node:stream'
+import type { DeviceFs } from './packappcore.mts'
+import type { FsKind, FsStat } from './permpath.mts'
 
-type Node = { kind: 'file' | 'dir' | 'link' | 'other'; size: number; data?: Buffer; target?: string }
+type Node ={ kind: 'file' | 'dir' | 'link' | 'other'; size: number; data?: Buffer; target?: string }
 
-export class FakeDevice implements PathFs {
+export class FakeDevice implements DeviceFs {
   nodes = new Map<string, Node>([['/', { kind: 'dir', size: 0 }]])
   home: string
   constructor(home = '/home/u') {
@@ -65,5 +67,78 @@ export class FakeDevice implements PathFs {
   }
   async lstat(p: string): Promise<FsStat | null> {
     return this.st(this.walk(p, false)?.node)
+  }
+
+  // ── 전송용 (DeviceFs). cutAfter: 이 바이트만큼 흐른 뒤 연결이 끊긴 것처럼 실패 ──
+  cutAfter: number | null = null
+  stall = false
+  extra = 0 // stat이 알려 준 크기보다 더 많이 흐르게 함 (실행 중 커지는 파일)
+  modes = new Map<string, number>()
+  async readdir(p: string): Promise<{ name: string; kind: FsKind; size: number }[]> {
+    const w = this.walk(p, true)
+    if (w?.node?.kind !== 'dir') throw new Error('Not a directory')
+    const out: { name: string; kind: FsKind; size: number }[] = []
+    for (const [k, n] of this.nodes) if (k !== w.path && k.startsWith((w.path === '/' ? '' : w.path) + '/') && !k.slice(w.path.length + 1).includes('/')) out.push({ name: k.slice(k.lastIndexOf('/') + 1), kind: n.kind, size: n.size })
+    return out
+  }
+  readStream(p: string): Readable {
+    const n = this.walk(p, true)?.node
+    if (n?.kind !== 'file') throw new Error('No such file')
+    const cut = this.cutAfter
+    const dev = this
+    let sent = 0
+    return new Readable({
+      read() {
+        if (dev.stall) return // 멈춰 있는 연결 (취소·시간 초과 시험)
+        if (cut !== null && sent >= cut) return this.destroy(new Error('Connection lost'))
+        if (sent >= n.size + dev.extra) return void this.push(null)
+        const len = Math.min(65536, n.size + dev.extra - sent, cut === null ? Infinity : cut - sent)
+        this.push(n.data ? n.data.subarray(sent, sent + len) : Buffer.alloc(len))
+        sent += len
+      }
+    })
+  }
+  writeStream(p: string, mode: number): Writable {
+    const self = this
+    const chunks: Buffer[] = []
+    let got = 0
+    return new Writable({
+      construct(cb) {
+        cb(self.nodes.has(p) ? new Error('File exists') : null) // wx
+      },
+      write(c: Buffer, _e, cb) {
+        got += c.length
+        chunks.push(c)
+        if (self.cutAfter !== null && got > self.cutAfter) {
+          self.nodes.set(p, { kind: 'file', size: got, data: Buffer.concat(chunks) }) // 끊겨도 임시 파일은 남음
+          return cb(new Error('Connection lost'))
+        }
+        cb()
+      },
+      final(cb) {
+        const data = Buffer.concat(chunks)
+        self.nodes.set(p, { kind: 'file', size: data.length, data })
+        self.modes.set(p, mode)
+        cb()
+      }
+    })
+  }
+  async rename(from: string, to: string, overwrite: boolean): Promise<void> {
+    const n = this.nodes.get(from)
+    if (!n) throw new Error('No such file')
+    if (!overwrite && this.nodes.has(to)) throw new Error('File exists')
+    this.nodes.delete(from)
+    this.nodes.set(to, n)
+    const m = this.modes.get(from)
+    if (m !== undefined) (this.modes.delete(from), this.modes.set(to, m))
+  }
+  async unlink(p: string): Promise<void> {
+    if (!this.nodes.delete(p)) throw new Error('No such file')
+  }
+  read(p: string): string | undefined {
+    return this.nodes.get(p)?.data?.toString()
+  }
+  names(dir: string): string[] {
+    return [...this.nodes.keys()].filter((k) => k.startsWith(dir + '/') && !k.slice(dir.length + 1).includes('/')).map((k) => k.slice(dir.length + 1))
   }
 }

@@ -10,5 +10,18 @@ export const EN_O: Record<string, string> = {
   '일반 파일만 쓸 수 있어요': 'Only regular files can be used',
   '파일이 너무 커요': 'The file is too large',
   '링크 파일은 덮어쓸 수 없어요': 'A link file cannot be overwritten',
-  '올릴 폴더가 없어요': 'The upload folder does not exist'
+  '올릴 폴더가 없어요': 'The upload folder does not exist',
+  '받은 파일 저장': 'Save received file',
+  '올릴 파일 고르기': 'Choose a file to upload',
+  '앱 기능을 쓰는 항목이 아니에요': 'This item does not use an app feature',
+  '이 연결은 전송을 하나씩만 할 수 있어요': 'Only one transfer at a time per connection',
+  '전송 시간이 너무 길어서 멈췄어요': 'The transfer took too long and was stopped',
+  '전송을 멈췄어요': 'The transfer was stopped',
+  '같은 이름의 파일이 있어서 올릴 수 없어요': 'A file with the same name exists, so it cannot be uploaded',
+  '확인한 내용과 달라요. 다시 확인해 주세요': 'It differs from what you confirmed. Please confirm again',
+  '바이너리 파일이라 글자로 볼 수 없어요': 'This is a binary file and cannot be shown as text',
+  'UTF-8 파일이 아니라 글자로 볼 수 없어요': 'This is not a UTF-8 file and cannot be shown as text',
+  '실행 파일 형식(.exe 등)으로는 저장할 수 없어요': 'Files cannot be saved in an executable format (such as .exe)',
+  '올린 파일 크기가 달라요': 'The uploaded file size does not match',
+  '아직 지원하지 않는 동작이에요': 'This action is not supported yet'
 }
