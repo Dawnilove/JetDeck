@@ -104,6 +104,16 @@ test('터널: prepare는 아무것도 열지 않고 확인 창 정보를 주고,
   await s.done()
 })
 
+test('6.0.0 리뷰 #7 open: 확인 뒤 팩 파일(지문)이 바뀌면 이전 token은 거부, 포트는 열리지 않음', async () => {
+  const s = await setup()
+  const [t] = s.targets('tp', [8888])
+  const p = (await s.engine.prepare('c1', t, {}))!
+  await rej(s.engine.run('c1', { ...t, hash: 'h-changed' }, {}, p.token), /확인한 내용과 달라요/)
+  assert.equal(s.engine.tunnelCount(), 0)
+  assert.equal(await refused(p.tunnel!.port), true)
+  await s.done()
+})
+
 test('T18 같은 PC의 LAN 주소로는 접속할 수 없다 (127.0.0.1만 열림)', async () => {
   const s = await setup()
   const [t] = s.targets('tp', [8888])

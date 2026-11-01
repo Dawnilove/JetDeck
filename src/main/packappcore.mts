@@ -150,7 +150,7 @@ export function createAppEngine(deps: AppDeps) {
       tunnelKey(connId, t)
       if (portProblem(perm.remotePort)) throw new Error(tr('경로가 올바르지 않아요'))
       const port = await (deps.freePort ?? pickFreePort)() // 번호만 정함. 확인하기 전에는 아무것도 열지 않음
-      const token = sha(t.pack.id, t.pluginId, a.id, 'open', perm.remotePort!, port, perm.maxMinutes!)
+      const token = sha(t.pack.id, t.hash, t.pluginId, a.id, 'open', perm.remotePort!, port, perm.maxMinutes!)
       if (pendingOpen.size >= PENDING_MAX) pendingOpen.delete(pendingOpen.keys().next().value!)
       pendingOpen.set(token, { connId, port, at: Date.now() })
       return { ...base, needConfirm: true, token, tunnel: { port, remotePort: perm.remotePort!, minutes: perm.maxMinutes! } }
@@ -165,7 +165,7 @@ export function createAppEngine(deps: AppDeps) {
     const st = await fsStat(local)
     if (!st.isFile()) throw new Error(tr('일반 파일만 쓸 수 있어요'))
     if (st.size > perm.maxBytes!) throw new Error(tr('파일이 너무 커요'))
-    const token = sha(t.pack.id, t.pluginId, a.id, 'put', w.path, w.exists ? 1 : 0, local, st.size, st.mtimeMs)
+    const token = sha(t.pack.id, t.hash, t.pluginId, a.id, 'put', w.path, w.exists ? 1 : 0, local, st.size, st.mtimeMs)
     if (pending.size >= PENDING_MAX) pending.delete(pending.keys().next().value!)
     pending.set(token, { connId, local, size: st.size, mtimeMs: st.mtimeMs, at: Date.now() })
     return { ...base, needConfirm: true, token, remotePath: toTilde(w.path, home), exists: w.exists, local: { name: safeName(basename(local)), size: st.size } }
@@ -177,7 +177,7 @@ export function createAppEngine(deps: AppDeps) {
     if (op === 'open') {
       const p = typeof token === 'string' ? pendingOpen.get(token) : undefined
       // 확인한 것과 같아야 실행: 포트·시간은 팩이 정한 값이고, 이 PC 포트 번호는 확인 창에서 보여 준 값
-      if (!p || p.connId !== connId || Date.now() - p.at > PENDING_TTL || token !== sha(t.pack.id, t.pluginId, a.id, 'open', perm.remotePort!, p.port, perm.maxMinutes!)) throw new Error(tr('확인한 내용과 달라요. 다시 확인해 주세요'))
+      if (!p || p.connId !== connId || Date.now() - p.at > PENDING_TTL || token !== sha(t.pack.id, t.hash, t.pluginId, a.id, 'open', perm.remotePort!, p.port, perm.maxMinutes!)) throw new Error(tr('확인한 내용과 달라요. 다시 확인해 주세요'))
       pendingOpen.delete(token as string)
       const connect = deps.connectTo
       if (!connect || portProblem(perm.remotePort) || !perm.maxMinutes || perm.maxMinutes > LIMITS.tunnelMinutesMax) throw new Error(tr('아직 지원하지 않는 동작이에요'))
@@ -265,7 +265,7 @@ export function createAppEngine(deps: AppDeps) {
       const w = await resolveTarget(fs, home, perm, rel, 'write')
       const p = typeof token === 'string' ? pending.get(token) : undefined
       // 확인한 것과 같아야 실행: 화면이 token을 바꾸거나 입력값·Device 상태가 prepare 뒤에 달라졌으면 거부
-      if (!p || p.connId !== connId || Date.now() - p.at > PENDING_TTL || token !== sha(t.pack.id, t.pluginId, a.id, 'put', w.path, w.exists ? 1 : 0, p.local, p.size, p.mtimeMs)) throw new Error(tr('확인한 내용과 달라요. 다시 확인해 주세요'))
+      if (!p || p.connId !== connId || Date.now() - p.at > PENDING_TTL || token !== sha(t.pack.id, t.hash, t.pluginId, a.id, 'put', w.path, w.exists ? 1 : 0, p.local, p.size, p.mtimeMs)) throw new Error(tr('확인한 내용과 달라요. 다시 확인해 주세요'))
       pending.delete(token as string)
       const st = await fsStat(p.local)
       if (!st.isFile() || st.size !== p.size || st.mtimeMs !== p.mtimeMs) throw new Error(tr('고른 파일이 바뀌었어요. 다시 골라 주세요'))

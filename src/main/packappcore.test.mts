@@ -191,6 +191,16 @@ test('T17 put: 변조된 token·다른 입력값·재사용·다른 연결은 �
   s.done()
 })
 
+test('6.0.0 리뷰 #7 put: 확인 뒤 팩 파일(지문)이 바뀌면 이전 token은 거부', async () => {
+  const s = setup()
+  const p = await prep(s)
+  const changed = { ...s.t('put'), hash: 'h2' }
+  await rej(s.engine.run('c1', changed, { file: 'new.bin' }, p.token), /확인한 내용과 달라요/)
+  assert.deepEqual(s.dev.names(`${HOME}/upload`), [])
+  await s.engine.run('c1', s.t('put'), { file: 'new.bin' }, p.token) // 지문이 같으면 통과
+  s.done()
+})
+
 test('put: 확인 뒤 PC 파일이 바뀌면 거부 / 다른 PC 파일을 고르면 새 token', async () => {
   const s = setup()
   const p = await prep(s)
