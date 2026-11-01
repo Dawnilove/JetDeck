@@ -6,6 +6,17 @@ export const releaseUrl = (version: string): string | null => (/^\d+\.\d+\.\d+$/
 
 export const RELEASES: Release[] = [
   {
+    version: '6.1.3',
+    ko: [
+      '폴더 보기: Device에서 2001개까지만 읽어요',
+      '폴더 읽기에 10초 시간 상한을 뒀어요'
+    ],
+    en: [
+      'Folder list: reads at most 2001 entries from the Device',
+      'Folder reads now have a 10-second time limit'
+    ]
+  },
+  {
     version: '6.1.2',
     ko: [
       '읽기 root에 ~/.config 같은 통째 폴더를 막아요',
