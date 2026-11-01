@@ -48,7 +48,7 @@ function badStrings(v: unknown, at: string, out: string[], depth = 0): void {
 }
 
 // 권한 범위를 사람이 읽는 한 줄로 (요약표용)
-const scopeOf = (x: Permission): string => (x.kind === 'tunnel' ? `Device 127.0.0.1:${x.remotePort} → this PC 127.0.0.1 · ${x.maxMinutes} min` : `${x.root} · max ${Math.round(x.maxBytes! / 1024)} KB per file${x.kind === 'sftp.write' ? ` · overwrite ${x.overwrite}` : ''}`)
+const scopeOf = (x: Permission): string => (x.kind === 'serial.read' ? `this PC serial port (user picks it) · ${x.baud} baud · ${x.maxMinutes} min · ${Math.round(x.maxBytes! / 1024)} KB read-only` : x.kind === 'tunnel' ? `Device 127.0.0.1:${x.remotePort} → this PC 127.0.0.1 · ${x.maxMinutes} min` : `${x.root} · max ${Math.round(x.maxBytes! / 1024)} KB per file${x.kind === 'sftp.write' ? ` · overwrite ${x.overwrite}` : ''}`)
 
 export function checkSubmission(inp: CheckInput): CheckResult {
   const problems: string[] = []

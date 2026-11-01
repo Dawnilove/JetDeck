@@ -74,7 +74,7 @@ const chartCmdPart = (d: ChartDisplay) => ({ every: d.every, match: d.match, spl
 export function commandMap(p: Pack): Record<string, string> {
   const m: Record<string, string> = Object.create(null)
   for (const pl of p.plugins) for (const a of pl.actions) m[`${pl.id}/${a.id}`] = a.cmd + (a.preview ? `\u0000${a.preview}` : '') + (a.sudo ? '\u0000sudo' : '') + `\u0000${a.mode}` + (a.fields ? `\u0000fields:${JSON.stringify(a.fields)}` : '') + (a.display?.type === 'chart' ? `\u0000chart:${JSON.stringify(chartCmdPart(a.display))}` : '') + (a.mode === 'app' ? `\u0000app:${a.perm}:${a.op}:${a.path ?? ''}` : '')
-  for (const x of p.permissions ?? []) m[`perm:${x.id}`] = JSON.stringify({ kind: x.kind, root: x.root, maxBytes: x.maxBytes, overwrite: x.overwrite, remotePort: x.remotePort, maxMinutes: x.maxMinutes }) // 6.0.0: 권한 범위가 바뀌면 허용 창에 바뀐 항목으로 보임 (why는 제외 — 설명 글)
+  for (const x of p.permissions ?? []) m[`perm:${x.id}`] = JSON.stringify({ kind: x.kind, root: x.root, maxBytes: x.maxBytes, overwrite: x.overwrite, remotePort: x.remotePort, maxMinutes: x.maxMinutes, baud: x.baud }) // 6.0.0·6.1.0 (baud는 없으면 글자에서 빠져 기존 허용이 그대로 유효): 권한 범위가 바뀌면 허용 창에 바뀐 항목으로 보임 (why는 제외 — 설명 글)
   for (const b of p.badges ?? []) m[`badge:${b.id}`] = JSON.stringify({ cmd: b.cmd, shell: b.shell, separator: b.separator, root: b.root, match: b.match, code: b.code, path: b.path, codes: b.codes, tag: b.tag }) // 5.3.0: 배지가 읽는 방법이 바뀌면 허용 창에 바뀐 항목으로 보임
   return m
 }
