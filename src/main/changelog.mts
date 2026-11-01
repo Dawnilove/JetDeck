@@ -6,6 +6,23 @@ export const releaseUrl = (version: string): string | null => (/^\d+\.\d+\.\d+$/
 
 export const RELEASES: Release[] = [
   {
+    version: '6.0.0',
+    ko: [
+      '팩이 파일 받기·올리기·터널을 권한으로 선언',
+      '허용 창에 권한 목록, 올리기·터널은 확인 창',
+      '공식 베타 팩: 파일 전송·웹 터널 (기본 꺼짐)',
+      '화면을 나가면 터널·전송이 자동으로 멈춰요',
+      '권한 문서·예제 팩, 모음 심사 기준 추가'
+    ],
+    en: [
+      'Packs can declare file download, upload and tunnel permissions',
+      'Allow dialog lists permissions; uploads and tunnels ask first',
+      'Official beta packs: File transfer and Web tunnel (off by default)',
+      'Leaving the screen stops tunnels and transfers',
+      'Permission docs, example pack and gallery review rules'
+    ]
+  },
+  {
     version: '5.6.0',
     ko: [
       '철회된 팩은 자동으로 꺼져요 (하루 1번 확인, 끌 수 있음)',
