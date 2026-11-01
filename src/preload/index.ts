@@ -14,6 +14,7 @@ import type { GalleryInspect } from '../main/gallery'
 import type { GalleryView } from '../main/galleryflow.mts'
 import type { Inspect as PackInspect } from '../main/packstore.mts'
 import type { PackResult } from '../main/packrun.mts'
+import type { AppEvent, AppPrepared, AppResult } from '../main/packappcore.mts'
 import type { BadgeResult } from '../main/packbadgecore.mts'
 import type { PollEndReason, Sample as PollSample } from '../main/packpollcore.mts'
 import type { EndReason as StreamEndReason } from '../main/packstreamcore.mts'
@@ -145,6 +146,11 @@ const api = {
   packStreamStart: (connId: string, packId: string, pluginId: string, actionId: string, params: Record<string, string>, streamId: string, token?: string): Promise<void> => ipcRenderer.invoke('pack:stream-start', connId, packId, pluginId, actionId, params, streamId, token),
   packStreamStop: (streamId: string): Promise<void> => ipcRenderer.invoke('pack:stream-stop', streamId),
   packFrom: (connId: string, packId: string, pluginId: string, actionId: string, fieldName: string): Promise<string[]> => ipcRenderer.invoke('pack:from', connId, packId, pluginId, actionId, fieldName),
+  // 앱 기능 권한 (6.0.0): app 항목. prepare는 put·open만 확인 창이 필요 (null = PC 파일 고르기 취소). 터널·전송 상태는 pack:app-event로 옴
+  packAppPrepare: (connId: string, packId: string, pluginId: string, actionId: string, given?: Record<string, string>): Promise<AppPrepared | null> => ipcRenderer.invoke('pack:app-prepare', connId, packId, pluginId, actionId, given),
+  packAppRun: (connId: string, packId: string, pluginId: string, actionId: string, given?: Record<string, string>, token?: string, opId?: string): Promise<AppResult> => ipcRenderer.invoke('pack:app-run', connId, packId, pluginId, actionId, given, token, opId),
+  packAppStop: (opId: string): Promise<boolean> => ipcRenderer.invoke('pack:app-stop', opId),
+  onPackAppEvent: (cb: (e: AppEvent) => void) => on('pack:app-event', cb),
   onPackStreamData: (cb: (id: string, lines: string[], skipped: number) => void) => on('pack:stream-data', cb),
   onPackStreamEnd: (cb: (id: string, reason: StreamEndReason, code?: number) => void) => on('pack:stream-end', cb),
   // 시계열 그래프 (5.2.0): pollId는 화면이 정함. 점은 한 번 실행에 한 번 옴 (t: 읽은 시각 ms, every: 지금 간격 초, hint: 읽은 숫자가 없을 때 마지막 출력 한 줄)
