@@ -17,7 +17,7 @@ import { startPoll, stopAllPolls, stopPoll } from './packpoll.mts'
 import { sanitizeOutput } from './packsafe.mts'
 import { buildFrom, buildPoll, buildPreview, buildRun, buildStream, buildTerminal, fill, hasUnsafeMark, parseResult, resolveParams, unsafeNotice, type PackResult } from './packrun.mts'
 import { startStream, stopAll, stopStream } from './packstream.mts'
-import { approveAndEnable, buildCatalog, enabledPacks, ensureDir, forgetPack, inspectPackBytes, installPackBytes, readState, readUserDir, setBadgesOff, setEnabled, setOrigin, writeState, type Inspect, type PackEntry, type PackOrigin, type StateFile } from './packstore.mts'
+import { ackRevoked, approveAndEnable, buildCatalog, enabledPacks, ensureDir, forgetPack, inspectPackBytes, installPackBytes, readState, readUserDir, setBadgesOff, setEnabled, setOrigin, writeState, type Inspect, type PackEntry, type PackOrigin, type StateFile } from './packstore.mts'
 import { applyRevocations, type TurnedOff } from './galleryrevoke.mts'
 import type { GalleryIndex } from './gallerycore.mts'
 import { LIMITS, type Pack, type PackAction, type Reason, type Risk } from './packschema.mts'
@@ -126,6 +126,7 @@ export function registerPackIpc(): void {
     if (on === true && e.revoked && confirmRevoked !== true) throw new Error(tr('모음에서 철회된 팩이에요. 확인 없이는 켤 수 없어요')) // 5.6.0: 다시 켜기는 확인 한 번 더
     if (on === true && e.source === 'user' && e.approval !== 'approved') save(approveAndEnable(state, e, String(shownHash ?? '')))
     else save(setEnabled(state, e, on === true))
+    if (on === true && e.revoked) save(ackRevoked(state, e)) // 확인하고 켠 철회 팩: 다음 확인에서 또 끄지 않음
     return rescan()
   })
   ipcMain.handle('pack:open-dir', async (): Promise<void> => {

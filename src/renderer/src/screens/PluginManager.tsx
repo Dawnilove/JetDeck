@@ -101,7 +101,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
           </span>
         </div>
         <span style={{ fontSize: 12 }} className={e.enabled ? '' : 'dim'}>{e.enabled ? tr('켜짐') : tr('꺼짐')}{note && <> · <span className={e.approval === 'changed' || e.status !== 'ok' ? 'msg-err' : ''}>{e.approval === 'changed' ? '⚠ ' : ''}{note}</span></>}</span>
-        {e.revoked && <p className="msg-err" role="alert" style={{ fontSize: 13, overflowWrap: 'anywhere' }}>⛔ {tr('철회됨')} — {tr('관리자가 모음에서 내려서 자동으로 껐어요')}: "{lt(e.revoked.reason)}"</p>}
+        {e.revoked && <p className="msg-err" role="alert" style={{ fontSize: 13, overflowWrap: 'anywhere' }}>⛔ {tr('철회됨')} — {e.revoked.ack ? tr('관리자가 모음에서 내렸어요. 알고 켜 둔 상태예요') : tr('관리자가 모음에서 내려서 자동으로 껐어요')}: "{lt(e.revoked.reason)}"</p>}
         {!e.revoked && e.origin && e.pack && revoked.filter((r) => r.id === e.id && r.version === e.pack!.version).map((r) => (
           <p key={r.id} className="msg-err" role="alert" style={{ fontSize: 13, overflowWrap: 'anywhere' }}>⛔ {tr('철회됨')} — {tr('관리자가 모음에서 내렸어요')}: "{lt(r.reason)}"{e.enabled ? ' ' + tr('아직 켜져 있을 수 있어요. 끄거나 제거해 주세요.') : ''}</p>
         ))}

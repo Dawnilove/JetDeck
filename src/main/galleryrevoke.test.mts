@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { applyRevocations, CHECK_GAP_MS, shouldCheck } from './galleryrevoke.mts'
-import { approveAndEnable, buildCatalog, readState, setEnabled, sha256, writeState, type PackEntry, type StateFile } from './packstore.mts'
+import { ackRevoked, approveAndEnable, buildCatalog, readState, setEnabled, sha256, writeState, type PackEntry, type StateFile } from './packstore.mts'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -106,4 +106,18 @@ test('하루 1번 확인: 조건 표', () => {
   assert.equal(shouldCheck({ ...base, checkedAt: new Date(NOW.getTime() - CHECK_GAP_MS - 1).toISOString() }), true)
   assert.equal(shouldCheck({ ...base, checkedAt: 'garbage' }), true)
   assert.equal(shouldCheck({ ...base, checkedAt: new Date(NOW.getTime() + 3600_000).toISOString() }), true) // 미래 시각(시계 되돌림)이면 다시 확인
+})
+
+test('철회된 팩을 알고 다시 켜면(ack) 다음 확인에서 또 끄지 않음, 파일이 바뀌면 ack는 무효', () => {
+  const { st, es, files } = setup()
+  const off = applyRevocations(st, es, { revoked: [REV] }, NOW).state
+  const bad = buildCatalog({ official: [], user: files, state: off, appVersion: '5.6.0' }).find((e) => e.id === 'bad-pack')!
+  const on = ackRevoked(setEnabled(off, bad, true), bad)
+  assert.equal(on.packs['bad-pack'].enabled, true)
+  assert.equal(on.packs['bad-pack'].revoked?.ack, true)
+  const es2 = buildCatalog({ official: [], user: files, state: on, appVersion: '5.6.0' })
+  const again = applyRevocations(on, es2, { revoked: [REV] }, new Date(NOW.getTime() + 86400_000))
+  assert.equal(again.state, on)
+  assert.equal(again.turnedOff.length, 0)
+  assert.equal(ackRevoked(st, bad), st) // 철회 기록이 없으면 아무 일도 없음
 })

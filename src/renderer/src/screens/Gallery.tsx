@@ -160,7 +160,7 @@ export default function Gallery({ onCatalog, onCancel, onRevoked }: { onCatalog:
               {it.update && <span className="tag" style={{ color: 'var(--accent-text)', borderColor: 'var(--accent-text)' }}>{tr('업데이트 있음')}</span>}
               <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
                 {reviewing === it.id && <Button size={36} onClick={() => window.api.galleryCancel().catch(() => {})}>{tr('취소')}</Button>}
-                <Button size={36} variant="ghost" onClick={() => report(it.id, 'pack')}>{tr('신고')}</Button>
+                <Button size={36} onClick={() => report(it.id, 'pack')}>{tr('신고')}</Button>
                 {it.block !== 'revoked' && (
                   <Button size={36} variant="primary" disabled={!!it.block || !!reviewing || installing} onClick={() => inspect(it.id)}>
                     {reviewing === it.id ? tr('받는 중…') : tr('내용 보기')}
@@ -179,12 +179,12 @@ export default function Gallery({ onCatalog, onCancel, onRevoked }: { onCatalog:
         )
       })}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', justifyContent: 'flex-end' }}>
-        <label className="check" style={{ fontSize: 13 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', justifyContent: 'space-between' }}>
+        <label className="check" style={{ fontSize: 13, flex: '1 1 240px', minWidth: 0, whiteSpace: 'normal', alignItems: 'flex-start' }}>
           <input type="checkbox" checked={view.autoCheck} onChange={(e) => window.api.galleryAutoCheck(e.target.checked).then(setView).catch((er) => setMsg({ text: errText(er), err: true }))} />
           {tr('앱을 켤 때 하루 1번 철회 확인 (받은 팩이 있을 때만)')}
         </label>
-        <Button size={36} variant="ghost" onClick={() => window.api.galleryConsent(false).then(setView).catch((e) => setMsg({ text: errText(e), err: true }))}>{tr('모음 동의 끄기')}</Button>
+        <span style={{ flex: 'none' }}><Button size={36} onClick={() => window.api.galleryConsent(false).then(setView).catch((e) => setMsg({ text: errText(e), err: true }))}>{tr('모음 동의 끄기')}</Button></span>
       </div>
 
       {rev && (
@@ -195,7 +195,7 @@ export default function Gallery({ onCatalog, onCancel, onRevoked }: { onCatalog:
           foot={
             <>
               <Button disabled={installing} onClick={closeRev}>{tr('취소')}</Button>
-              <Button variant="ghost" onClick={() => report(rev.entry.id, 'pack')}>{tr('신고')}</Button>
+              <Button onClick={() => report(rev.entry.id, 'pack')}>{tr('신고')}</Button>
               {rev.inspect.ok && !view.safeMode && (
                 <>
                   <Button disabled={installing} onClick={() => install(false)}>{tr('설치만 (꺼진 채)')}</Button>

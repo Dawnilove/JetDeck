@@ -24,7 +24,7 @@ export type PackState = {
   revoked?: PackRevoked // 5.6.0: 모음 철회로 자동으로 끈 기록 (그 파일 지문에만 유효). 다시 켜려면 확인이 한 번 더 필요
 }
 export type PackOrigin = { kind: 'gallery'; serial: number; sha256: string }
-export type PackRevoked = { hash: string; reason: L10n; at: string }
+export type PackRevoked = { hash: string; reason: L10n; at: string; ack?: boolean } // ack: 사용자가 철회를 알고도 다시 켬 → 다음 확인에서 또 끄지 않음
 export type StateFile = { version: 1; packs: Record<string, PackState> }
 const ID = /^[a-z][a-z0-9-]{0,39}$/
 
@@ -53,7 +53,7 @@ export function readState(file: string): StateFile {
       if (o && typeof o === 'object' && o.kind === 'gallery' && Number.isInteger(o.serial) && (o.serial as number) >= 0 && typeof o.sha256 === 'string' && /^[0-9a-f]{64}$/.test(o.sha256)) s.origin = { kind: 'gallery', serial: o.serial as number, sha256: o.sha256 }
       const rv = v.revoked as Record<string, unknown> | undefined
       const rr = rv?.reason as Record<string, unknown> | undefined
-      if (rv && typeof rv === 'object' && typeof rv.hash === 'string' && /^[0-9a-f]{64}$/.test(rv.hash) && typeof rv.at === 'string' && rr && typeof rr.ko === 'string' && typeof rr.en === 'string') s.revoked = { hash: rv.hash, reason: { ko: rr.ko.slice(0, 300), en: rr.en.slice(0, 300) }, at: rv.at.slice(0, 40) }
+      if (rv && typeof rv === 'object' && typeof rv.hash === 'string' && /^[0-9a-f]{64}$/.test(rv.hash) && typeof rv.at === 'string' && rr && typeof rr.ko === 'string' && typeof rr.en === 'string') s.revoked = { hash: rv.hash, reason: { ko: rr.ko.slice(0, 300), en: rr.en.slice(0, 300) }, at: rv.at.slice(0, 40), ...(rv.ack === true ? { ack: true } : {}) }
       out.packs[id] = s
     }
   } catch {
@@ -111,7 +111,7 @@ export type PackEntry = {
   changes?: CommandDiff // approval이 changed일 때: 허용했던 명령 대비
   badgesOff: string[] // 5.3.0: 꺼 둔 탐색기 배지 id (팩이 켜져 있어도 이 배지는 실행 안 함)
   origin?: PackOrigin // 5.5.0: 모음에서 받은 파일 그대로일 때만 (파일이 바뀌면 "직접 설치"로 돌아감)
-  revoked?: { reason: L10n; at: string } // 5.6.0: 모음에서 철회돼 자동으로 꺼진 팩 (같은 파일일 때만)
+  revoked?: { reason: L10n; at: string; ack: boolean } // 5.6.0: 모음에서 철회돼 자동으로 꺼진 팩 (같은 파일일 때만)
 }
 
 // 사용자 폴더 안 팩 파일 읽기: 이 폴더 바로 아래의 *.jdpack.json 일반 파일만 (하위 폴더·심볼릭 링크 제외), 512KB 초과는 읽지 않음
@@ -198,7 +198,7 @@ export function buildCatalog(inp: CatalogInput): PackEntry[] {
     u.wantEnabled = !!st?.enabled
     u.badgesOff = st?.badgesOff ?? []
     if (st?.origin && st.origin.sha256 === u.hash) u.origin = st.origin
-    if (st?.revoked && st.revoked.hash === u.hash) u.revoked = { reason: st.revoked.reason, at: st.revoked.at }
+    if (st?.revoked && st.revoked.hash === u.hash) u.revoked = { reason: st.revoked.reason, at: st.revoked.at, ack: st.revoked.ack === true }
     u.approvedVersion = st?.approvedVersion
     u.approvedAt = st?.approvedAt
     if (st?.approvedHash && st.approvedHash === u.hash) u.approval = 'approved'
@@ -243,8 +243,14 @@ export function setOrigin(st: StateFile, id: string, origin: PackOrigin | undefi
 // 철회된 팩을 자동으로 끔 (5.6.0): 켜진 상태만 끄고 파일은 그대로. 같은 파일에 같은 기록이 있으면 바꾸지 않음
 export function markRevoked(st: StateFile, e: PackEntry, reason: L10n, now = new Date()): StateFile {
   const cur = st.packs[e.id] ?? { enabled: false }
-  if (cur.revoked?.hash === e.hash && !cur.enabled) return st
+  if (cur.revoked?.hash === e.hash && (cur.revoked.ack || !cur.enabled)) return st // 이미 기록함. 사용자가 알고 켠 것(ack)은 다시 끄지 않음
   return { ...st, packs: { ...st.packs, [e.id]: { ...cur, enabled: false, revoked: { hash: e.hash, reason, at: cur.revoked?.hash === e.hash ? cur.revoked.at : now.toISOString() } } } }
+}
+// 사용자가 "그래도 켜기"로 철회된 팩을 다시 켬: 다음 철회 확인에서 또 끄지 않게 기록 (같은 파일일 때만)
+export function ackRevoked(st: StateFile, e: PackEntry): StateFile {
+  const cur = st.packs[e.id]
+  if (!cur?.revoked || cur.revoked.hash !== e.hash) return st
+  return { ...st, packs: { ...st.packs, [e.id]: { ...cur, revoked: { ...cur.revoked, ack: true } } } }
 }
 export function forgetPack(st: StateFile, id: string): StateFile {
   const packs = { ...st.packs }

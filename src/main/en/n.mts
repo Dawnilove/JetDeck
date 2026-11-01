@@ -10,6 +10,7 @@ export const EN_N: Record<string, string> = {
   '팩이 안전 검사를 우회하면 비공개로 알려 주세요': 'If a pack gets around the safety checks, report it privately',
   '관리자가 모음에서 내려서 자동으로 껐어요': 'The maintainer removed it from the gallery, so it was turned off automatically',
   '철회된 팩이에요. 그래도 켤까요?': 'This pack was revoked. Turn it on anyway?',
+  '관리자가 모음에서 내렸어요. 알고 켜 둔 상태예요': 'The maintainer removed it from the gallery. You turned it on knowingly',
   '그래도 켜기': 'Turn on anyway',
   '관리자가 이 팩을 모음에서 내렸어요. 안전하지 않을 수 있어요. 켜기 전에 명령 전문을 확인해 주세요.': 'The maintainer removed this pack from the gallery. It may be unsafe. Read the full commands before turning it on.'
 }
