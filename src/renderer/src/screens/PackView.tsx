@@ -7,6 +7,7 @@ import PanelHead, { Desc, Note } from '../components/PanelHead'
 import Segment from '../components/Segment'
 import { errText } from '../util'
 import AskDialog, { type Ask } from './PackAsk'
+import AppCard from './PackApp'
 import ChartCard from './PackChart'
 import StreamCard from './PackStream'
 import { FieldInputs, formErrors, useFormValues } from './PackForm'
@@ -32,6 +33,7 @@ export default function PackView({ connId, online, jetson, pack, plugin, trigger
   const [cells, setCells] = useState<Record<string, Cell>>({})
   const [params, setParams] = useState<Record<string, Record<string, string>>>({}) // 항목 id → 고른 선택값
   const [ask, setAsk] = useState<Ask | null>(null)
+  const [appTrig, setAppTrig] = useState<{ id: string; n: number } | null>(null)
   const shown = plugin.actions.filter((a) => a.when !== 'jetson' || jetson)
   const runnable = shown.filter((a) => a.mode === 'exec' && !a.hidden && !a.fields && a.display?.type !== 'chart') // 입력 폼 항목은 값을 넣고 눌러야 실행
   const started = useRef(new Set<string>()) // 자동 실행은 연결·플러그인마다 한 번
@@ -83,6 +85,7 @@ export default function PackView({ connId, online, jetson, pack, plugin, trigger
   }
   const click = async (a: PackAction, given?: Record<string, string>) => {
     if (a.hidden || a.display?.type === 'chart') return
+    if (a.mode === 'app') return setAppTrig({ id: a.id, n: Date.now() }) // 카드가 같은 확인 흐름으로 처리
     if (a.fields && a.mode === 'exec') return begin(a, given ?? {}) // 팔레트에서 고르면 기본값으로
     let values: Record<string, string>
     try {
@@ -139,6 +142,7 @@ export default function PackView({ connId, online, jetson, pack, plugin, trigger
           const c = cells[a.id]
           const term = a.mode === 'terminal'
           if (a.display?.type === 'chart' && a.mode === 'exec' && !a.hidden) return <ChartCard key={`${connId}/${pack.id}/${plugin.id}/${a.id}`} connId={connId} packId={pack.id} pluginId={plugin.id} a={a} />
+          if (a.mode === 'app' && !a.hidden) return <AppCard key={`${connId}/${pack.id}/${plugin.id}/${a.id}`} connId={connId} online={online} packId={pack.id} pluginId={plugin.id} a={a} trigger={appTrig?.id === a.id ? appTrig.n : undefined} />
           if (a.mode === 'stream' && !a.hidden) return <StreamCard key={`${connId}/${a.id}`} connId={connId} online={online} packId={pack.id} pluginId={plugin.id} a={a} />
           if (a.fields && a.mode === 'exec' && !a.hidden) return <FormCard key={a.id} connId={connId} packId={pack.id} pluginId={plugin.id} a={a} c={c} online={online} onRun={(values) => begin(a, values)} />
           return (
