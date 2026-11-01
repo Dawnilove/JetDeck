@@ -1,8 +1,9 @@
 // 선언형 팩 (4.5.0 → 5.0.0): 명령·표시 방식·확인창을 JSON 데이터로 적고, 코드는 읽어서 실행만 함. 팩 > 플러그인(화면) > 항목(버튼). Electron 없이 시험
 // 위험도는 팩이 적은 값이 아니라 risk.mts가 계산한 값과의 max (내려갈 수 없음)
 import { FIELD_LIMITS, FIELD_TYPES, FLAG_ON, checkValue, sampleCombos, type Field, type FromSpec } from './packfields.mts'
+import { portProblem, rootProblem, splitRel } from './permpath.mts'
 import { fill, fillDir } from './packrun.mts'
-import { analyze, destroysBlockedPath, maxRisk, REASON_TEXT, slotProblem, type Reason, type Risk } from './risk.mts'
+import { analyze, destroysBlockedPath, maxRisk, permRisk, REASON_TEXT, slotProblem, type Reason, type Risk } from './risk.mts'
 
 export type { Risk, Reason, Field, FromSpec }
 export type L10n = { ko: string; en: string }
@@ -45,13 +46,28 @@ export type Badge = {
   ttl: number // 같은 기준 폴더를 다시 실행하기까지 최소 초
   timeout: number // 초
 }
+// 6.0.0 앱 기능 권한: 팩이 선언하고 앱이 범위를 지킴. 항목(mode:'app')이 perm으로 가리킴
+export type PermKind = 'sftp.read' | 'sftp.write' | 'tunnel'
+export type AppOp = 'list' | 'get' | 'text' | 'put' | 'open'
+export const PERM_KINDS: PermKind[] = ['sftp.read', 'sftp.write', 'tunnel']
+export const PERM_OPS: Record<PermKind, AppOp[]> = { 'sftp.read': ['list', 'get', 'text'], 'sftp.write': ['put'], tunnel: ['open'] }
+export type Permission = {
+  id: string
+  kind: PermKind
+  why: L10n // 팩 작성자의 설명. 화면은 "팩 설명" 라벨 아래에만 보임
+  root?: string // sftp.*: "~/" 아래 폴더
+  maxBytes?: number // sftp.*: 파일 하나의 크기 상한
+  overwrite?: 'ask' | 'never' // sftp.write
+  remotePort?: number // tunnel: Device 쪽 포트 (127.0.0.1 고정)
+  maxMinutes?: number // tunnel
+}
 export type Choice = { value: string; label: L10n }
 export type Param = { name: string; label: L10n; choices: Choice[] }
 export type PackAction = {
   id: string
   label: L10n
   desc?: L10n
-  cmd: string // sudo는 쓰지 않음 (sudo: true면 앱이 붙임)
+  cmd: string // sudo는 쓰지 않음 (sudo: true면 앱이 붙임). mode:'app' 항목은 빈 글자
   risk: Risk // 실질 위험도 = max(declared, 앱 계산). 화면·실행은 이 값을 씀
   declared: Risk // 팩이 적은 값
   computed: Risk // 앱이 cmd를 분석한 값 (모든 선택지 조합 중 가장 높은 것)
@@ -67,7 +83,10 @@ export type PackAction = {
   timeout?: number // 초
   stopGrace?: number // 5.4.0 stream 전용: Ctrl-C 뒤 채널을 닫기까지 기다리는 초 (없으면 앱 기본 3초)
   disconnects?: boolean // 실행하면 연결이 끊김 (재부팅·종료)
-  mode: 'exec' | 'terminal' | 'stream' // terminal: 결과를 받지 않고 현재 터미널에 명령을 입력 (스니펫 방식), stream: 끝나지 않는 출력을 실시간으로 받음 (5.1.0)
+  perm?: string // mode:'app' 전용: 쓰는 권한 id
+  op?: AppOp // mode:'app' 전용
+  path?: string // mode:'app' 전용: root 기준 상대 경로 템플릿 ({필드이름} 슬롯)
+  mode: 'exec' | 'terminal' | 'stream' | 'app' // app: 앱 기능 권한을 써서 실행 (6.0.0). terminal: 결과를 받지 않고 현재 터미널에 명령을 입력 (스니펫 방식), stream: 끝나지 않는 출력을 실시간으로 받음 (5.1.0)
   enter?: boolean // terminal에서 끝에 Enter (기본 true)
   shell: 'sh' | 'bash-i' // bash-i: ~/.bashrc 환경이 필요할 때 (ROS2)
   when?: 'jetson' // 젯슨일 때만 표시
@@ -84,6 +103,7 @@ export type Pack = {
   license?: string
   homepage?: string // 표시만. 앱이 접속하지 않음
   minApp?: string
+  permissions?: Permission[] // 6.0.0: 앱 기능 권한 선언 (있으면 minApp 6.0.0 필수)
   official: boolean // 앱에 동봉된 팩만 true (검증 호출 쪽이 정함, 파일 내용으로는 못 정함)
   plugins: PackPlugin[]
   badges?: Badge[] // 5.3.0: 탐색기 배지 (화면이 아니라 팩 최상위)
@@ -98,11 +118,15 @@ export const LIMITS = { fileBytes: 512 * 1024, plugins: 20, actionsPerPlugin: 50
   // 5.3.0 탐색기 배지: 팩당 개수, 코드 수, 표시 글자, 실행 간격·시간, 읽는 결과 한도
   badges: 2, badgesOfficial: 4, badgeCodes: 30, badgeShow: 2, badgeTtlMin: 3, badgeTtlMax: 300, badgeTtlDefault: 5, badgeTimeoutMax: 15, badgeTimeoutDefault: 10, badgeRecords: 5000, badgeLineChars: 4096, badgeTag: 40, badgeDir: 1024,
   // 5.4.0 stopGrace: 스트림 정지 유예(초). 정리에 시간이 걸리는 launch를 위해 길게 허용하되 외부 팩은 짧게
-  stopGraceMin: 3, stopGraceExternal: 10, stopGraceOfficial: 30 }
+  stopGraceMin: 3, stopGraceExternal: 10, stopGraceOfficial: 30,
+  // 6.0.0 앱 기능 권한: 팩당 개수, 글자 수, 전송 크기·목록·미리보기 한도, 터널 시간·개수, 전송 시간(초)
+  permsExternal: 3, permsOfficial: 5, permWhy: 300, permRoot: 200, permBytesMax: 20 * 1024 * 1024, permBytesDefault: 5 * 1024 * 1024, permPath: 300, textPreview: 256 * 1024, listEntries: 2000,
+  tunnelMinutesMax: 60, tunnelMinutesDefault: 10, tunnelsPerPack: 2, tunnelsPerApp: 4, transferSeconds: 600 }
 export const CHART_MIN_APP = '5.2.0'
 export const BADGE_MIN_APP = '5.3.0'
 export const STOP_GRACE_MIN_APP = '5.4.0'
-export const RESERVED_IDS = ['device', 'ros2', 'monitor', 'perf', 'devtools', 'examples', 'ros2-live', 'jetdeck', 'official', 'app', 'core', 'snippets']
+export const PERM_MIN_APP = '6.0.0'
+export const RESERVED_IDS = ['device', 'ros2', 'monitor', 'perf', 'devtools', 'examples', 'ros2-live', 'jetdeck', 'official', 'app', 'core', 'snippets', 'file-transfer', 'web-tunnel']
 // 공식 팩에서 읽기로 증명되지 않아도 읽기로 인정하는 항목 (팩id/항목id → 고정된 명령). 새 공식 항목을 추가하면 여기와 시험을 고쳐야 함 = 리뷰 강제
 export const OFFICIAL_UNPROVEN_READS = new Map<string, string>([
   ['device/pwr-status', 'echo "target=$(systemctl get-default 2>/dev/null)"; echo "up=$(uptime -p)"; echo "since=$(uptime -s)"; if [ -f /var/run/reboot-required ]; then echo reboot=yes; else echo reboot=no; fi; if [ -f /run/systemd/shutdown/scheduled ]; then s=$(grep -m1 \'^USEC=\' /run/systemd/shutdown/scheduled | cut -d= -f2); echo "scheduled=$(date -d @$((s/1000000)) \'+%F %T\') $(grep -m1 \'^MODE=\' /run/systemd/shutdown/scheduled | cut -d= -f2)"; else echo scheduled=none; fi']
@@ -111,6 +135,7 @@ export const OFFICIAL_UNPROVEN_READS = new Map<string, string>([
 const RISK_KO: Record<Risk, string> = { read: '읽기', change: '바꿈', danger: '위험' }
 const why = (rs: Reason[]) => rs.map((r) => REASON_TEXT[r]).join(' · ') // 오류·경고에는 이유 코드 대신 앱 글자
 const ID = /^[a-z][a-z0-9-]{0,39}$/
+const PERM_ID = /^[a-z][a-z0-9-]{1,29}$/
 const VALUE = /^[A-Za-z0-9_.@:~/+][A-Za-z0-9_.@:~/+-]*$/ // 선택지 값: 셸 특수문자 없음, 맨 앞 '-' 금지(옵션 주입 방지) → 따옴표 없이 명령에 끼워도 안전
 const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/
 const BAD_TEXT = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f​-‏‪-‮⁦-⁩﻿]/g // 제어 문자·BiDi·보이지 않는 글자
@@ -374,7 +399,106 @@ function checkBadge(b: unknown, S: boolean, seen: Set<string>): { badge?: Badge;
   return { badge: { id, label, cmd: b.cmd, shell: b.shell === 'bash-i' ? 'bash-i' : 'sh', separator: b.separator === 'nul' ? 'nul' : 'line', root: b.root === 'line1' ? 'line1' : 'dir', match: b.match, code: b.code as number, path: b.path as number, codes, tag, folderDot: b.folderDot !== false, ttl, timeout } }
 }
 
-type Ctx = { official: boolean; packId: string; seen: Set<string>; autoCount: { n: number } }
+type Ctx = { official: boolean; packId: string; seen: Set<string>; autoCount: { n: number }; perms: Map<string, Permission>; usedPerms: Set<string> }
+
+// 권한 하나 읽기 (6.0.0). 범위는 종류별 규칙대로 검사하고 기본값을 채운다. 위험도는 종류로 앱이 정함 (permRisk)
+function checkPermission(p: unknown, S: boolean, seen: Set<string>): { perm?: Permission; error?: string } {
+  if (!isObj(p)) return { error: '권한 항목이 객체가 아니에요' }
+  const id = p.id
+  if (typeof id !== 'string' || !PERM_ID.test(id)) return { error: `권한 id가 올바르지 않아요: ${String(id).slice(0, 40)}` }
+  const bad = (m: string) => ({ error: `${id}: ${m}` })
+  if (seen.has(id)) return bad('id가 겹쳐요')
+  if (!PERM_KINDS.includes(p.kind as PermKind)) return bad('kind는 sftp.read · sftp.write · tunnel 중 하나예요')
+  const kind = p.kind as PermKind
+  const why = loc(p.why, S, LIMITS.permWhy)
+  if (!why) return bad(`why는 글자(또는 {ko, en})이고 ${LIMITS.permWhy}자 이내여야 해요`)
+  const out: Permission = { id, kind, why }
+  const only = (keys: string[]) => keys.find((k) => p[k] !== undefined)
+  if (kind === 'tunnel') {
+    const extra = only(['root', 'maxBytes', 'overwrite'])
+    if (extra) return bad(`tunnel 권한은 ${extra}를 쓸 수 없어요`)
+    const pp = portProblem(p.remotePort)
+    if (pp) return bad(pp)
+    out.remotePort = p.remotePort as number
+    const mm = p.maxMinutes ?? LIMITS.tunnelMinutesDefault
+    if (!(typeof mm === 'number' && Number.isInteger(mm) && mm >= 1 && mm <= LIMITS.tunnelMinutesMax)) return bad(`maxMinutes는 1~${LIMITS.tunnelMinutesMax} 사이 정수예요`)
+    out.maxMinutes = mm
+  } else {
+    const extra = only(['remotePort', 'maxMinutes'])
+    if (extra) return bad(`${kind} 권한은 ${extra}를 쓸 수 없어요`)
+    const rp = rootProblem(p.root)
+    if (rp) return bad(rp)
+    out.root = p.root as string
+    const mb = p.maxBytes ?? LIMITS.permBytesDefault
+    if (!(typeof mb === 'number' && Number.isInteger(mb) && mb >= 1 && mb <= LIMITS.permBytesMax)) return bad(`maxBytes는 1~${LIMITS.permBytesMax} 사이 정수예요`)
+    out.maxBytes = mb
+    if (kind === 'sftp.write') {
+      const ow = p.overwrite ?? 'ask'
+      if (ow !== 'ask' && ow !== 'never') return bad("overwrite는 'ask' 또는 'never'예요")
+      out.overwrite = ow
+    } else if (p.overwrite !== undefined) return bad('sftp.read 권한은 overwrite를 쓸 수 없어요')
+  }
+  seen.add(id)
+  return { perm: out }
+}
+
+// mode:'app' 항목 읽기 (6.0.0): 권한을 가리키는 항목. cmd·자동 실행·그래프·미리보기 같은 명령 쪽 필드는 쓸 수 없다. 위험도는 권한 종류로 앱이 계산
+function checkAppAction(a: Record<string, unknown>, id: string, label: L10n, ctx: Ctx, warnings: string[]): { action?: PackAction; error?: string } {
+  const S = ctx.official
+  const bad = (m: string) => ({ error: `${id}: ${m}` })
+  for (const k of ['cmd', 'sudo', 'auto', 'preview', 'display', 'confirm', 'params', 'stopGrace', 'timeout', 'enter', 'shell', 'disconnects'])
+    if (a[k] !== undefined) return bad(`app 항목은 ${k}를 쓸 수 없어요${k === 'params' ? ' (고정 선택지는 fields의 select를 쓰세요)' : ''}`)
+  if (typeof a.perm !== 'string') return bad('perm이 필요해요')
+  const perm = ctx.perms.get(a.perm)
+  if (!perm) return bad(`perm "${a.perm.slice(0, 30)}"에 맞는 권한이 없어요`)
+  if (typeof a.op !== 'string' || !(PERM_OPS[perm.kind] as string[]).includes(a.op)) return bad(`op는 ${perm.kind} 권한에서 ${PERM_OPS[perm.kind].join(' · ')} 중 하나예요`)
+  const op = a.op as AppOp
+  let desc: L10n | undefined
+  if (a.desc !== undefined && !(desc = loc(a.desc, S, LIMITS.desc, true) ?? undefined)) return bad(`desc가 올바르지 않아요 (${LIMITS.desc}자 이내)`)
+  if (a.when !== undefined && a.when !== 'jetson') return bad("when은 'jetson'만 돼요")
+  const fields: Field[] = []
+  if (a.fields !== undefined) {
+    if (!Array.isArray(a.fields) || !a.fields.length || a.fields.length > FIELD_LIMITS.fields) return bad(`fields는 1~${FIELD_LIMITS.fields}개 배열이에요`)
+    for (const raw of a.fields) {
+      const r = checkField(raw, S)
+      if (!r.field) return bad(r.error!)
+      const f = r.field
+      if (fields.some((x) => x.name === f.name)) return bad('fields 이름이 겹쳐요')
+      // 경로 조각이 될 값: 고정 선택지·숫자·낱말·자유 글자(슬래시는 조각으로 나뉘어 root 안에서 다시 검사)
+      if (!(f.type === 'int' || (f.type === 'select' && f.choices) || (f.type === 'text' && f.charset !== 'ros'))) return bad('app 항목의 fields는 select(고정 선택지)·text(word·free)·int만 쓸 수 있어요')
+      fields.push(f)
+    }
+  }
+  let path: string | undefined
+  if (op === 'open') {
+    if (a.path !== undefined) return bad('open 항목은 path를 쓸 수 없어요')
+  } else {
+    path = a.path === undefined && op === 'list' ? '' : (a.path as string)
+    if (typeof path !== 'string' || path.length > LIMITS.permPath || (op !== 'list' && !path)) return bad(`path는 root 기준 상대 경로 글자(${LIMITS.permPath}자 이내)예요`)
+    try {
+      splitRel(path.replace(/\{\w+\}/g, 'x')) // 슬롯을 뺀 나머지 글자가 절대 경로·..·제어 문자가 아닌지
+    } catch {
+      return bad('path가 올바르지 않아요 (절대 경로·..·빈 조각·제어 문자 금지)')
+    }
+  }
+  const names = new Set(fields.map((f) => f.name))
+  for (const n of path ? placeholders(path) : []) if (!names.has(n)) return bad(`{${n}}에 맞는 fields가 없어요`)
+  for (const f of fields) if (!(path && placeholders(path).includes(f.name))) return bad(`필드 ${f.name}를 path에서 쓰지 않아요`)
+  const computed = permRisk(perm.kind)
+  let declared: Risk = computed.risk
+  if (a.risk !== undefined) {
+    if (a.risk !== 'read' && a.risk !== 'change' && a.risk !== 'danger') return bad('risk는 read·change·danger 중 하나예요')
+    declared = a.risk
+  }
+  const risk = maxRisk(declared, computed.risk)
+  const understated = risk !== declared
+  if (understated) warnings.push(`${id}: 팩에 적힌 위험도 "${RISK_KO[declared]}"보다 앱이 계산한 위험도 "${RISK_KO[computed.risk]}"가 더 높아요 (${why(computed.reasons)})`)
+  ctx.usedPerms.add(perm.id)
+  ctx.seen.add(id)
+  return {
+    action: { id, label, desc, cmd: '', risk, declared, computed: computed.risk, reasons: computed.reasons, understated, fields: fields.length ? fields : undefined, mode: 'app', shell: 'sh', when: a.when === 'jetson' ? 'jetson' : undefined, perm: perm.id, op, path }
+  }
+}
 
 function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackAction; error?: string } {
   if (!isObj(a)) return { error: '항목이 객체가 아니에요' }
@@ -385,6 +509,7 @@ function checkAction(a: unknown, ctx: Ctx, warnings: string[]): { action?: PackA
   if (ctx.seen.has(id)) return bad('id가 겹쳐요')
   const label = loc(a.label, S, LIMITS.name)
   if (!label) return bad(S ? 'label은 {ko, en} 둘 다 있어야 해요' : `label은 글자(또는 {ko, en})이고 ${LIMITS.name}자 이내예요`)
+  if (a.mode === 'app') return checkAppAction(a, id, label, ctx, warnings)
   if (typeof a.cmd !== 'string' || !a.cmd.trim()) return bad('cmd가 비었어요')
   if (a.cmd.length > LIMITS.cmd) return bad(`cmd는 ${LIMITS.cmd}자 이내예요`)
   if (a.cmd.includes('\r') || a.cmd.search(BAD_TEXT) >= 0) return bad('cmd에 제어 문자는 쓸 수 없어요') // 확인창에 보이는 글자와 실제 입력·실행이 달라지는 것 방지
@@ -628,7 +753,24 @@ export function validatePack(raw: unknown, opts: ValidateOptions = {}): Validate
   let desc: L10n | undefined
   if (raw.desc !== undefined && !(desc = loc(raw.desc, S, LIMITS.desc, true) ?? undefined)) return fail('desc가 올바르지 않아요')
   if (!Array.isArray(raw.plugins)) return fail('plugins 배열이 필요해요')
-  const ctx: Ctx = { official: S, packId: raw.id, seen: new Set(), autoCount: { n: 0 } }
+  // 권한·앱 기능 항목이 있는 팩은 옛 앱이 팩 전체를 거부하도록 minApp이 필수 (옛 앱은 이 항목을 오류로 버리고 나머지만 열어 버림)
+  const usesApp = raw.permissions !== undefined || raw.plugins.some((pl) => isObj(pl) && Array.isArray(pl.actions) && pl.actions.some((a) => isObj(a) && a.mode === 'app'))
+  if (usesApp && !(typeof raw.minApp === 'string' && compareSemver(raw.minApp, PERM_MIN_APP) >= 0)) return fail(`permissions나 mode "app" 항목이 있어요: minApp을 "${PERM_MIN_APP}" 이상으로 적어야 해요`)
+  const perms: Permission[] = []
+  if (raw.permissions !== undefined) {
+    const maxPerms = S ? LIMITS.permsOfficial : LIMITS.permsExternal
+    if (!Array.isArray(raw.permissions)) errors.push('permissions는 배열이에요')
+    else {
+      const seenP = new Set<string>()
+      for (const x of raw.permissions.slice(0, maxPerms)) {
+        const r = checkPermission(x, S, seenP)
+        if (r.perm) perms.push(r.perm)
+        else errors.push(`permissions/${r.error}`)
+      }
+      if (raw.permissions.length > maxPerms) errors.push(`권한은 ${maxPerms}개까지예요`)
+    }
+  }
+  const ctx: Ctx = { official: S, packId: raw.id, seen: new Set(), autoCount: { n: 0 }, perms: new Map(perms.map((x) => [x.id, x])), usedPerms: new Set() }
   const plugins: PackPlugin[] = []
   const pluginIds = new Set<string>()
   let total = 0
@@ -683,11 +825,12 @@ export function validatePack(raw: unknown, opts: ValidateOptions = {}): Validate
   if (plugins.some((p) => p.actions.some((a) => a.display?.type === 'chart')) && !(typeof raw.minApp === 'string' && compareSemver(raw.minApp, CHART_MIN_APP) >= 0)) warnings.push(`chart 항목이 있어요: minApp을 "${CHART_MIN_APP}" 이상으로 적어 주세요`)
   // 옛 앱은 stopGrace를 모르고 3초로 끝냄 → 정리에 시간이 걸리는 팩이 옛 앱에서 기기 프로세스를 남길 수 있음
   if (plugins.some((p) => p.actions.some((a) => a.stopGrace !== undefined)) && !(typeof raw.minApp === 'string' && compareSemver(raw.minApp, STOP_GRACE_MIN_APP) >= 0)) warnings.push(`stopGrace가 있어요: minApp을 "${STOP_GRACE_MIN_APP}" 이상으로 적어 주세요`)
+  for (const x of perms) if (!ctx.usedPerms.has(x.id)) warnings.push(`permissions/${x.id}: 쓰는 항목이 없어요`)
   return {
     pack: {
       id: raw.id, format: 1, version: raw.version, name, desc,
       author: str(raw.author, 100), license: str(raw.license, 60), homepage: str(raw.homepage, 200), minApp: raw.minApp as string | undefined,
-      official: S, plugins, ...(badges.length ? { badges } : {})
+      official: S, plugins, ...(perms.length ? { permissions: perms } : {}), ...(badges.length ? { badges } : {})
     },
     errors,
     warnings
@@ -695,8 +838,8 @@ export function validatePack(raw: unknown, opts: ValidateOptions = {}): Validate
 }
 
 // 허용 창·관리 화면용 요약: 위험도별 개수, 적힌 위험도가 부정확한 항목, 숨겨진 항목
-export function summarizePack(p: Pack): { total: number; read: number; change: number; danger: number; understated: number; hidden: number; terminal: number; stream: number; form: number; chart: number; badge: number; autoRun: number } {
-  const s = { total: 0, read: 0, change: 0, danger: 0, understated: 0, hidden: 0, terminal: 0, stream: 0, form: 0, chart: 0, badge: p.badges?.length ?? 0, autoRun: p.badges?.length ?? 0 } // 배지는 폴더를 열 때 저절로 실행되므로 autoRun에 셈
+export function summarizePack(p: Pack): { total: number; read: number; change: number; danger: number; understated: number; hidden: number; terminal: number; stream: number; form: number; chart: number; badge: number; autoRun: number; perm: number; app: number } {
+  const s = { total: 0, read: 0, change: 0, danger: 0, understated: 0, hidden: 0, terminal: 0, stream: 0, form: 0, chart: 0, badge: p.badges?.length ?? 0, autoRun: p.badges?.length ?? 0, perm: p.permissions?.length ?? 0, app: 0 } // 배지는 폴더를 열 때 저절로 실행되므로 autoRun에 셈
   for (const pl of p.plugins) for (const a of pl.actions) {
     s.total++
     s[a.risk]++
@@ -704,9 +847,13 @@ export function summarizePack(p: Pack): { total: number; read: number; change: n
     if (a.hidden) s.hidden++
     if (a.mode === 'terminal') s.terminal++
     if (a.mode === 'stream') s.stream++
+    if (a.mode === 'app') s.app++
     if (a.fields) s.form++
     if (a.display?.type === 'chart') s.chart++
     if (a.auto || a.fields?.some((f) => f.type === 'select' && f.from)) s.autoRun++ // 누르지 않아도 실행되는 것 (auto, 목록 불러오기)
   }
   return s
 }
+
+// 모음 색인 caps.perms에 넣는 글자 (사람이 읽는 요약 + 비교용): "sftp.read", "sftp.write", "tunnel:8888". 팩 파일에서 앱이 계산한다
+export const permStrings = (p: Pack): string[] => [...new Set((p.permissions ?? []).map((x) => (x.kind === 'tunnel' ? `tunnel:${x.remotePort}` : x.kind)))]

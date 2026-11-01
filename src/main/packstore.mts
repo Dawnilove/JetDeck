@@ -73,7 +73,8 @@ export type CommandDiff = { added: string[]; changed: string[]; removed: string[
 const chartCmdPart = (d: ChartDisplay) => ({ every: d.every, match: d.match, split: d.split, skip: d.skip, perLine: d.perLine, series: d.series })
 export function commandMap(p: Pack): Record<string, string> {
   const m: Record<string, string> = Object.create(null)
-  for (const pl of p.plugins) for (const a of pl.actions) m[`${pl.id}/${a.id}`] = a.cmd + (a.preview ? `\u0000${a.preview}` : '') + (a.sudo ? '\u0000sudo' : '') + `\u0000${a.mode}` + (a.fields ? `\u0000fields:${JSON.stringify(a.fields)}` : '') + (a.display?.type === 'chart' ? `\u0000chart:${JSON.stringify(chartCmdPart(a.display))}` : '')
+  for (const pl of p.plugins) for (const a of pl.actions) m[`${pl.id}/${a.id}`] = a.cmd + (a.preview ? `\u0000${a.preview}` : '') + (a.sudo ? '\u0000sudo' : '') + `\u0000${a.mode}` + (a.fields ? `\u0000fields:${JSON.stringify(a.fields)}` : '') + (a.display?.type === 'chart' ? `\u0000chart:${JSON.stringify(chartCmdPart(a.display))}` : '') + (a.mode === 'app' ? `\u0000app:${a.perm}:${a.op}:${a.path ?? ''}` : '')
+  for (const x of p.permissions ?? []) m[`perm:${x.id}`] = JSON.stringify({ kind: x.kind, root: x.root, maxBytes: x.maxBytes, overwrite: x.overwrite, remotePort: x.remotePort, maxMinutes: x.maxMinutes }) // 6.0.0: 권한 범위가 바뀌면 허용 창에 바뀐 항목으로 보임 (why는 제외 — 설명 글)
   for (const b of p.badges ?? []) m[`badge:${b.id}`] = JSON.stringify({ cmd: b.cmd, shell: b.shell, separator: b.separator, root: b.root, match: b.match, code: b.code, path: b.path, codes: b.codes, tag: b.tag }) // 5.3.0: 배지가 읽는 방법이 바뀌면 허용 창에 바뀐 항목으로 보임
   return m
 }
@@ -84,6 +85,12 @@ export function diffCommands(before: Record<string, string> | undefined, after: 
     changed: Object.keys(after).filter((k) => k in b && b[k] !== after[k]),
     removed: Object.keys(b).filter((k) => !(k in after))
   }
+}
+
+// 허용했던 권한 대비 권한 변화 (commandMap의 perm: 항목만). added·changed가 있으면 허용 창이 "권한이 늘었어요"로 강조
+export function diffPerms(before: Record<string, string> | undefined, after: Record<string, string>): CommandDiff {
+  const pick = (m: Record<string, string>) => Object.fromEntries(Object.entries(m).filter(([k]) => k.startsWith('perm:')))
+  return diffCommands(pick(before ?? {}), pick(after))
 }
 
 // ───────────── 훑기 ─────────────
@@ -109,6 +116,7 @@ export type PackEntry = {
   approvedVersion?: string
   approvedAt?: string
   changes?: CommandDiff // approval이 changed일 때: 허용했던 명령 대비
+  permChanges?: CommandDiff // approval이 changed일 때: 허용했던 권한 대비 (6.0.0, changes에도 perm: 항목으로 들어 있음)
   badgesOff: string[] // 5.3.0: 꺼 둔 탐색기 배지 id (팩이 켜져 있어도 이 배지는 실행 안 함)
   origin?: PackOrigin // 5.5.0: 모음에서 받은 파일 그대로일 때만 (파일이 바뀌면 "직접 설치"로 돌아감)
   revoked?: { reason: L10n; at: string; ack: boolean } // 5.6.0: 모음에서 철회돼 자동으로 꺼진 팩 (같은 파일일 때만)
@@ -204,7 +212,11 @@ export function buildCatalog(inp: CatalogInput): PackEntry[] {
     if (st?.approvedHash && st.approvedHash === u.hash) u.approval = 'approved'
     else if (st?.approvedHash) {
       u.approval = 'changed'
-      if (u.pack) u.changes = diffCommands(st.approvedCmds, commandMap(u.pack))
+      if (u.pack) {
+        const cur = commandMap(u.pack)
+        u.changes = diffCommands(st.approvedCmds, cur)
+        u.permChanges = diffPerms(st.approvedCmds, cur)
+      }
     } else u.approval = 'new'
     u.enabled = u.status === 'ok' && u.approval === 'approved' && u.wantEnabled
   }
