@@ -61,5 +61,16 @@ export const EN_O: Record<string, string> = {
   '덮어쓰기 안 함': 'No overwriting',
   '같은 이름이 있으면 물어봄': 'Asks if the name exists',
   '쓰는 항목': 'Used by',
-  '팩 설명 (작성자의 글)': 'Pack description (written by the author)'
+  '팩 설명 (작성자의 글)': 'Pack description (written by the author)',
+  // 6.1.0 시리얼 읽기
+  '이 PC의 시리얼 포트를 읽어요. 일부 장치는 포트를 열 때 다시 시작해요': 'Reads a serial port of this PC. Some devices restart when the port is opened',
+  '시리얼 포트 고르기': 'Pick a serial port',
+  '읽을 포트를 고르세요': 'Pick the port to read',
+  '포트가 더 있어요. 목록에는 USB 포트를 먼저 8개까지만 보여요': 'There are more ports. The list shows up to 8, USB ports first',
+  '이 포트 읽기는 이미 하고 있어요': 'This port is already being read',
+  '동시에 읽을 수 있는 포트 수를 넘었어요': 'Too many ports are being read at the same time',
+  '연결된 시리얼 포트가 없어요': 'No serial port is connected',
+  '고른 포트가 바뀌었어요. 다시 골라 주세요': 'The chosen port changed. Pick it again',
+  '{0}을(를) 여는 데 너무 오래 걸려요. 장치를 확인하세요': 'Opening {0} takes too long. Check the device',
+  '이 PC의 시리얼 포트 읽기': 'Read a serial port of this PC',
 }

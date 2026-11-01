@@ -12,10 +12,12 @@ import { tr } from './i18n.mts'
 import { checkValue, type Field } from './packfields.mts'
 import { fill } from './packrun.mts'
 import { sanitizeOutput } from './packsafe.mts'
-import { LIMITS, PERM_OPS, type AppOp, type Pack, type PackAction, type PermKind, type Permission } from './packschema.mts'
+import { LIMITS, PERM_OPS, SERIAL_BAUDS, type AppOp, type Pack, type PackAction, type PermKind, type Permission } from './packschema.mts'
+import { identOf, orderChoices, startSerialRead, type SerialChoice, type SerialEnd, type SerialRead } from './packserial.mts'
 import { listenTunnel, pickFreePort, TUNNEL_HOST, type TunnelHandle } from './packtunnel.mts'
 import { badSaveName, portProblem, resolveTarget, safeName, toTilde, type FsKind, type PathFs } from './permpath.mts'
 import { permRisk, type Reason, type Risk } from './risk.mts'
+import type { SerialSource } from './serialread.mts'
 
 export interface DeviceFs extends PathFs {
   readdir(p: string): Promise<{ name: string; kind: FsKind; size: number }[]>
@@ -27,18 +29,26 @@ export interface DeviceFs extends PathFs {
 export type AppUi = {
   pickSave(defaultName: string, ctx?: unknown): Promise<string | null> // OS 저장 대화상자 (덮어쓰기 확인은 대화상자가 함)
   pickOpen(ctx?: unknown): Promise<string | null> // OS 열기 대화상자
+  pickPort?(choices: SerialChoice[], more: boolean, ctx?: unknown): Promise<number | null> // 시리얼 포트 고르기 (main이 연 창). choices의 순서 번호를 돌려줌, 취소는 null
 }
 export type AppEvent =
   | { type: 'progress'; opId: string; done: number; total: number }
   | { type: 'tunnel'; state: 'open' | 'closed'; id: string; packId: string; connId: string; port?: number; remotePort?: number; endsAt?: number; reason?: string } // 상태 줄·정지 버튼용
+  | { type: 'serial'; state: 'open' | 'closed'; id: string; packId: string; connId: string; port?: string; baud?: number; endsAt?: number; reason?: SerialEnd; bytes?: number } // 시리얼 읽기 상태 줄·정지 버튼용
+  | { type: 'serial-data'; id: string; lines: string[]; skipped: number } // 읽은 글자 (줄 단위, 이미 정리·비밀 가림)
+  | { type: 'serial-idle'; id: string } // 열린 뒤 일정 시간 데이터가 없음: 보율·장치 확인 안내용
 export type AppDeps = {
   fsOf(connId: string): Promise<DeviceFs>
   ui: AppUi
   emit?: (e: AppEvent) => void
   connectTo?: (connId: string, sock: Socket, remotePort: number) => void // 터널: 들어온 연결을 Device 127.0.0.1:remotePort에 이음 (packapp.ts가 forwardOut·pipe로 연결)
   isActive?: (packId: string, hash: string) => boolean // 그 팩이 지금도 켜져 있고 파일이 같은지 (대화상자를 기다린 뒤 확인). 없으면 확인 안 함
+  listPorts?: () => Promise<SerialChoice[]> // 시리얼: 지금 연결된 포트 (packapp.ts가 serial.ts로 연결)
+  openRead?: (path: string, baud: number) => Promise<SerialSource> // 시리얼: 읽기 전용으로 엶
   freePort?: () => Promise<number> // 시험용
   tunnelMs?: (minutes: number) => number // 시험용
+  serialMs?: (minutes: number) => number // 시험용
+  serialIdleMs?: number // 시험용
 }
 export type AppTarget = { pack: Pack; hash: string; pluginId: string; action: PackAction } // 켜진 팩에서 찾은 항목 (찾는 일은 호출 쪽)
 export type AppPrepared = {
@@ -52,6 +62,7 @@ export type AppPrepared = {
   exists?: boolean // put: 같은 이름이 이미 있음 (overwrite가 ask면 확인 창에 덮어쓴다고 보임)
   local?: { name: string; size: number } // put: 사용자가 고른 PC 파일
   tunnel?: { port: number; remotePort: number; minutes: number } // open: 이 PC 127.0.0.1:port를 Device remotePort에 이음. 이 PC의 다른 프로그램도 접속할 수 있음
+  serial?: { path: string; label: string; vidpid: string; baud: number; minutes: number; maxBytes: number } // read: 사용자가 고른 이 PC 포트. 확인 창은 앱 문장으로 이것을 보임
 }
 export type AppResult =
   | { op: 'list'; entries: { name: string; kind: FsKind; size: number }[]; truncated: boolean }
@@ -59,6 +70,7 @@ export type AppResult =
   | { op: 'get'; saved: string | null; size: number } // saved: 저장한 파일 이름 (취소하면 null)
   | { op: 'put'; name: string; size: number; path: string }
   | { op: 'open'; id: string; host: string; port: number; remotePort: number; endsAt: number } // id로 pack:app-stop
+  | { op: 'read'; id: string; port: string; baud: number; endsAt: number } // 시리얼 읽기 시작. 글자는 serial-data 이벤트, id로 pack:app-stop
 
 const PENDING_TTL = 10 * 60_000
 const PENDING_MAX = 8
@@ -101,12 +113,15 @@ function counter(max: number, onBytes: (n: number) => void): Transform {
 type Op = { connId: string; packId: string; hash: string; stop: (why?: string) => void }
 type Tunnel = Op & { key: string }
 type Pending = { connId: string; local: string; size: number; mtimeMs: number; at: number }
+type PendingRead = { connId: string; choice: SerialChoice; at: number }
 
 export function createAppEngine(deps: AppDeps) {
   const ops = new Map<string, Op>()
   const pending = new Map<string, Pending>()
   const tunnels = new Map<string, Tunnel>()
   const pendingOpen = new Map<string, { connId: string; port: number; at: number }>()
+  const pendingRead = new Map<string, PendingRead>()
+  const serials = new Map<string, Op & { key: string }>()
 
   function contextOf(t: AppTarget): { perm: Permission; op: AppOp; a: PackAction } {
     const a = t.action
@@ -121,7 +136,7 @@ export function createAppEngine(deps: AppDeps) {
   // 전송 시작: 연결마다 하나, 시간 상한, 멈춤 신호. opId는 화면이 정하면(취소용) 그대로, 아니면 새로 만듦
   function begin(connId: string, t: AppTarget, wanted?: string) {
     const opId = wanted ?? rand()
-    if (!/^[\w-]{1,64}$/.test(opId) || ops.has(opId) || tunnels.has(opId)) throw new Error(tr('올바르지 않은 요청이에요'))
+    if (!/^[\w-]{1,64}$/.test(opId) || ops.has(opId) || tunnels.has(opId) || serials.has(opId)) throw new Error(tr('올바르지 않은 요청이에요'))
     if ([...ops.values()].some((o) => o.connId === connId)) throw new Error(tr('이 연결은 전송을 하나씩만 할 수 있어요'))
     const ac = new AbortController()
     const timer = setTimeout(() => ac.abort(new Error(tr('전송 시간이 너무 길어서 멈췄어요'))), LIMITS.transferSeconds * 1000)
@@ -141,6 +156,16 @@ export function createAppEngine(deps: AppDeps) {
     if (open.filter((x) => x.packId === t.pack.id).length >= LIMITS.tunnelsPerPack || open.length >= LIMITS.tunnelsPerApp) throw new Error(tr('열 수 있는 터널 수를 넘었어요'))
     return key
   }
+  // 시리얼 읽기 개수: 같은 항목 중복 금지, 팩당 1, 앱 전체 2
+  function serialKey(connId: string, t: AppTarget): string {
+    const key = `${connId}/${t.pack.id}/${t.pluginId}/${t.action.id}`
+    const open = [...serials.values()]
+    if (open.some((x) => x.key === key)) throw new Error(tr('이 포트 읽기는 이미 하고 있어요'))
+    if (open.filter((x) => x.packId === t.pack.id).length >= LIMITS.serialPerPack || open.length >= LIMITS.serialPerApp) throw new Error(tr('동시에 읽을 수 있는 포트 수를 넘었어요'))
+    return key
+  }
+  // 확인한 것과 같은 값이어야 실행하는 token. 팩 지문(hash)과 고른 장치(identOf)가 들어 있어 팩이 바뀌거나 장치가 바뀌면 달라진다
+  const readToken = (t: AppTarget, perm: Permission, choice: SerialChoice) => sha(t.pack.id, t.hash, t.pluginId, t.action.id, 'read', perm.baud!, perm.maxMinutes!, perm.maxBytes!, identOf(choice))
 
   async function prepare(connId: string, t: AppTarget, given: Record<string, string> | undefined, ctx?: unknown): Promise<AppPrepared | null> {
     const { perm, op, a } = contextOf(t)
@@ -154,6 +179,23 @@ export function createAppEngine(deps: AppDeps) {
       if (pendingOpen.size >= PENDING_MAX) pendingOpen.delete(pendingOpen.keys().next().value!)
       pendingOpen.set(token, { connId, port, at: Date.now() })
       return { ...base, needConfirm: true, token, tunnel: { port, remotePort: perm.remotePort!, minutes: perm.maxMinutes! } }
+    }
+    if (op === 'read') {
+      serialKey(connId, t)
+      const pickPort = deps.ui.pickPort
+      if (!pickPort || !deps.listPorts || !perm.baud || !SERIAL_BAUDS.includes(perm.baud)) throw new Error(tr('아직 지원하지 않는 동작이에요'))
+      const { shown, more } = orderChoices(await deps.listPorts())
+      if (!shown.length) throw new Error(tr('연결된 시리얼 포트가 없어요'))
+      const i = await pickPort(shown, more, ctx) // 사용자가 직접 고름: 자동 선택·기억 없음
+      if (i === null || !shown[i]) return null
+      // 고르기 창이 열려 있는 동안 팩이 꺼졌거나 파일이 바뀌었을 수 있음
+      if (deps.isActive && !deps.isActive(t.pack.id, t.hash)) throw new Error(tr('이 팩은 켜져 있지 않아요'))
+      const c = shown[i]
+      const token = readToken(t, perm, c)
+      if (pendingRead.size >= PENDING_MAX) pendingRead.delete(pendingRead.keys().next().value!)
+      pendingRead.set(token, { connId, choice: c, at: Date.now() })
+      const vidpid = c.vendorId && c.productId ? `${c.vendorId}:${c.productId}` : ''
+      return { ...base, needConfirm: true, token, serial: { path: safeName(c.path), label: safeName(c.label).slice(0, 60), vidpid: safeName(vidpid), baud: perm.baud, minutes: perm.maxMinutes!, maxBytes: perm.maxBytes! } }
     }
     if (op !== 'put') return base // 읽기 동작은 확인 창이 없음 (받기는 OS 저장 창이 확인 역할)
     const fs = await deps.fsOf(connId)
@@ -202,6 +244,44 @@ export function createAppEngine(deps: AppDeps) {
       deps.emit?.({ type: 'tunnel', state: 'open', id, packId: t.pack.id, connId, port: handle.port, remotePort, endsAt: handle.endsAt })
       if (stopped) handle.stop(stopped)
       return { op, id, host: TUNNEL_HOST, port: handle.port, remotePort, endsAt: handle.endsAt }
+    }
+
+    if (op === 'read') {
+      const p = typeof token === 'string' ? pendingRead.get(token) : undefined
+      // 확인한 것과 같아야 실행: 팩 지문·보율·한도·고른 장치가 token에 들어 있다
+      if (!p || p.connId !== connId || Date.now() - p.at > PENDING_TTL || token !== readToken(t, perm, p.choice)) throw new Error(tr('확인한 내용과 달라요. 다시 확인해 주세요'))
+      pendingRead.delete(token as string)
+      if (deps.isActive && !deps.isActive(t.pack.id, t.hash)) throw new Error(tr('이 팩은 켜져 있지 않아요'))
+      const openRead = deps.openRead
+      if (!openRead || !deps.listPorts || !perm.baud || !SERIAL_BAUDS.includes(perm.baud) || !perm.maxMinutes || perm.maxMinutes > LIMITS.tunnelMinutesMax || !perm.maxBytes) throw new Error(tr('아직 지원하지 않는 동작이에요'))
+      const key = serialKey(connId, t)
+      const id = `sr-${rand()}`
+      const label = safeName(p.choice.path)
+      const baud = perm.baud
+      let read: SerialRead | undefined
+      let stopped: SerialEnd | undefined
+      // 포트가 열리기를 기다리는 동안에도 목록에 올려 개수 제한을 지키고, 그 사이 정지 요청이 와도 놓치지 않음
+      serials.set(id, { connId, packId: t.pack.id, hash: t.hash, key, stop: (why) => ((stopped = (why ?? 'stopped') as SerialEnd), read?.stop(stopped)) })
+      try {
+        const cur = (await deps.listPorts()).find((x) => x.path === p.choice.path)
+        if (!cur || identOf(cur) !== identOf(p.choice)) throw new Error(tr('고른 포트가 바뀌었어요. 다시 골라 주세요'))
+        const source = await openRead(p.choice.path, baud)
+        read = startSerialRead({
+          source,
+          ms: (deps.serialMs ?? ((m) => m * 60_000))(perm.maxMinutes),
+          maxBytes: perm.maxBytes,
+          idleMs: deps.serialIdleMs ?? LIMITS.serialIdleSeconds * 1000,
+          onLines: (lines, skipped) => deps.emit?.({ type: 'serial-data', id, lines, skipped }),
+          onIdle: () => deps.emit?.({ type: 'serial-idle', id }),
+          onEnd: (reason, bytes) => (serials.delete(id), deps.emit?.({ type: 'serial', state: 'closed', id, packId: t.pack.id, connId, reason, bytes }))
+        })
+      } catch (e) {
+        serials.delete(id)
+        throw e
+      }
+      deps.emit?.({ type: 'serial', state: 'open', id, packId: t.pack.id, connId, port: label, baud, endsAt: read.endsAt })
+      if (stopped) read.stop(stopped)
+      return { op, id, port: label, baud, endsAt: read.endsAt }
     }
 
     const fs = await deps.fsOf(connId)
@@ -291,12 +371,12 @@ export function createAppEngine(deps: AppDeps) {
     throw new Error(tr('아직 지원하지 않는 동작이에요'))
   }
 
-  const stopWhere = (f: (o: Op) => boolean, why?: string) => [...ops.values(), ...tunnels.values()].filter(f).forEach((o) => o.stop(why))
+  const stopWhere = (f: (o: Op) => boolean, why?: string) => [...ops.values(), ...tunnels.values(), ...serials.values()].filter(f).forEach((o) => o.stop(why))
   return {
     prepare,
     run,
     stop: (opId: string): boolean => {
-      const o = ops.get(opId) ?? tunnels.get(opId)
+      const o = ops.get(opId) ?? tunnels.get(opId) ?? serials.get(opId)
       o?.stop()
       return !!o
     },
@@ -305,7 +385,8 @@ export function createAppEngine(deps: AppDeps) {
     reconcile: (isActive: (packId: string, hash: string) => boolean) => stopWhere((o) => !isActive(o.packId, o.hash), 'pack'),
     stopAll: () => stopWhere(() => true, 'quit'),
     size: () => ops.size,
-    tunnelCount: () => tunnels.size
+    tunnelCount: () => tunnels.size,
+    serialCount: () => serials.size
   }
 }
 export type AppEngine = ReturnType<typeof createAppEngine>

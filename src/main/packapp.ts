@@ -5,8 +5,9 @@ import { forwardOut, pipe } from './forward'
 import { createAppEngine, type AppEvent, type DeviceFs } from './packappcore.mts'
 import type { PackEntry } from './packstore.mts'
 import type { Pack, PackAction } from './packschema.mts'
-import type { FsKind, FsStat } from './permpath.mts'
+import { safeName, type FsKind, type FsStat } from './permpath.mts'
 import { requireClient } from './session'
+import { listChoices, openSerialRead } from './serial'
 import { call, sftpOf } from './sftp'
 
 // 팩의 앱 기능 권한 (6.0.0): 팩 항목(mode:'app')이 SFTP로 목록·받기·읽기·올리기를 한다. 화면은 (팩, 플러그인, 항목, 입력값, 토큰)만 보내고
@@ -63,8 +64,18 @@ const engine = createAppEngine({
       const opts = { title: tr('올릴 파일 고르기'), properties: ['openFile' as const] }
       const r = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
       return r.canceled || !r.filePaths[0] ? null : r.filePaths[0]
+    },
+    // 시리얼 포트 고르기: main이 여는 창이라 팩의 글자가 없다. 버튼 하나가 포트 하나, 맨 끝은 취소. 자동 선택·기억 없음
+    async pickPort(choices, more, ctx) {
+      const win = winOf(ctx)
+      const buttons = [...choices.map((c) => `${safeName(c.path)} · ${safeName(c.label).slice(0, 40)}${c.vendorId && c.productId ? ` · ${safeName(c.vendorId)}:${safeName(c.productId)}` : ''}`.slice(0, 80)), tr('취소')]
+      const opts = { type: 'question' as const, title: tr('시리얼 포트 고르기'), message: tr('읽을 포트를 고르세요'), detail: more ? tr('포트가 더 있어요. 목록에는 USB 포트를 먼저 8개까지만 보여요') : undefined, buttons, cancelId: buttons.length - 1, noLink: true }
+      const r = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts)
+      return r.response >= choices.length ? null : r.response
     }
   },
+  listPorts: listChoices,
+  openRead: openSerialRead,
   connectTo: (connId, sock, remotePort) => forwardOut(requireClient(connId), sock, '127.0.0.1', remotePort, (stream) => pipe(sock, stream)), // Device 쪽은 127.0.0.1 고정 (다른 호스트로 못 감)
   emit: (e: AppEvent) => BrowserWindow.getAllWindows().forEach((w) => w.webContents.isDestroyed() || w.webContents.send('pack:app-event', e))
 })
@@ -111,7 +122,7 @@ export function registerPackAppIpc(find: FindAction): void {
     const id = opId === undefined ? undefined : String(opId)
     if (id) own(e.sender, id) // 전송은 시작 전에 올려 둠: 도중에 화면이 사라져도 멈출 수 있게
     const r = await engine.run(String(connId), target(String(connId), packId, pluginId, actionId), values(given), token, id, e.sender)
-    if (r.op === 'open') own(e.sender, r.id)
+    if (r.op === 'open' || r.op === 'read') own(e.sender, r.id)
     return r
   })
   ipcMain.handle('pack:app-stop', (_e, opId: string): boolean => engine.stop(String(opId)))
