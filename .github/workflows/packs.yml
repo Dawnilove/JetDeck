@@ -1,0 +1,31 @@
+name: Pack check
+
+# 커뮤니티 팩 제출(Pull Request) 자동 검사. docs/packs 를 건드리는 PR에서만 돌고, 비밀값·쓰기 권한이 없다.
+# pull_request_target 은 쓰지 않는다. 팩 파일은 읽기만 하고 실행하지 않는다 (src/main/packcheck.mts).
+# 결과는 Actions 요약(Job summary)에 나온다. 포크 PR은 댓글을 쓸 수 없어서 댓글 대신 요약을 쓴다.
+on:
+  pull_request:
+    paths:
+      - 'docs/packs/**'
+      - 'scripts/packs-check.mjs'
+      - 'src/main/packcheck.mts'
+      - '.github/workflows/packs.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  packs:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check submitted packs
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_REF: ${{ github.base_ref }}
+        run: node scripts/packs-check.mjs --base "origin/$BASE_REF"

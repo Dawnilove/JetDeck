@@ -1,0 +1,49 @@
+name: Report a gallery pack / 모음 팩 신고
+description: Report a pack from the JetDeck gallery that looks unsafe, copies another pack, or that you want removed.
+title: "[pack] "
+labels: ["pack-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not write personal information, passwords or tokens here. This issue is public.**
+        If the pack **gets around the app's safety checks** (for example a command rated "read" that really changes things), do **not** use this form. Use [Report a vulnerability](https://github.com/Dawnilove/JetDeck/security/advisories/new) (private).
+        The maintainer is one person and cannot promise a reply time.
+        공개 이슈예요. 개인정보·비밀번호·토큰을 적지 마세요. 팩이 안전 검사를 우회한다면 이 양식 말고 위 링크로 비공개 제보해 주세요.
+  - type: input
+    id: pack_id
+    attributes:
+      label: Pack id
+    validations:
+      required: true
+  - type: input
+    id: pack_version
+    attributes:
+      label: Pack version
+    validations:
+      required: true
+  - type: input
+    id: pack_hash
+    attributes:
+      label: First 8 characters of the file fingerprint
+      description: Filled in by the app. 앱이 채워 줘요.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is wrong?
+      options:
+        - A command looks harmful
+        - The description does not match the commands
+        - It copies another pack or a person
+        - Licence or privacy problem
+        - I am the author and want it removed
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Which command or text, and why. 어떤 명령·글자가 왜 문제인지 적어 주세요.
+    validations:
+      required: true

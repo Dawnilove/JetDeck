@@ -1,0 +1,9 @@
+# 모음(팩 목록)과 그 검사·서명 코드는 관리자 승인이 있어야 합친다.
+# 효력을 내려면 저장소 설정 → Branches → main 보호에서 "Require review from Code Owners"를 켜야 한다.
+/docs/packs/ @Dawnilove
+/.github/ @Dawnilove
+/scripts/ @Dawnilove
+/src/main/gallery*.mts @Dawnilove
+/src/main/gallery.ts @Dawnilove
+/src/main/pack*.mts @Dawnilove
+/src/main/risk.mts @Dawnilove
