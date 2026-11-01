@@ -134,7 +134,7 @@ const api = {
   // 플러그인 관리 (5.0.0): 전체 목록(공식+내 팩, 상태·문제·위험도 요약), 켜기·끄기(외부 팩은 허용 창에서 보여 준 지문을 같이 보냄), 설치(고르기 → 내용 확인 → 지문으로 확정), 제거(휴지통), 터미널 입력 항목
   packCatalog: (): Promise<PackCatalog> => ipcRenderer.invoke('pack:catalog'),
   packRescan: (): Promise<PackCatalog> => ipcRenderer.invoke('pack:rescan'),
-  packEnable: (packId: string, on: boolean, shownHash?: string): Promise<PackCatalog> => ipcRenderer.invoke('pack:enable', packId, on, shownHash),
+  packEnable: (packId: string, on: boolean, shownHash?: string, confirmRevoked?: boolean): Promise<PackCatalog> => ipcRenderer.invoke('pack:enable', packId, on, shownHash, confirmRevoked),
   packPick: (): Promise<PackInspect | null> => ipcRenderer.invoke('pack:pick'),
   packInstall: (hash: string): Promise<PackCatalog> => ipcRenderer.invoke('pack:install', hash),
   packRemove: (packId: string): Promise<PackCatalog> => ipcRenderer.invoke('pack:remove', packId),
@@ -160,6 +160,9 @@ const api = {
   galleryInspect: (id: string): Promise<GalleryInspect> => ipcRenderer.invoke('gallery:inspect', id),
   galleryInstall: (id: string, hash: string, enable: boolean): Promise<PackCatalog> => ipcRenderer.invoke('gallery:install', id, hash, enable),
   galleryCancel: (): Promise<void> => ipcRenderer.invoke('gallery:cancel'),
+  galleryAutoCheck: (on: boolean): Promise<GalleryView> => ipcRenderer.invoke('gallery:auto-check', on),
+  galleryReport: (id: string, kind: 'pack' | 'bypass'): Promise<void> => ipcRenderer.invoke('gallery:report', id, kind),
+  onPackChanged: (cb: () => void) => on('pack:changed', cb),
   packBadgesOff: (packId: string, ids: string[]): Promise<PackCatalog> => ipcRenderer.invoke('pack:badges-off', packId, ids),
   onPackPollEnd: (cb: (id: string, reason: PollEndReason, detail?: string) => void) => on('pack:poll-end', cb),
   // 기기 점검 (읽기 전용). smart=false면 SMART 생략

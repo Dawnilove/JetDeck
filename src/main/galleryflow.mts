@@ -114,6 +114,7 @@ export type GalleryItem = GalleryPack & { block?: Block; revokedReason?: L10n; i
 export type InstalledPack = { id: string; version: string; hash: string; fromGallery: boolean }
 export type GalleryView = {
   consent: boolean
+  autoCheck: boolean // 5.6.0: 앱을 켤 때 하루 1번 철회 확인
   safeMode: boolean
   dev: boolean // 개발 빌드가 시험 서버를 쓰는 중
   status: ListStatus | 'idle' // idle: 아직 받지 않음
@@ -125,9 +126,9 @@ export type GalleryView = {
   generatedAt?: string
   expires?: string
   items: GalleryItem[]
-  revokedInstalled: { id: string; version: string; reason: L10n }[] // 철회된 팩을 이미 설치함 (5.6.0에서 자동으로 끔)
+  revokedInstalled: { id: string; version: string; reason: L10n }[] // 철회된 팩을 이미 설치함 (5.6.0: 켜져 있었다면 자동으로 끔)
 }
-export function buildView(list: Listing | null, o: { consent: boolean; safeMode: boolean; dev: boolean; appVersion: string; installed: InstalledPack[] }): GalleryView {
+export function buildView(list: Listing | null, o: { consent: boolean; autoCheck: boolean; safeMode: boolean; dev: boolean; appVersion: string; installed: InstalledPack[] }): GalleryView {
   const l = list ?? { ...EMPTY, status: 'offline' as ListStatus }
   const global: Block | undefined = l.status === 'untrusted' ? 'untrusted' : l.status === 'offline' ? 'offline' : l.expired ? 'expired' : o.safeMode ? 'safe-mode' : undefined
   const items: GalleryItem[] = l.packs.map((p) => {
@@ -140,5 +141,5 @@ export function buildView(list: Listing | null, o: { consent: boolean; safeMode:
     const rev = revokedFor(l, i.id, i.version, i.hash)
     return rev ? [{ id: i.id, version: i.version, reason: rev.reason }] : []
   })
-  return { consent: o.consent, safeMode: o.safeMode, dev: o.dev, status: list ? l.status : 'idle', error: l.error, expired: l.expired, fromCache: l.fromCache, serial: l.serial, fetchedAt: l.fetchedAt, generatedAt: l.generatedAt, expires: l.expires, items, revokedInstalled }
+  return { consent: o.consent, autoCheck: o.autoCheck, safeMode: o.safeMode, dev: o.dev, status: list ? l.status : 'idle', error: l.error, expired: l.expired, fromCache: l.fromCache, serial: l.serial, fetchedAt: l.fetchedAt, generatedAt: l.generatedAt, expires: l.expires, items, revokedInstalled }
 }

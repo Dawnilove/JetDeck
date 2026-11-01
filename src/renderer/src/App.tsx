@@ -11,6 +11,7 @@ import { terms } from './components/Terminal'
 import Dashboard from './screens/Dashboard'
 import Main from './screens/Main'
 import SerialView from './screens/SerialView'
+import { PACKS_CHANGED } from './screens/PluginManager'
 import Workspace, { dropTerm, unsaved, type Sess } from './screens/Workspace'
 import { switchLang } from './lang'
 import { applyTheme, currentTheme } from './themes'
@@ -66,6 +67,7 @@ export default function App() {
       // 어느 화면에서 접속하든 호스트 키 확인은 여기서 한 번에 처리
       window.api.onHostKey((k) => setHostKeys((q) => [...q, k])),
       window.api.onUpdate(setUpdate),
+      window.api.onPackChanged(() => window.dispatchEvent(new Event(PACKS_CHANGED))), // 모음 철회로 팩이 자동으로 꺼짐 → 활동 막대·탐색기가 다시 읽음
       // Claude(MCP) 요청: 위험한 명령 승인은 줄 세워 하나씩, 연결 요청은 그 호스트로 작업 공간 탭을 엶
       window.api.onMcpApprove((a) => setAsks((q) => [...q, a])),
       window.api.onMcpOpen(({ id, hostId }) =>

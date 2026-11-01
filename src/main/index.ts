@@ -13,7 +13,7 @@ import { registerDockerIpc } from './docker'
 import { registerSvcIpc } from './svc'
 import { registerHealthIpc } from './health'
 import { registerPackIpc } from './pack'
-import { registerGalleryIpc } from './gallery'
+import { registerGalleryIpc, startupRevokeCheck } from './gallery'
 import { registerSettingsIpc } from './settingsfile'
 import { registerTermLogIpc } from './termlog'
 import { registerDiagIpc } from './diag'
@@ -164,6 +164,7 @@ function startApp(): void {
     ipcMain.on('app:reload', (e) => e.sender.reload())
     ipcMain.handle('app:version', () => app.getVersion())
     win = createWindow()
+    setTimeout(() => void startupRevokeCheck(), 10_000) // 5.6.0: 모음에서 받은 팩이 있을 때만 하루 1번 철회 확인
   })
   app.on('window-all-closed', () => app.quit())
 }

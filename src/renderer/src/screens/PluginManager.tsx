@@ -16,7 +16,7 @@ import { ExistingNote, lt, PackBody } from './PackUi'
 // 켜진 팩이 바뀌었음을 활동 막대·팔레트에 알림 (Workspace가 듣고 다시 읽음)
 export const PACKS_CHANGED = 'jetdeck:packs-changed'
 
-type Sub = { kind: 'view'; e: PackEntry } | { kind: 'allow'; e: PackEntry } | { kind: 'install'; ins: Inspect } | { kind: 'remove'; e: PackEntry }
+type Sub = { kind: 'view'; e: PackEntry } | { kind: 'allow'; e: PackEntry } | { kind: 'install'; ins: Inspect } | { kind: 'remove'; e: PackEntry } | { kind: 'revoked'; e: PackEntry }
 
 const statusNote = (e: PackEntry): string => {
   if (e.status === 'conflict') return tr('같은 id의 팩 파일이 여러 개예요. 폴더에서 정리한 뒤 다시 시도하세요')
@@ -59,6 +59,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
 
   const toggle = (e: PackEntry) => {
     if (e.enabled) return act(() => window.api.packEnable(e.id, false))
+    if (e.revoked) return setSub({ kind: 'revoked', e }) // 철회된 팩: 확인을 한 번 더 받음 (5.6.0)
     if (e.source === 'user' && e.approval !== 'approved') return setSub({ kind: 'allow', e }) // 처음·바뀐 뒤: 허용 창
     return act(() => window.api.packEnable(e.id, true))
   }
@@ -100,7 +101,8 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
           </span>
         </div>
         <span style={{ fontSize: 12 }} className={e.enabled ? '' : 'dim'}>{e.enabled ? tr('켜짐') : tr('꺼짐')}{note && <> · <span className={e.approval === 'changed' || e.status !== 'ok' ? 'msg-err' : ''}>{e.approval === 'changed' ? '⚠ ' : ''}{note}</span></>}</span>
-        {e.origin && e.pack && revoked.filter((r) => r.id === e.id && r.version === e.pack!.version).map((r) => (
+        {e.revoked && <p className="msg-err" role="alert" style={{ fontSize: 13, overflowWrap: 'anywhere' }}>⛔ {tr('철회됨')} — {tr('관리자가 모음에서 내려서 자동으로 껐어요')}: "{lt(e.revoked.reason)}"</p>}
+        {!e.revoked && e.origin && e.pack && revoked.filter((r) => r.id === e.id && r.version === e.pack!.version).map((r) => (
           <p key={r.id} className="msg-err" role="alert" style={{ fontSize: 13, overflowWrap: 'anywhere' }}>⛔ {tr('철회됨')} — {tr('관리자가 모음에서 내렸어요')}: "{lt(r.reason)}"{e.enabled ? ' ' + tr('아직 켜져 있을 수 있어요. 끄거나 제거해 주세요.') : ''}</p>
         ))}
         {e.pack?.desc && <p className="dim" style={{ fontSize: 13 }}>{lt(e.pack.desc)}</p>}
@@ -208,6 +210,22 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
           )}
           {sub.ins.pack && <PackBody pack={sub.ins.pack} hash={sub.ins.hash} size={sub.ins.size} changes={sub.ins.existing?.diff} />}
           <p className="dim" style={{ fontSize: 13 }}>{tr('설치해도 꺼진 채로 들어와요. 켤 때 한 번 더 허용을 받아요.')}</p>
+        </Modal>
+      )}
+      {sub?.kind === 'revoked' && sub.e.pack && (
+        <Modal
+          title={tr('철회된 팩이에요. 그래도 켤까요?')}
+          onClose={() => setSub(null)}
+          foot={
+            <>
+              <Button onClick={() => setSub(null)}>{tr('취소')}</Button>
+              <Button variant="warn" disabled={busy} onClick={() => { const e = sub.e; setSub(null); act(() => window.api.packEnable(e.id, true, e.approval === 'approved' ? undefined : e.hash, true)) }}>{tr('그래도 켜기')}</Button>
+            </>
+          }
+        >
+          <p className="msg-err" style={{ fontSize: 13, overflowWrap: 'anywhere' }}>⛔ "{lt(sub.e.pack.name)}": {sub.e.revoked ? lt(sub.e.revoked.reason) : ''}</p>
+          <p style={{ fontSize: 13 }}>{tr('관리자가 이 팩을 모음에서 내렸어요. 안전하지 않을 수 있어요. 켜기 전에 명령 전문을 확인해 주세요.')}</p>
+          <PackBody pack={sub.e.pack} hash={sub.e.hash} size={sub.e.size} changes={sub.e.changes} />
         </Modal>
       )}
       {sub?.kind === 'remove' && (

@@ -18,6 +18,8 @@ import { sanitizeOutput } from './packsafe.mts'
 import { buildFrom, buildPoll, buildPreview, buildRun, buildStream, buildTerminal, fill, hasUnsafeMark, parseResult, resolveParams, unsafeNotice, type PackResult } from './packrun.mts'
 import { startStream, stopAll, stopStream } from './packstream.mts'
 import { approveAndEnable, buildCatalog, enabledPacks, ensureDir, forgetPack, inspectPackBytes, installPackBytes, readState, readUserDir, setBadgesOff, setEnabled, setOrigin, writeState, type Inspect, type PackEntry, type PackOrigin, type StateFile } from './packstore.mts'
+import { applyRevocations, type TurnedOff } from './galleryrevoke.mts'
+import type { GalleryIndex } from './gallerycore.mts'
 import { LIMITS, type Pack, type PackAction, type Reason, type Risk } from './packschema.mts'
 import { analyzeWithInput } from './risk.mts'
 import { requireClient as client } from './session'
@@ -91,6 +93,15 @@ function requireConfirmed(a: PackAction, p: Prepared, token: unknown): void {
 // 설치는 꺼진 채로 들어오고(파일이 바뀌면 허용도 풀림), enable이면 사용자가 방금 확인한 지문(shownHash)과 같을 때만 허용·켜기까지 한 번에 함
 export const packEntries = (): PackEntry[] => entries
 export const isSafeMode = (): boolean => safeMode
+// 모음 철회 처리 (5.6.0): 철회된 팩을 자동으로 끄고 끈 목록을 돌려줌. 바뀐 게 없으면 파일을 안 씀
+export function applyGalleryRevocations(list: Pick<GalleryIndex, 'revoked'>): TurnedOff[] {
+  const r = applyRevocations(state, entries, list)
+  if (r.state !== state) {
+    save(r.state)
+    rescan()
+  }
+  return r.turnedOff
+}
 export function installFromGallery(bytes: Uint8Array, origin: PackOrigin, enable: boolean, shownHash: string): Catalog {
   const r = installPackBytes(userDir(), bytes, app.getVersion(), entries)
   rescan()
@@ -110,8 +121,9 @@ export function registerPackIpc(): void {
   ipcMain.handle('pack:catalog', (): Catalog => catalog())
   ipcMain.handle('pack:rescan', (): Catalog => rescan())
   // 켜기·끄기. 외부 팩을 처음(또는 파일이 바뀐 뒤) 켤 때는 허용 창에서 사용자에게 보여 준 지문(shownHash)을 같이 보내야 함
-  ipcMain.handle('pack:enable', (_e, packId: string, on: boolean, shownHash?: string): Catalog => {
+  ipcMain.handle('pack:enable', (_e, packId: string, on: boolean, shownHash?: string, confirmRevoked?: boolean): Catalog => {
     const e = entryOf(packId)
+    if (on === true && e.revoked && confirmRevoked !== true) throw new Error(tr('모음에서 철회된 팩이에요. 확인 없이는 켤 수 없어요')) // 5.6.0: 다시 켜기는 확인 한 번 더
     if (on === true && e.source === 'user' && e.approval !== 'approved') save(approveAndEnable(state, e, String(shownHash ?? '')))
     else save(setEnabled(state, e, on === true))
     return rescan()

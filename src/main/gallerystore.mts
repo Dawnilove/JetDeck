@@ -6,6 +6,8 @@ import { GALLERY_LIMITS } from './gallerycore.mts'
 export type GalleryState = {
   version: 1
   consent: boolean // 처음 열 때 안내에 동의했는가
+  autoCheck: boolean // 5.6.0: 앱을 켤 때 하루 1번 철회 확인 (모음에서 받은 팩이 있을 때만). 기본 켜짐
+  checkedAt?: string // 마지막으로 철회 확인에 성공한 시각
   lastSerial: number
   fetchedAt?: string
   etag?: string
@@ -13,7 +15,7 @@ export type GalleryState = {
   index?: string // 마지막 정상 색인 원본 바이트 (base64)
   sig?: string
 }
-export const emptyGalleryState = (): GalleryState => ({ version: 1, consent: false, lastSerial: 0 })
+export const emptyGalleryState = (): GalleryState => ({ version: 1, consent: false, autoCheck: true, lastSerial: 0 })
 
 export function readGalleryState(file: string): GalleryState {
   const out = emptyGalleryState()
@@ -21,6 +23,8 @@ export function readGalleryState(file: string): GalleryState {
     const raw = JSON.parse(readFileSync(file, 'utf8').replace(/^﻿/, ''))
     if (!raw || typeof raw !== 'object') return out
     out.consent = raw.consent === true
+    out.autoCheck = raw.autoCheck !== false
+    if (typeof raw.checkedAt === 'string') out.checkedAt = raw.checkedAt.slice(0, 40)
     if (Number.isInteger(raw.lastSerial) && raw.lastSerial >= 0) out.lastSerial = raw.lastSerial
     if (typeof raw.fetchedAt === 'string') out.fetchedAt = raw.fetchedAt.slice(0, 40)
     if (typeof raw.etag === 'string' && raw.etag.length <= 200) out.etag = raw.etag

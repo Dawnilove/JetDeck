@@ -173,7 +173,7 @@ test('화면용 목록: 차단 이유·업데이트·철회된 설치본', async
   const p3 = packEntry('old-pack', '1.0.0', PACK)
   const t = mk(served(B1, makeIndex([p1, p2, p3], { revoked: [{ id: 'old-pack', reason: { ko: '문제', en: 'bad' }, at: '2026-10-30' }] })))
   const l = await refreshListing(t.d)
-  const o = { consent: true, safeMode: false, dev: false, appVersion: '5.5.0', installed: [{ id: 'sensor-check', version: '1.1.0', hash: 'a'.repeat(64), fromGallery: true }, { id: 'old-pack', version: '1.0.0', hash: p3.sha256, fromGallery: true }] }
+  const o = { consent: true, autoCheck: true, safeMode: false, dev: false, appVersion: '5.5.0', installed: [{ id: 'sensor-check', version: '1.1.0', hash: 'a'.repeat(64), fromGallery: true }, { id: 'old-pack', version: '1.0.0', hash: p3.sha256, fromGallery: true }] }
   const v = buildView(l, o)
   assert.equal(v.status, 'ok')
   const by = Object.fromEntries(v.items.map((i) => [i.id, i]))
@@ -195,7 +195,7 @@ test('상태 파일: 저장·읽기, 깨진 파일·이상한 값은 빈 상태'
   try {
     const f = join(dir, 'gallery.json')
     assert.deepEqual(readGalleryState(f), emptyGalleryState())
-    const st: GalleryState = { version: 1, consent: true, lastSerial: 7, fetchedAt: 'x', etag: '"a"', etagBase: B1, index: 'AAAA', sig: 'bbbb' }
+    const st: GalleryState = { version: 1, consent: true, autoCheck: true, lastSerial: 7, fetchedAt: 'x', etag: '"a"', etagBase: B1, index: 'AAAA', sig: 'bbbb' }
     writeGalleryState(f, st)
     assert.deepEqual(readGalleryState(f), st)
     writeFileSync(f, '{{ not json')

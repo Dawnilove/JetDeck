@@ -89,6 +89,7 @@ export default function Gallery({ onCatalog, onCancel, onRevoked }: { onCatalog:
       setReviewing(null)
     }
   }
+  const report = (id: string, kind: 'pack' | 'bypass') => window.api.galleryReport(id, kind).catch((e) => setMsg({ text: errText(e), err: true }))
   const closeRev = () => {
     window.api.galleryCancel().catch(() => {})
     setRev(null)
@@ -159,6 +160,7 @@ export default function Gallery({ onCatalog, onCancel, onRevoked }: { onCatalog:
               {it.update && <span className="tag" style={{ color: 'var(--accent-text)', borderColor: 'var(--accent-text)' }}>{tr('업데이트 있음')}</span>}
               <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
                 {reviewing === it.id && <Button size={36} onClick={() => window.api.galleryCancel().catch(() => {})}>{tr('취소')}</Button>}
+                <Button size={36} variant="ghost" onClick={() => report(it.id, 'pack')}>{tr('신고')}</Button>
                 {it.block !== 'revoked' && (
                   <Button size={36} variant="primary" disabled={!!it.block || !!reviewing || installing} onClick={() => inspect(it.id)}>
                     {reviewing === it.id ? tr('받는 중…') : tr('내용 보기')}
@@ -177,7 +179,11 @@ export default function Gallery({ onCatalog, onCancel, onRevoked }: { onCatalog:
         )
       })}
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', justifyContent: 'flex-end' }}>
+        <label className="check" style={{ fontSize: 13 }}>
+          <input type="checkbox" checked={view.autoCheck} onChange={(e) => window.api.galleryAutoCheck(e.target.checked).then(setView).catch((er) => setMsg({ text: errText(er), err: true }))} />
+          {tr('앱을 켤 때 하루 1번 철회 확인 (받은 팩이 있을 때만)')}
+        </label>
         <Button size={36} variant="ghost" onClick={() => window.api.galleryConsent(false).then(setView).catch((e) => setMsg({ text: errText(e), err: true }))}>{tr('모음 동의 끄기')}</Button>
       </div>
 
@@ -189,6 +195,7 @@ export default function Gallery({ onCatalog, onCancel, onRevoked }: { onCatalog:
           foot={
             <>
               <Button disabled={installing} onClick={closeRev}>{tr('취소')}</Button>
+              <Button variant="ghost" onClick={() => report(rev.entry.id, 'pack')}>{tr('신고')}</Button>
               {rev.inspect.ok && !view.safeMode && (
                 <>
                   <Button disabled={installing} onClick={() => install(false)}>{tr('설치만 (꺼진 채)')}</Button>
@@ -208,6 +215,7 @@ export default function Gallery({ onCatalog, onCancel, onRevoked }: { onCatalog:
             <span className="mono" style={{ fontSize: 12 }}><strong>{tr('검증')}</strong> {tr('목록 서명 확인됨')} ✔ · {tr('파일 지문')} ✔ {rev.inspect.hash.slice(0, 8)} · v{rev.entry.version}</span>
             <span className="dim" style={{ fontSize: 12 }}>{tr('이름과 작성자는 팩이 직접 적은 글자예요.')}</span>
           </div>
+          {rev.inspect.existing?.relation === 'upgrade' && <p className="msg-err" role="status" style={{ fontSize: 13, color: 'var(--warn)' }}>⚠ {tr('업데이트예요. 새 버전은 다시 허용해야 켜져요. 바뀐 명령은 아래에서 강조돼요.')}</p>}
           {rev.inspect.existing && <ExistingNote existing={rev.inspect.existing} />}
           {rev.inspect.errors.length > 0 && (
             <ul className="msg-err" style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>
@@ -215,6 +223,7 @@ export default function Gallery({ onCatalog, onCancel, onRevoked }: { onCatalog:
             </ul>
           )}
           {rev.inspect.pack && <PackBody pack={rev.inspect.pack} hash={rev.inspect.hash} size={rev.inspect.size} changes={rev.inspect.existing?.diff} />}
+          <p className="dim" style={{ fontSize: 12 }}>{tr('신고는 GitHub 이슈 양식을 열어요. 개인정보는 적지 마세요.')} <a href="#" onClick={(ev) => { ev.preventDefault(); report(rev.entry.id, 'bypass') }}>{tr('팩이 안전 검사를 우회하면 비공개로 알려 주세요')}</a></p>
           <p className="dim" style={{ fontSize: 13 }}>{installing ? tr('설치하는 중…') : tr('"설치만"은 꺼진 채로 들어와요. "허용하고 켜기"는 위 명령을 읽고 허용한 것으로 봐요.')}</p>
         </Modal>
       )}

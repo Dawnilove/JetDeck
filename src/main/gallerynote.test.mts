@@ -4,7 +4,7 @@ import { buildView, type Listing, type ListError } from './galleryflow.mts'
 import { errorText, galleryNotes } from './gallerynote.mts'
 
 const fmt = (s: string) => s.slice(0, 10)
-const o = { consent: true, safeMode: false, dev: false, appVersion: '5.5.0', installed: [] }
+const o = { consent: true, autoCheck: true, safeMode: false, dev: false, appVersion: '5.5.0', installed: [] }
 const list = (p: Partial<Listing>): Listing => ({ status: 'ok', expired: false, fromCache: false, packs: [], revoked: [], ...p })
 const kinds = (l: Listing | null, extra: Partial<typeof o> = {}) => galleryNotes(buildView(l, { ...o, ...extra }), fmt)
 

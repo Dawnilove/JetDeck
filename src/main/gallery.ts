@@ -1,11 +1,12 @@
-import { app, ipcMain, net } from 'electron'
+import { app, BrowserWindow, ipcMain, net, Notification, shell } from 'electron'
 import { join } from 'node:path'
 import { checkPackIdentity, revokedFor, type GalleryPack } from './gallerycore.mts'
 import { buildView, cachedListing, fetchPackFile, refreshListing, type FlowDeps, type GalleryView, type InstalledPack, type Listing, type PackFileError } from './galleryflow.mts'
 import { fetchLimited, REFRESH_GAP_MS, resolveSource } from './gallerynet.mts'
 import { readGalleryState, writeGalleryState } from './gallerystore.mts'
-import { tr } from './i18n.mts'
-import { installFromGallery, isSafeMode, packEntries, type Catalog } from './pack'
+import { getLang, tr } from './i18n.mts'
+import { applyGalleryRevocations, installFromGallery, isSafeMode, packEntries, type Catalog } from './pack'
+import { shouldCheck, type TurnedOff } from './galleryrevoke.mts'
 import { inspectPackBytes, type Inspect } from './packstore.mts'
 
 // 모음 (5.5.0): 서명된 색인을 내려받아 보여 주고, 사용자가 누르면 팩 파일을 받아 지문·검사를 거쳐 기존 설치 흐름으로 설치.
@@ -33,7 +34,46 @@ const deps = (): FlowDeps => ({
 function installed(): InstalledPack[] {
   return packEntries().flatMap((e) => (e.source === 'user' && e.pack ? [{ id: e.id, version: e.pack.version, hash: e.hash, fromGallery: !!e.origin }] : []))
 }
-const view = (): GalleryView => buildView(current, { consent: readGalleryState(stateFile()).consent, safeMode: isSafeMode(), dev: source.dev, appVersion: app.getVersion(), installed: installed() })
+const view = (): GalleryView => buildView(current, { consent: readGalleryState(stateFile()).consent, autoCheck: readGalleryState(stateFile()).autoCheck, safeMode: isSafeMode(), dev: source.dev, appVersion: app.getVersion(), installed: installed() })
+
+// 철회 처리 (5.6.0): 서명을 확인한 목록의 revoked에 든 팩을 자동으로 끄고, 끈 게 있으면 알림 + 열린 창에 알림
+const REPO = 'https://github.com/Dawnilove/JetDeck'
+function enforce(list: Listing | null): void {
+  if (!list || isSafeMode()) return
+  const off = applyGalleryRevocations(list)
+  if (!off.length) return
+  notifyOff(off)
+  for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.webContents.send('pack:changed')
+}
+function notifyOff(off: TurnedOff[]): void {
+  try {
+    if (!Notification.isSupported()) return
+    const lang = getLang()
+    const first = off[0]
+    const body = off.length === 1 ? `${first.id}: ${first.reason[lang]}` : tr('{0}개 팩이 철회되어 껐어요. 플러그인 관리에서 확인해 주세요', off.length)
+    new Notification({ title: tr('모음에서 철회된 팩을 껐어요'), body: body.slice(0, 250) }).show()
+  } catch {
+    /* 알림 실패는 무시 (팩은 이미 꺼짐) */
+  }
+}
+// 앱을 켠 뒤 한 번 부름: 동의·스위치·받은 팩·하루 간격 조건이 맞을 때만 모음에 접속 (설계안 §8-7). 오프라인이면 저장해 둔 목록으로만 처리
+export async function startupRevokeCheck(): Promise<void> {
+  const st = readGalleryState(stateFile())
+  if (isSafeMode() || !shouldCheck({ consent: st.consent, autoCheck: st.autoCheck, hasGalleryPacks: packEntries().some((e) => e.source === 'user' && e.origin), checkedAt: st.checkedAt, now: new Date() })) return
+  try {
+    ctl = new AbortController()
+    refreshing = refreshListing(deps())
+    const l = await refreshing
+    current = l
+    lastRefresh = Date.now()
+    if (l.status === 'ok') writeGalleryState(stateFile(), { ...readGalleryState(stateFile()), checkedAt: new Date().toISOString() })
+    enforce(l)
+  } catch {
+    /* 확인 실패는 조용히 (다음 실행 때 다시) */
+  } finally {
+    refreshing = null
+  }
+}
 
 function fileError(code: PackFileError): string {
   if (code === 'blocked') return tr('지금은 이 팩을 설치할 수 없어요. 목록 상태, 철회 여부, 앱 버전을 확인해 주세요')
@@ -84,6 +124,7 @@ export function registerGalleryIpc(): void {
     refreshing = refreshListing(deps())
     try {
       current = await refreshing
+      enforce(current)
     } finally {
       refreshing = null
     }
@@ -110,6 +151,19 @@ export function registerGalleryIpc(): void {
     pending = null
     return installFromGallery(p.bytes, { kind: 'gallery', serial: p.serial, sha256: p.hash }, enable === true, p.hash)
   })
+  // 철회 자동 확인 켜기·끄기 (설정). 끄면 앱을 켤 때 모음에 접속하지 않음
+  ipcMain.handle('gallery:auto-check', (_e, on: boolean): GalleryView => {
+    writeGalleryState(stateFile(), { ...readGalleryState(stateFile()), autoCheck: on === true })
+    return view()
+  })
+  // 신고 (5.6.0): 목록에 있는 팩만. 주소는 main이 상수 + 색인의 id·버전·지문 앞 8자리로 만듦. kind 'bypass'는 비공개 취약점 제보 화면
+  ipcMain.handle('gallery:report', async (_e, id: string, kind: 'pack' | 'bypass'): Promise<void> => {
+    if (kind === 'bypass') return void (await shell.openExternal(`${REPO}/security/advisories/new`))
+    const p = current?.packs.find((x) => x.id === String(id))
+    if (!p) throw new Error(tr('목록에 없는 팩이에요'))
+    const q = new URLSearchParams({ template: 'pack-report.yml', title: `[pack] ${p.id} v${p.version}`, pack_id: p.id, pack_version: p.version, pack_hash: p.sha256.slice(0, 8) })
+    await shell.openExternal(`${REPO}/issues/new?${q}`)
+  })
   ipcMain.handle('gallery:cancel', (): void => {
     ctl.abort()
     pending = null
@@ -117,6 +171,7 @@ export function registerGalleryIpc(): void {
   // 저장해 둔 목록만 보기 (앱을 켠 직후 오프라인 확인용). 네트워크 없음
   ipcMain.handle('gallery:cached', (): GalleryView => {
     if (!current && readGalleryState(stateFile()).consent) current = cachedListing(deps())
+    enforce(current)
     return view()
   })
 }
