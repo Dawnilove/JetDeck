@@ -1,6 +1,7 @@
 // 팩 시리얼 읽기의 포트 열기 (6.1.0, 설계안 §2-4): 읽기 전용. 쓰기 함수는 돌려주지 않고, 제어선(DTR·RTS)을 낮춘 채로 연다.
 // OS는 읽기 전용 열기를 지원하지 않는다 (항상 읽기+쓰기로 엶) → 쓰기 함수가 구조에 없는 것으로 지킨다. Electron·실제 포트 없이 시험 (serialread.test.mts)
 import { tr } from './i18n.mts'
+import { safeName } from './permpath.mts'
 import { LIMITS } from './packschema.mts'
 import { serialError } from './serialmsg.mts'
 
@@ -31,7 +32,7 @@ export function openRead(make: (o: Record<string, unknown>) => PortLike, path: s
     const timer = setTimeout(() => {
       if (settled) return
       settled = true
-      reject(new Error(tr('{0}을(를) 여는 데 너무 오래 걸려요. 장치를 확인하세요', path)))
+      reject(new Error(tr('{0}을(를) 여는 데 너무 오래 걸려요. 장치를 확인하세요', safeName(path))))
     }, openMs)
     timer.unref?.()
     port.open((err) => {

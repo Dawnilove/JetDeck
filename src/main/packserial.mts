@@ -4,9 +4,9 @@ import { StringDecoder } from 'node:string_decoder'
 import { Batcher, LineAssembler, STREAM_LIMITS, Throttle } from './packstreamcore.mts'
 import type { SerialSource } from './serialread.mts'
 
-export type SerialChoice = { path: string; label: string; vendorId?: string; productId?: string; serialNumber?: string }
-// 같은 장치인지 비교하는 값: 고른 뒤 포트 이름이 다른 장치로 바뀌면 달라진다
-export const identOf = (p: SerialChoice): string => [p.path, p.vendorId ?? '', p.productId ?? '', p.serialNumber ?? ''].join('\u0000')
+export type SerialChoice = { path: string; label: string; vendorId?: string; productId?: string; serialNumber?: string; pnpId?: string; locationId?: string }
+// 같은 장치인지 비교하는 값: 고른 뒤 포트 이름이 다른 장치로 바뀌면 달라진다. pnpId·locationId는 시리얼 번호 없는 같은 모델 보드 교체를 잡는다 (값의 안정성은 실기 미확인)
+export const identOf = (p: SerialChoice): string => [p.path, p.vendorId ?? '', p.productId ?? '', p.serialNumber ?? '', p.pnpId ?? '', p.locationId ?? ''].join('\u0000')
 // 고르기 창에 보일 순서: USB(vendorId 있음)를 먼저, 최대 8개
 export const PICK_MAX = 8
 export function orderChoices(list: SerialChoice[]): { shown: SerialChoice[]; more: boolean } {

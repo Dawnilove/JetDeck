@@ -39,7 +39,7 @@ test('T2 보율: 허용 목록 밖·낮은 보율·문자열·없음은 오류, 
 })
 
 test('T4 팩이 포트·경로·쓰기·제어선을 적으면 오류, 다른 권한에 baud를 적어도 오류', () => {
-  for (const k of ['port', 'path', 'device', 'root', 'remotePort', 'overwrite', 'write', 'dtr', 'rts']) assert.match(errs(run([sperm({ [k]: k === 'root' ? '~/x' : k === 'remotePort' ? 8888 : 'COM5' })], [sapp()])), /serial\.read 권한은/, k)
+  for (const k of ['port', 'path', 'device', 'root', 'remotePort', 'overwrite', 'write', 'dtr', 'rts', 'hupcl', 'rtscts', 'rtsMode']) assert.match(errs(run([sperm({ [k]: k === 'root' ? '~/x' : k === 'remotePort' ? 8888 : 'COM5' })], [sapp()])), /serial\.read 권한은/, k)
   assert.match(errs(run([{ id: 'logs', kind: 'sftp.read', root: '~/logs', baud: 9600, why: L('x') }], [{ id: 'l', label: L('l'), mode: 'app', perm: 'logs', op: 'list' }])), /baud/)
   assert.match(errs(run([{ id: 'web', kind: 'tunnel', remotePort: 8888, baud: 9600, why: L('x') }], [{ id: 'o', label: L('o'), mode: 'app', perm: 'web', op: 'open' }])), /baud/)
   assert.match(errs(run([sperm({ maxMinutes: 61 })], [sapp()])), /maxMinutes/)

@@ -14,7 +14,7 @@ export interface PathFs {
 
 export const PATH_LIMITS = { path: 1024, piece: 255, root: 200 }
 // 제어 문자·역슬래시·BiDi·보이지 않는 글자 (화면에 보이는 경로와 실제 경로가 달라지는 것 방지)
-const BAD_CHARS = /[\u0000-\u001f\u007f-\u009f\\​-‏‪-‮⁠-⁯﻿]/
+const BAD_CHARS = /[\u0000-\u001f\u007f-\u009f\u061c\\​-‏‪-‮⁠-⁯﻿]/
 const ENCODED = /%(2e|2f|5c)/i // 퍼센트 인코딩 우회 흉내 (SFTP는 해석하지 않지만 팩 글자에서 아예 막음)
 // 인증이 없거나 코드 실행까지 가는 관리 서비스: Docker(2375·2376·4243) · RDP · Redis · Elasticsearch · memcached · MongoDB · etcd · adb(5037·5555) · debugpy · Chrome DevTools · Node inspector · kube(6443·10250) · Ray · Ollama · ROS1 master
 const BAD_PORTS = new Set([2375, 2376, 2379, 3389, 4243, 5037, 5555, 5678, 6379, 6443, 8265, 9200, 9222, 9229, 10250, 11211, 11311, 11434, 27017])

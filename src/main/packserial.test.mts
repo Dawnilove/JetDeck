@@ -133,5 +133,5 @@ test('포트 고르기 순서: USB 먼저, 최대 8개, 더 있으면 표시', (
 test('identOf: 경로·VID·PID·시리얼 번호 중 하나라도 다르면 다른 장치', () => {
   const a: SerialChoice = { path: 'COM5', label: 'x', vendorId: '2341', productId: '0043', serialNumber: 'S1' }
   assert.equal(identOf(a), identOf({ ...a, label: '다른 이름' })) // 이름(label)은 비교하지 않음
-  for (const b of [{ path: 'COM6' }, { vendorId: '1' }, { productId: '1' }, { serialNumber: 'S2' }, { serialNumber: undefined }]) assert.notEqual(identOf(a), identOf({ ...a, ...b }))
+  for (const b of [{ path: 'COM6' }, { vendorId: '1' }, { productId: '1' }, { serialNumber: 'S2' }, { pnpId: 'P2' }, { locationId: 'L2' }, { serialNumber: undefined }]) assert.notEqual(identOf(a), identOf({ ...a, ...b }))
 })

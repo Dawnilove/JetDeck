@@ -88,7 +88,7 @@
       },
       "allOf": [
         { "if": { "properties": { "kind": { "const": "tunnel" } }, "required": ["kind"] }, "then": { "required": ["remotePort"], "not": { "anyOf": [{ "required": ["root"] }, { "required": ["maxBytes"] }, { "required": ["overwrite"] }, { "required": ["baud"] }] } } },
-        { "if": { "properties": { "kind": { "const": "serial.read" } }, "required": ["kind"] }, "then": { "required": ["baud"], "not": { "anyOf": [{ "required": ["root"] }, { "required": ["overwrite"] }, { "required": ["remotePort"] }] } } },
+        { "if": { "properties": { "kind": { "const": "serial.read" } }, "required": ["kind"] }, "then": { "required": ["baud"], "not": { "anyOf": [{ "required": ["root"] }, { "required": ["overwrite"] }, { "required": ["remotePort"] }, { "required": ["port"] }, { "required": ["path"] }, { "required": ["device"] }, { "required": ["write"] }, { "required": ["dtr"] }, { "required": ["rts"] }, { "required": ["hupcl"] }, { "required": ["rtscts"] }, { "required": ["rtsMode"] }] } } },
         { "if": { "properties": { "kind": { "enum": ["sftp.read", "sftp.write"] } }, "required": ["kind"] }, "then": { "required": ["root"], "not": { "anyOf": [{ "required": ["remotePort"] }, { "required": ["maxMinutes"] }, { "required": ["baud"] }] } } }
       ]
     },

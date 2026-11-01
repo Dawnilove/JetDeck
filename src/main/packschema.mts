@@ -426,7 +426,7 @@ function checkPermission(p: unknown, S: boolean, seen: Set<string>): { perm?: Pe
   }
   if (kind === 'serial.read') {
     // 포트는 팩이 정하지 못한다 (사용자가 실행할 때 고름). 쓰기·제어선도 없다
-    const extra = only(['root', 'overwrite', 'remotePort', 'port', 'path', 'device', 'write', 'dtr', 'rts'])
+    const extra = only(['root', 'overwrite', 'remotePort', 'port', 'path', 'device', 'write', 'dtr', 'rts', 'hupcl', 'rtscts', 'rtsMode'])
     if (extra) return bad(`serial.read 권한은 ${extra}를 쓸 수 없어요 (포트는 실행할 때 사용자가 골라요)`)
     if (typeof p.baud !== 'number' || !SERIAL_BAUDS.includes(p.baud)) return bad(`baud는 ${SERIAL_BAUDS.join(' · ')} 중 하나여야 해요`)
     out.baud = p.baud

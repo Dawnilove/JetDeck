@@ -8,4 +8,5 @@ test('시리얼 오류 문구', () => {
   assert.match(serialError('Opening COM9: File not found', 'COM9'), /찾을 수 없어요/)
   assert.match(serialError('Error: No such file or directory, cannot open /dev/ttyACM0', '/dev/ttyACM0'), /찾을 수 없어요/)
   assert.equal(serialError('이상한 오류', 'COM1'), '이상한 오류')
+  assert.ok(!serialError('Opening COM3: Access denied', 'COM'+String.fromCharCode(0x61c)+'3').includes(String.fromCharCode(0x61c))) // 보이지 않는 글자는 지움
 })

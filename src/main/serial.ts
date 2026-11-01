@@ -19,7 +19,9 @@ export async function listChoices(): Promise<SerialChoice[]> {
     label: (p as { friendlyName?: string }).friendlyName || p.manufacturer || p.path,
     vendorId: p.vendorId,
     productId: p.productId,
-    serialNumber: p.serialNumber
+    serialNumber: p.serialNumber,
+    pnpId: p.pnpId,
+    locationId: p.locationId
   }))
 }
 
