@@ -46,9 +46,11 @@ async function deviceFs(connId: string): Promise<DeviceFs> {
   }
 }
 
+let latest: PackEntry[] | null = null // 마지막으로 만들어진 팩 목록 (appReconcile이 채움)
 const winOf = (ctx: unknown) => (ctx && typeof ctx === 'object' ? BrowserWindow.fromWebContents(ctx as WebContents) : null)
 const engine = createAppEngine({
   fsOf: deviceFs,
+  isActive: (id, hash) => !latest || latest.some((e) => e.id === id && e.enabled && e.hash === hash),
   ui: {
     async pickSave(defaultName, ctx) {
       const win = winOf(ctx)
@@ -68,7 +70,10 @@ const engine = createAppEngine({
 })
 
 // 팩 목록이 다시 만들어질 때(끄기·파일 변경·제거) 꺼졌거나 파일이 달라진 팩이 시작한 전송을 즉시 멈춤
-export const appReconcile = (entries: PackEntry[]): void => engine.reconcile((id, hash) => entries.some((e) => e.id === id && e.enabled && e.hash === hash))
+export function appReconcile(entries: PackEntry[]): void {
+  latest = entries
+  engine.reconcile((id, hash) => entries.some((e) => e.id === id && e.enabled && e.hash === hash))
+}
 
 export type FindAction = (packId: string, pluginId: string, actionId: string) => { pack: Pack; action: PackAction; hash: string } // 켜진 팩의 항목만 찾음 (pack.ts find)
 

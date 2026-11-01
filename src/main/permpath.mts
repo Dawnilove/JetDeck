@@ -16,7 +16,8 @@ export const PATH_LIMITS = { path: 1024, piece: 255, root: 200 }
 // 제어 문자·역슬래시·BiDi·보이지 않는 글자 (화면에 보이는 경로와 실제 경로가 달라지는 것 방지)
 const BAD_CHARS = /[\u0000-\u001f\u007f-\u009f\\​-‏‪-‮⁠-⁯﻿]/
 const ENCODED = /%(2e|2f|5c)/i // 퍼센트 인코딩 우회 흉내 (SFTP는 해석하지 않지만 팩 글자에서 아예 막음)
-const BAD_PORTS = new Set([2375, 3389, 6379, 9200, 11211, 27017])
+// 인증이 없거나 코드 실행까지 가는 관리 서비스: Docker(2375·2376·4243) · RDP · Redis · Elasticsearch · memcached · MongoDB · etcd · adb(5037·5555) · debugpy · Chrome DevTools · Node inspector · kube(6443·10250) · Ray · Ollama · ROS1 master
+const BAD_PORTS = new Set([2375, 2376, 2379, 3389, 4243, 5037, 5555, 5678, 6379, 6443, 8265, 9200, 9222, 9229, 10250, 11211, 11311, 11434, 27017])
 
 // Device에서 받은 이름을 표시용으로 정리 (제어 문자·BiDi 제거, 길이 제한). 다시 경로로 쓸 때는 splitRel부터 다시 지남
 export const safeName = (n: string): string => n.replace(new RegExp(BAD_CHARS, 'g'), '').slice(0, PATH_LIMITS.piece)
@@ -28,16 +29,18 @@ function pieceProblem(s: string): boolean {
 // 터널 Device 포트: 1024 이상 65535 이하 정수, 인증 없는 관리 서비스 포트(거부 목록) 제외
 export function portProblem(p: unknown): string | null {
   if (typeof p !== 'number' || !Number.isInteger(p) || p < 1024 || p > 65535) return '포트는 1024~65535 사이 정수예요'
-  if (BAD_PORTS.has(p) || (p >= 5900 && p <= 5909)) return `포트 ${p}는 쓸 수 없어요 (인증 없는 관리 서비스)`
+  if (BAD_PORTS.has(p) || (p >= 5900 && p <= 5909) || (p >= 6000 && p <= 6063)) return `포트 ${p}는 쓸 수 없어요 (인증 없는 관리 서비스)` // 5900~5909 VNC, 6000~6063 X11
   return null
 }
 
 // root: "~/" 아래 폴더 1개 이상. ~ 자체·/·..·//·민감 경로 금지. 팩을 읽을 때(스키마) 쓰는 글자 검사
-export function rootProblem(root: unknown): string | null {
+// write=true(올리기 root)면 점으로 시작하는 조각도 금지: ~/.local(.pth)·~/.config(fish·pip·autostart) 같은 설정 폴더에 쓰지 못하게
+export function rootProblem(root: unknown, write = false): string | null {
   if (typeof root !== 'string' || !root.startsWith('~/') || root.length > PATH_LIMITS.root) return `root는 "~/"로 시작하는 ${PATH_LIMITS.root}자 이내 경로예요`
   const pieces = root.slice(2).split('/')
   if (pieces.some(pieceProblem)) return 'root에 빈 조각·..·제어 문자는 쓸 수 없어요'
   if (isSensitivePath(root)) return 'root가 민감한 경로예요 (.ssh, .env 등)'
+  if (write && pieces.some((s) => s.startsWith('.'))) return '올리기 root에는 점(.)으로 시작하는 폴더를 쓸 수 없어요'
   return null
 }
 
@@ -50,7 +53,8 @@ export function splitRel(rel: string): string[] {
 
 // 쓰기에서 더 막는 이름: 셸 시작 파일·자동 실행 폴더·git 설정 (읽기·쓰기 공통 거부 목록은 risk.mts isSensitivePath)
 const WRITE_DENY = /(^|\/)(\.bashrc|\.bash_profile|\.bash_login|\.bash_logout|\.profile|\.zshrc|\.zprofile|\.zshenv|\.xprofile|\.xsession|\.pam_environment|\.gitconfig)$|(^|\/)\.config\/(autostart|systemd|git)(\/|$)|(^|\/)\.git(\/|$)|(^|\/)\.local\/share\/systemd(\/|$)|crontab/i
-export const deniedPath = (rest: string, mode: 'read' | 'write'): boolean => isSensitivePath('~' + rest) || (mode === 'write' && WRITE_DENY.test(rest))
+const DOT_PIECE = /(^|\/)\./ // 쓰기는 점으로 시작하는 조각이 하나라도 있으면 거부 (이름 목록은 끝이 없음). 읽기는 해당 없음
+export const deniedPath = (rest: string, mode: 'read' | 'write'): boolean => isSensitivePath('~' + rest) || (mode === 'write' && (DOT_PIECE.test(rest) || WRITE_DENY.test(rest)))
 
 const under = (p: string, dir: string) => p.startsWith(dir + '/')
 const dirOf = (p: string) => p.slice(0, p.lastIndexOf('/'))
@@ -62,8 +66,8 @@ export type Resolved = { path: string; exists: boolean; stat: FsStat | null } //
 // 단계 1~8: 상대 경로를 root 안의 실제 경로로. 하나라도 틀리면 거기서 멈춘다
 // want: dir=폴더 보기, file=받기·읽기(일반 파일, maxBytes 이하), write=올리기(없거나 일반 파일, 링크는 거부)
 export async function resolveTarget(fs: PathFs, home: string, perm: Permission, rel: string, want: Want): Promise<Resolved> {
-  if (!perm.root || rootProblem(perm.root)) throw new Error(tr('경로가 올바르지 않아요'))
   const mode = want === 'write' ? 'write' : 'read'
+  if (!perm.root || rootProblem(perm.root, mode === 'write')) throw new Error(tr('경로가 올바르지 않아요'))
   const pieces = splitRel(rel)
   const rootAbs = home + perm.root.slice(1)
   const full = [rootAbs, ...pieces].join('/')
@@ -97,7 +101,7 @@ export async function resolveTarget(fs: PathFs, home: string, perm: Permission, 
 }
 
 // PC에 받을 때 이름 거부: Windows에서 바로 실행될 수 있는 확장자 (끝의 점·공백은 Windows가 떼므로 같이 본다)
-const EXEC_EXT = new Set(['exe', 'bat', 'cmd', 'ps1', 'lnk', 'scr', 'msi', 'vbs', 'js', 'jar', 'com'])
+const EXEC_EXT = new Set(['exe', 'bat', 'cmd', 'ps1', 'lnk', 'scr', 'msi', 'vbs', 'js', 'jar', 'com', 'hta', 'pif', 'cpl', 'msc', 'scf', 'url', 'wsf', 'wsh', 'jse', 'vbe', 'reg', 'psm1', 'msp', 'appref-ms', 'application', 'gadget'])
 export function badSaveName(name: string): boolean {
   const n = name.replace(/[. ]+$/, '').toLowerCase()
   const dot = n.lastIndexOf('.')

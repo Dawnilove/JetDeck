@@ -23,7 +23,16 @@ test('root·포트 글자 검사', () => {
   for (const r of ['~', '~/', '/', '~/..', '~/.ssh', '~/a/.env', '/home/x', '', `~/${'a'.repeat(199)}`, '~/a/../b']) assert.ok(rootProblem(r), r)
   for (const r of ['~/logs', '~/a/b', '~/한글']) assert.equal(rootProblem(r), null, r)
   for (const p of [0, 22, 80, 1023, 2375, 5901, 65536, 3389, 6379, 9200, 11211, 27017, 1.5, '8888', null]) assert.ok(portProblem(p), String(p))
-  for (const p of [1024, 8888, 5910, 65535]) assert.equal(portProblem(p), null, String(p))
+  for (const p of [2376, 2379, 4243, 5037, 5555, 5678, 6000, 6063, 6443, 8265, 9222, 9229, 10250, 11311, 11434]) assert.ok(portProblem(p), String(p)) // 코드 실행까지 가는 서비스
+  for (const p of [1024, 8888, 5910, 6064, 65535]) assert.equal(portProblem(p), null, String(p))
+})
+
+test('올리기 root: 점으로 시작하는 폴더는 거부 (읽기 root는 허용)', () => {
+  for (const r of ['~/.local', '~/.config', '~/up/.cache', '~/.ipython/profile_default/startup']) {
+    assert.ok(rootProblem(r, true), `write ${r}`)
+    assert.equal(rootProblem(r), r.startsWith('~/.ssh') ? 'x' : null, `read ${r}`)
+  }
+  assert.equal(rootProblem('~/upload', true), null)
 })
 
 test('T3 거부 목록: 읽기·쓰기 구분', () => {
@@ -31,6 +40,16 @@ test('T3 거부 목록: 읽기·쓰기 구분', () => {
   for (const r of ['/logs/a.log', '/up/.bashrc', '/up/.profile', '/up/.git/hooks/x', '/x/.config/autostart/a.desktop', '/x/.config/systemd/user/a', '/up/crontab']) assert.equal(deniedPath(r, 'read'), r === '/logs/a.log' ? false : r === '/up/crontab' ? false : false, `read ${r}`)
   for (const r of ['/up/.bashrc', '/up/.profile', '/up/.zshrc', '/up/.git/hooks/x', '/x/.config/autostart/a.desktop', '/x/.config/systemd/user/a', '/up/crontab', '/up/.ssh/authorized_keys', '/up/.gitconfig', '/up/x.pem']) assert.equal(deniedPath(r, 'write'), true, `write ${r}`)
   assert.equal(deniedPath('/up/data.bin', 'write'), false)
+  // 쓰기: 점으로 시작하는 조각은 이름 목록에 없어도 거부 (.pth·fish·pip·ipython·vim·desktop 등)
+  for (const r of ['/.local/lib/python3.10/site-packages/x.pth', '/.config/fish/config.fish', '/.config/pip/pip.conf', '/.ipython/profile_default/startup/a.py', '/.vim/plugin/a.vim', '/up/.hidden']) assert.equal(deniedPath(r, 'write'), true, `write ${r}`)
+  assert.equal(deniedPath('/.local/lib/x.pth', 'read'), false) // 읽기는 그대로
+})
+
+test('올리기: root 아래 숨김 폴더·숨김 파일로는 쓸 수 없다', async () => {
+  const d = dev().mkdir(`${HOME}/upload/.hid`)
+  await rej(resolveTarget(d, HOME, write(), '.hid/x.pth', 'write'), /막힌 경로/)
+  await rej(resolveTarget(d, HOME, write({ root: '~/.local' }), 'x', 'write'), /경로가 올바르지 않아요/) // 스키마를 거치지 않은 root도 실행 때 거부
+  assert.equal((await resolveTarget(d, HOME, write(), 'ok.pth', 'write')).path, `${HOME}/upload/ok.pth`)
 })
 
 test('정상 경로: 폴더 보기·받기·올리기', async () => {
@@ -94,11 +113,11 @@ test('T16 올리기: 링크 대상·읽기 전용 위치·쓰기 거부 목록',
     await rej(resolveTarget(d, HOME, write(), rel, 'write'), /막힌 경로/, rel)
   }
   // 올리는 쪽 root가 읽기 거부 목록과 겹쳐도 거부
-  await rej(resolveTarget(d, HOME, write({ root: '~/.config/systemd' }), 'a.service', 'write'), /허용된 폴더를 찾을 수 없어요|막힌 경로/)
+  await rej(resolveTarget(d, HOME, write({ root: '~/.config/systemd' }), 'a.service', 'write'), /경로가 올바르지 않아요|허용된 폴더를 찾을 수 없어요|막힌 경로/)
 })
 
 test('받기 이름: 실행 파일 확장자·Windows 끝 점/공백·대체 스트림 거부', () => {
-  for (const n of ['a.exe', 'A.EXE', 'a.bat', 'a.cmd', 'a.ps1', 'a.lnk', 'a.scr', 'a.msi', 'a.vbs', 'a.js', 'a.jar', 'a.com', 'a.exe.', 'a.exe ', 'a.exe. .', 'a.txt:evil.exe', 'x:y']) assert.equal(badSaveName(n), true, n)
+  for (const n of ['a.exe', 'A.EXE', 'a.bat', 'a.cmd', 'a.ps1', 'a.lnk', 'a.scr', 'a.msi', 'a.vbs', 'a.js', 'a.jar', 'a.com', 'a.exe.', 'a.exe ', 'a.exe. .', 'a.txt:evil.exe', 'x:y', 'a.hta', 'a.PIF', 'a.cpl', 'a.msc', 'a.scf', 'a.url', 'a.wsf', 'a.jse', 'a.vbe', 'a.reg', 'a.psm1', 'a.appref-ms']) assert.equal(badSaveName(n), true, n)
   for (const n of ['a.log', 'a.txt', 'js', 'exe', 'archive.tar.gz', 'a.json', 'readme']) assert.equal(badSaveName(n), false, n)
 })
 

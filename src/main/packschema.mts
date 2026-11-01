@@ -426,7 +426,7 @@ function checkPermission(p: unknown, S: boolean, seen: Set<string>): { perm?: Pe
   } else {
     const extra = only(['remotePort', 'maxMinutes'])
     if (extra) return bad(`${kind} 권한은 ${extra}를 쓸 수 없어요`)
-    const rp = rootProblem(p.root)
+    const rp = rootProblem(p.root, kind === 'sftp.write')
     if (rp) return bad(rp)
     out.root = p.root as string
     const mb = p.maxBytes ?? LIMITS.permBytesDefault

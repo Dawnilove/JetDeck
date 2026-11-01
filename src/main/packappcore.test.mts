@@ -28,12 +28,13 @@ function setup(perms: Record<string, unknown>[] = [{}, {}], connDevices?: Record
     .file('/etc/passwd', 'root:x')
     .file(`${HOME}/.ssh/id_rsa`, 'KEY')
   const dir = mkdtempSync(join(tmpdir(), 'jdapp-'))
-  const ui = { save: join(dir, 'saved.log') as string | null, open: null as string | null, saveCalls: 0, openCalls: 0, names: [] as string[] }
+  const ui = { save: join(dir, 'saved.log') as string | null, open: null as string | null, saveCalls: 0, openCalls: 0, names: [] as string[], active: true, whileDialog: null as (() => void) | null }
   const events: unknown[] = []
   const engine = createAppEngine({
     fsOf: async (id) => connDevices?.[id] ?? dev,
+    isActive: () => ui.active,
     ui: {
-      pickSave: async (name) => (ui.names.push(name), ui.saveCalls++, ui.save),
+      pickSave: async (name) => (ui.names.push(name), ui.saveCalls++, ui.whileDialog?.(), ui.save),
       pickOpen: async () => (ui.openCalls++, ui.open)
     },
     emit: (e) => events.push(e)
@@ -111,7 +112,7 @@ test('get: 저장 대화상자에서 고른 곳에만 임시 이름으로 받고
   assert.deepEqual(s.ui.names, ['a.log'])
   s.ui.save = null
   assert.deepEqual(await s.engine.run('c1', s.t('get'), { file: 'a.log' }, ''), { op: 'get', saved: null, size: 0 })
-  for (const bad of ['x.exe', 'x.BAT', 'x.ps1', 'x.js', 'x.exe.']) {
+  for (const bad of ['x.exe', 'x.BAT', 'x.ps1', 'x.js', 'x.exe.', 'x.hta']) {
     s.ui.save = join(s.dir, bad)
     await rej(s.engine.run('c1', s.t('get'), { file: 'a.log' }, ''), /실행 파일 형식/)
     assert.equal(existsSync(s.ui.save), false, bad)
@@ -119,6 +120,21 @@ test('get: 저장 대화상자에서 고른 곳에만 임시 이름으로 받고
   assert.deepEqual(readdirSync(s.dir), ['saved.log'])
   assert.deepEqual(s.events.length >= 0, true)
   s.done()
+})
+
+test('get: 저장 대화상자가 열려 있는 동안 파일이 링크로 바뀌거나 팩이 꺼지면 받지 않는다', async () => {
+  const s = setup()
+  s.dev.file(`${HOME}/.env`, 'FAKE')
+  s.ui.whileDialog = () => s.dev.link(`${HOME}/logs/a.log`, `${HOME}/.env`) // 검사 뒤, 읽기 전
+  await rej(s.engine.run('c1', s.t('get'), { file: 'a.log' }, ''), /허용된 폴더 밖|막힌 경로/)
+  assert.deepEqual(readdirSync(s.dir), []) // 받던 파일도 임시 파일도 없음
+  const s2 = setup()
+  s2.ui.whileDialog = () => (s2.ui.active = false) // 대화상자 동안 팩이 꺼짐
+  await rej(s2.engine.run('c1', s2.t('get'), { file: 'a.log' }, ''), /켜져 있지 않아요/)
+  assert.deepEqual(readdirSync(s2.dir), [])
+  assert.equal(s2.engine.size(), 0)
+  s.done()
+  s2.done()
 })
 
 test('T15 get: 상한 초과는 거부 / 전송 중 연결이 끊기면 임시 파일을 지운다', async () => {

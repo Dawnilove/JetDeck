@@ -3,7 +3,7 @@
 // 원칙: 화면은 (팩, 플러그인, 항목, 입력값, 토큰)만 보낸다. Device 경로는 팩 템플릿 + 검사된 입력값으로 main이 만들고, PC 경로는 OS 대화상자에서만 얻는다
 import { createHash, randomBytes } from 'node:crypto'
 import { createReadStream, createWriteStream } from 'node:fs'
-import { rename as fsRename, stat as fsStat, unlink as fsUnlink } from 'node:fs/promises'
+import { rename as fsRename, stat as fsStat, unlink as fsUnlink, writeFile } from 'node:fs/promises'
 import type { Socket } from 'node:net'
 import { basename } from 'node:path'
 import { Transform, Writable, type Readable } from 'node:stream'
@@ -36,6 +36,7 @@ export type AppDeps = {
   ui: AppUi
   emit?: (e: AppEvent) => void
   connectTo?: (connId: string, sock: Socket, remotePort: number) => void // 터널: 들어온 연결을 Device 127.0.0.1:remotePort에 이음 (packapp.ts가 forwardOut·pipe로 연결)
+  isActive?: (packId: string, hash: string) => boolean // 그 팩이 지금도 켜져 있고 파일이 같은지 (대화상자를 기다린 뒤 확인). 없으면 확인 안 함
   freePort?: () => Promise<number> // 시험용
   tunnelMs?: (minutes: number) => number // 시험용
 }
@@ -238,14 +239,19 @@ export function createAppEngine(deps: AppDeps) {
       const dest = await deps.ui.pickSave(safeName(baseOf(w.path)), ctx)
       if (!dest) return { op, saved: null, size: 0 }
       if (badSaveName(basename(dest))) throw new Error(tr('실행 파일 형식(.exe 등)으로는 저장할 수 없어요'))
+      // 저장 대화상자가 열려 있는 동안 팩이 꺼졌거나 Device 파일이 링크로 바뀌었을 수 있음 → 대화상자 뒤에 팩 상태와 Device 경로를 다시 검사하고, 그 결과만 읽음
+      if (deps.isActive && !deps.isActive(t.pack.id, t.hash)) throw new Error(tr('이 팩은 켜져 있지 않아요'))
+      const w2 = await resolveTarget(fs, home, limited, rel, 'file')
       const o = begin(connId, t, opId)
       const tmp = `${dest}.jdpart-${rand()}`
       let lastEmit = 0
       try {
-        await transfer(o.signal, fs.readStream(w.path), counter(perm.maxBytes!, (n) => {
+        await transfer(o.signal, fs.readStream(w2.path), counter(perm.maxBytes!, (n) => {
           if (Date.now() - lastEmit > 150) (lastEmit = Date.now(), deps.emit?.({ type: 'progress', opId: o.opId, done: n, total: size }))
         }), createWriteStream(tmp, { flags: 'wx' }))
         await fsRename(tmp, dest)
+        // Windows: 인터넷에서 받은 파일 표시(ZoneId=3)를 달아 실행할 때 Windows 경고가 나오게 함. 실패해도(FAT 등 대체 스트림 없음) 받기는 성공
+        if (process.platform === 'win32') await writeFile(`${dest}:Zone.Identifier`, '[ZoneTransfer]\r\nZoneId=3\r\n').catch(() => {})
       } catch (e) {
         await fsUnlink(tmp).catch(() => {})
         throw e
