@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { analyze, destroysBlockedPath, effectiveRisk, REASON_TEXT, type Reason, type Risk } from './risk.mts'
+import { analyze, destroysBlockedPath, effectiveRisk, isSensitivePath, permRisk, REASON_TEXT, type Reason, type Risk } from './risk.mts'
 
 const risk = (c: string): Risk => analyze(c).risk
 let total = 0
@@ -181,4 +181,15 @@ test('아무 글자나 넣어도 멈추거나 던지지 않고, 읽기 증명은
 
 test('시험 개수: 우회 시도 150건 이상', () => {
   assert.ok(total >= 150, String(total))
+})
+
+test('6.0.0 권한 위험도: 종류로 정해지고 danger는 없음', () => {
+  assert.deepEqual(permRisk('sftp.read'), { risk: 'read', reasons: [] })
+  assert.deepEqual(permRisk('sftp.write'), { risk: 'change', reasons: ['sftp-write'] })
+  assert.deepEqual(permRisk('tunnel'), { risk: 'change', reasons: ['tunnel'] })
+})
+
+test('6.0.0 isSensitivePath: 명령 분석과 같은 목록', () => {
+  for (const p of ['~/.ssh/id_rsa', '/home/u/.aws/credentials', '~/x/.env', '~/a/b.pem', '~/.bash_history', '/etc/shadow', '~/.config/gcloud/x']) assert.equal(isSensitivePath(p), true, p)
+  for (const p of ['~/logs/a.log', '~/upload/a.bin', '/home/u/data/x.txt']) assert.equal(isSensitivePath(p), false, p)
 })
