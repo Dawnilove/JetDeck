@@ -210,7 +210,7 @@ export function createAppEngine(deps: AppDeps) {
     const token = sha(t.pack.id, t.hash, t.pluginId, a.id, 'put', w.path, w.exists ? 1 : 0, local, st.size, st.mtimeMs)
     if (pending.size >= PENDING_MAX) pending.delete(pending.keys().next().value!)
     pending.set(token, { connId, local, size: st.size, mtimeMs: st.mtimeMs, at: Date.now() })
-    return { ...base, needConfirm: true, token, remotePath: toTilde(w.path, home), exists: w.exists, local: { name: safeName(basename(local)), size: st.size } }
+    return { ...base, needConfirm: true, token, remotePath: safeName(toTilde(w.path, home)), exists: w.exists, local: { name: safeName(basename(local)), size: st.size } }
   }
 
   async function run(connId: string, t: AppTarget, given: Record<string, string> | undefined, token: unknown, opId?: string, ctx?: unknown): Promise<AppResult> {
@@ -368,7 +368,7 @@ export function createAppEngine(deps: AppDeps) {
       } finally {
         o.end()
       }
-      return { op, name: safeName(baseOf(w.path)), size: p.size, path: toTilde(w.path, home) }
+      return { op, name: safeName(baseOf(w.path)), size: p.size, path: safeName(toTilde(w.path, home)) }
     }
 
     throw new Error(tr('아직 지원하지 않는 동작이에요'))

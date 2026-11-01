@@ -14,7 +14,7 @@ export interface PathFs {
 
 export const PATH_LIMITS = { path: 1024, piece: 255, root: 200 }
 // 제어 문자·역슬래시·BiDi·보이지 않는 글자 (화면에 보이는 경로와 실제 경로가 달라지는 것 방지)
-const BAD_CHARS = /[\u0000-\u001f\u007f-\u009f\u061c\\​-‏‪-‮⁠-⁯﻿]/
+const BAD_CHARS = /[\u0000-\u001f\u007f-\u009f\u061c\u2028\u2029\u00ad\u180e\ufff9-\ufffb\\​-‏‪-‮⁠-⁯﻿]/
 const ENCODED = /%(2e|2f|5c)/i // 퍼센트 인코딩 우회 흉내 (SFTP는 해석하지 않지만 팩 글자에서 아예 막음)
 // 인증이 없거나 코드 실행까지 가는 관리 서비스: Docker(2375·2376·4243) · RDP · Redis · Elasticsearch · memcached · MongoDB · etcd · adb(5037·5555) · debugpy · Chrome DevTools · Node inspector · kube(6443·10250) · Ray · Ollama · ROS1 master
 const BAD_PORTS = new Set([2375, 2376, 2379, 3389, 4243, 5037, 5555, 5678, 6379, 6443, 8265, 9200, 9222, 9229, 10250, 11211, 11311, 11434, 27017])
@@ -40,6 +40,7 @@ export function rootProblem(root: unknown, write = false): string | null {
   const pieces = root.slice(2).split('/')
   if (pieces.some(pieceProblem)) return 'root에 빈 조각·..·제어 문자는 쓸 수 없어요'
   if (isSensitivePath(root)) return 'root가 민감한 경로예요 (.ssh, .env 등)'
+  if (pieces.length === 1 && ['.config', '.cache', '.local'].includes(pieces[0])) return 'root에 ~/.config·~/.cache·~/.local 전체는 쓸 수 없어요'
   if (write && pieces.some((s) => s.startsWith('.'))) return '올리기 root에는 점(.)으로 시작하는 폴더를 쓸 수 없어요'
   return null
 }
@@ -54,7 +55,8 @@ export function splitRel(rel: string): string[] {
 // 쓰기에서 더 막는 이름: 셸 시작 파일·자동 실행 폴더·git 설정 (읽기·쓰기 공통 거부 목록은 risk.mts isSensitivePath)
 const WRITE_DENY = /(^|\/)(\.bashrc|\.bash_profile|\.bash_login|\.bash_logout|\.profile|\.zshrc|\.zprofile|\.zshenv|\.xprofile|\.xsession|\.pam_environment|\.gitconfig)$|(^|\/)\.config\/(autostart|systemd|git)(\/|$)|(^|\/)\.git(\/|$)|(^|\/)\.local\/share\/systemd(\/|$)|crontab/i
 const DOT_PIECE = /(^|\/)\./ // 쓰기는 점으로 시작하는 조각이 하나라도 있으면 거부 (이름 목록은 끝이 없음). 읽기는 해당 없음
-export const deniedPath = (rest: string, mode: 'read' | 'write'): boolean => isSensitivePath('~' + rest) || (mode === 'write' && (DOT_PIECE.test(rest) || WRITE_DENY.test(rest)))
+const READ_DENY = /(^|\/)(\.envrc|fish_history)$|(^|\/)\.git\/config$/i // risk.mts SENS는 analyze() 결과가 바뀌므로 읽기 거부만 여기서 더함
+export const deniedPath = (rest: string, mode: 'read' | 'write'): boolean => isSensitivePath('~' + rest) || READ_DENY.test(rest) || (mode === 'write' && (DOT_PIECE.test(rest) || WRITE_DENY.test(rest)))
 
 const under = (p: string, dir: string) => p.startsWith(dir + '/')
 const dirOf = (p: string) => p.slice(0, p.lastIndexOf('/'))

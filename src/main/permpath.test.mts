@@ -30,9 +30,24 @@ test('root·포트 글자 검사', () => {
 test('올리기 root: 점으로 시작하는 폴더는 거부 (읽기 root는 허용)', () => {
   for (const r of ['~/.local', '~/.config', '~/up/.cache', '~/.ipython/profile_default/startup']) {
     assert.ok(rootProblem(r, true), `write ${r}`)
-    assert.equal(rootProblem(r), r.startsWith('~/.ssh') ? 'x' : null, `read ${r}`)
+    if (/^~\/\.(local|config)$/.test(r)) assert.ok(rootProblem(r), `read ${r}`) // 6.1.2: 통째 root는 읽기도 거부
+    else assert.equal(rootProblem(r), null, `read ${r}`)
   }
   assert.equal(rootProblem('~/upload', true), null)
+})
+
+test('6.1.2 #5 읽기 root: ~/.config·~/.cache·~/.local 하나뿐이면 거부, 하위·다른 숨김 폴더는 허용', () => {
+  for (const r of ['~/.config', '~/.cache', '~/.local']) assert.ok(rootProblem(r), r)
+  for (const r of ['~/.ros/log', '~/.config/app', '~/.local/share/x']) assert.equal(rootProblem(r), null, r)
+  for (const r of ['/x/.envrc', '/.local/share/fish/fish_history', '/x/.git/config']) assert.equal(deniedPath(r, 'read'), true, r)
+  assert.equal(deniedPath('/x/.git/HEAD', 'read'), false)
+})
+
+test('6.1.2 #6 U+2028·2029·00AD·180E·FFF9~FFFB는 경로 조각·표시 이름에서 거부·제거', () => {
+  for (const c of [' ', ' ', '­', '᠎', '￹', '￻']) {
+    assert.throws(() => splitRel(`a${c}b`), /경로가 올바르지 않아요/, c.charCodeAt(0).toString(16))
+    assert.equal(safeName(`a${c}b`), 'ab')
+  }
 })
 
 test('T3 거부 목록: 읽기·쓰기 구분', () => {

@@ -20,7 +20,7 @@ export const FIELD_TYPES = ['select', 'text', 'int', 'path', 'flag']
 export const FLAG_ON = /^[A-Za-z0-9_.=-]{1,40}$/
 
 // 제어 문자·줄바꿈·BiDi·제로폭 (확인창에 보이는 글자와 실제 입력이 달라지는 것 방지)
-const BAD = /[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁯﻿]/
+const BAD = /[\u0000-\u001f\u007f-\u009f\u061c\u00ad\u180e\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff\ufff9-\ufffb]/
 const WORD = /^[A-Za-z0-9_.][A-Za-z0-9_.-]*$/
 const ROS = /^[A-Za-z0-9_~/][A-Za-z0-9_~/]*$/
 

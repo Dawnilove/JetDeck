@@ -6,6 +6,8 @@ import { join } from 'path'
 import type { Client } from 'ssh2'
 import { getClient } from './session'
 import { tr } from './i18n.mts'
+import { forwardOut } from './fwdout.mts'
+export { forwardOut }
 
 // 포트 포워딩 (design/PortForward.dc.html). 규칙은 호스트별로 저장, 켜 둔 규칙은 접속할 때 자동 시작
 export type Rule = { id: string; name: string; kind: 'L' | 'R' | 'D'; localPort: number; remotePort: number; on: boolean }
@@ -56,15 +58,6 @@ export function pipe(a: Socket, b: NodeJS.ReadWriteStream & { destroy?: () => vo
   a.on('error', () => b.destroy?.())
   b.on('error', () => a.destroy())
   a.on('close', () => b.destroy?.())
-}
-
-// SSH로 대상에 연결. 연결이 이미 끊겼으면 ssh2가 예외를 던지므로(앱 main 프로세스가 죽음) 잡아서 그 소켓만 닫음
-export function forwardOut(client: Client, sock: Socket, host: string, port: number, ok: (stream: NodeJS.ReadWriteStream & { destroy?: () => void }) => void): void {
-  try {
-    client.forwardOut('127.0.0.1', sock.remotePort ?? 0, host, port, (err, stream) => (err ? sock.destroy() : ok(stream)))
-  } catch {
-    sock.destroy()
-  }
 }
 
 // 동적(-D): 최소 SOCKS5 서버 (인증 없음, CONNECT만). 브라우저 프록시를 localhost:포트로 지정해 사용

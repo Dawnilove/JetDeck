@@ -14,7 +14,7 @@ const flag = (): Field => ({ ...base, name: 'g', type: 'flag', on: '--once', req
 
 test('글자 종류 검사: 맨 앞 -·제어 문자·길이·형식', () => {
   assert.equal(charsetProblem('word', 'abc_1.2-x', 60), null)
-  for (const v of ['-rf', '--x', 'a b', 'a;b', 'a\nb', 'a$b', "a'b", 'a/b', '', '한글', 'a‮b']) assert.notEqual(charsetProblem('word', v, 60), null, JSON.stringify(v))
+  for (const v of ['-rf', '--x', 'a b', 'a;b', 'a\nb', 'a$b', "a'b", 'a/b', '', '한글', 'a‮b', 'a؜b', 'a b', 'a b', 'a­b', 'a᠎b', 'a￹b', 'a￻b']) assert.notEqual(charsetProblem('word', v, 60), null, JSON.stringify(v))
   assert.equal(charsetProblem('ros', '/camera/image_raw', 60), null)
   assert.equal(charsetProblem('ros', '~/x', 60), null)
   for (const v of ['-x', '/a b', '/a;b', '/a$(x)']) assert.notEqual(charsetProblem('ros', v, 60), null, v)
