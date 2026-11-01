@@ -158,10 +158,10 @@ test('devtools.json: Git 배지 1개, 검증 통과, 한·영, 기본 꺼짐, �
 })
 
 // 6.0.0 권한 팩: 검증 통과, 한·영, 기본 꺼짐, 쓰지 않는 권한 없음
-for (const [id, file] of [['file-transfer', 'filetransfer'], ['web-tunnel', 'webtunnel']]) {
+for (const [id, file] of [['file-transfer', 'filetransfer'], ['web-tunnel', 'webtunnel'], ['uart-log', 'uartlog']]) {
   test(`${id}: 권한 팩 검증 통과·한영·기본 꺼짐`, () => {
     const raw = JSON.parse(readFileSync(new URL(`./${file}.json`, import.meta.url), 'utf8'))
-    const r = validatePack(raw, { official: true, appVersion: '6.0.0' })
+    const r = validatePack(raw, { official: true, appVersion: '6.1.0' })
     assert.deepEqual(r.errors, [])
     assert.deepEqual(r.warnings, [])
     assert.equal(r.pack?.id, id)

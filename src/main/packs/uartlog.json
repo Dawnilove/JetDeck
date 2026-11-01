@@ -1,0 +1,30 @@
+{
+  "id": "uart-log",
+  "format": 1,
+  "version": "6.1.0",
+  "minApp": "6.1.0",
+  "name": { "ko": "UART 로그 (베타)", "en": "UART log (beta)" },
+  "desc": { "ko": "이 PC에 연결한 장치의 시리얼 포트를 읽기만 해요. 장치로 아무것도 보내지 않아요.", "en": "Read a serial port of a device plugged into this PC. Nothing is sent to the device." },
+  "author": "JetDeck",
+  "license": "Apache-2.0",
+  "permissions": [
+    {
+      "id": "uart",
+      "kind": "serial.read",
+      "baud": 115200,
+      "maxMinutes": 10,
+      "maxBytes": 5242880,
+      "why": { "ko": "이 PC에 연결한 장치의 시리얼 로그(115200)를 읽어요. 포트는 실행할 때 직접 골라요", "en": "Read the serial log (115200) of a device plugged into this PC. You pick the port each time" }
+    }
+  ],
+  "plugins": [
+    {
+      "id": "uart",
+      "title": { "ko": "UART 로그", "en": "UART log" },
+      "desc": { "ko": "일부 장치는 포트를 열 때 다시 시작해요. 작업 중인 3D 프린터·기계의 포트는 열지 마세요.", "en": "Some devices restart when the port opens. Do not open the port of a printer or machine that is working." },
+      "actions": [
+        { "id": "read", "label": { "ko": "시리얼 읽기 (115200)", "en": "Read serial (115200)" }, "mode": "app", "perm": "uart", "op": "read" }
+      ]
+    }
+  ]
+}

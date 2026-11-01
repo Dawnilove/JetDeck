@@ -12,6 +12,7 @@ import ros2Json from './packs/ros2.json'
 import ros2LiveJson from './packs/ros2live.json'
 import fileTransferJson from './packs/filetransfer.json'
 import webTunnelJson from './packs/webtunnel.json'
+import uartLogJson from './packs/uartlog.json'
 import { parseFromOutput } from './packfields.mts'
 import { dropConn, runBadges } from './packbadge.mts'
 import { appReconcile, registerPackAppIpc } from './packapp'
@@ -37,7 +38,8 @@ const OFFICIAL = [
   { fileName: 'devtools.json', raw: devtoolsJson as unknown }, // 기본 꺼짐(베타), 탐색기 Git 배지
   { fileName: 'examples.json', raw: examplesJson as unknown }, // 기본 꺼짐(packstore OFFICIAL_DEFAULT_OFF). 원본: docs/plugins/examples/
   { fileName: 'filetransfer.json', raw: fileTransferJson as unknown }, // 기본 꺼짐(베타), 권한: sftp
-  { fileName: 'webtunnel.json', raw: webTunnelJson as unknown } // 기본 꺼짐(베타), 권한: 터널
+  { fileName: 'webtunnel.json', raw: webTunnelJson as unknown }, // 기본 꺼짐(베타), 권한: 터널
+  { fileName: 'uartlog.json', raw: uartLogJson as unknown } // 기본 꺼짐(베타), 권한: 시리얼 읽기
 ]
 const userDir = () => join(app.getPath('userData'), 'packs')
 const stateFile = () => join(app.getPath('userData'), 'packs-state.json')
