@@ -10,6 +10,7 @@ JetDeck 5.0은 **팩**으로 기능을 늘릴 수 있어요. 팩은 Device에서
 * [JSON Schema](jdpack.schema.json) — `"$schema"` 한 줄로 VS Code 자동 완성
 * [예제 · Examples](examples/examples.jdpack.json) — 내 프로젝트·센서·학습 작업 템플릿
 * [모음 게시 절차 · Publishing to the gallery](publish.md) — 관리자용
+* [팩 심사 기준 · Reviewing a pack](review.md) — 제출 검사와 관리자가 읽는 것
 
 ## 5분 만에 첫 팩 만들기
 

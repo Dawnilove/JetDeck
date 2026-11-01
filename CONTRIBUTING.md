@@ -37,6 +37,14 @@ JetDeck에 관심 가져 주셔서 고마워요. 버그 제보, 아이디어, �
 - 경로·이름은 `~/my-project`처럼 가짜 값으로 쓰고, 비밀·실제 IP·호스트·계정 이름을 넣지 마세요.
 - 한국어·영어 글자를 `{ "ko": "…", "en": "…" }` 로 둘 다 적어 주세요.
 - 파일을 `docs/plugins/jdpack.schema.json`으로 검사해 보고(VS Code에서 `"$schema"`), 앱의 플러그인 관리에서 설치해 허용 창에 ⚠가 없는지 확인하세요.
+### 모음에 팩 올리기 (Submitting to the Gallery, 5.6.0)
+앱 안 **모음**에 올리려면 PR로 **파일 하나**를 추가해 주세요: `docs/packs/files/<id>/<버전>/<id>.jdpack.json` (PR을 열 때 주소 끝에 `?template=pack-submission.md`를 붙이면 양식이 나와요).
+- `Pack check`가 자동으로 검사해요(공식·비슷한 id, 낮게 적은 위험도, 128KB 초과, 이미 올린 파일 수정 등). 결과는 Actions 실행 요약에 나와요. 팩은 **실행되지 않고** 읽기만 해요.
+- `danger` 항목이 있으면 PR 설명의 *Danger* 절에 이유를 적어야 해요.
+- 관리자가 모든 명령을 읽어 보고([심사 기준](docs/plugins/review.md)) 합쳐요. **합쳐도 바로 모음에 보이지 않아요.** 관리자가 서명한 새 목록을 게시해야 보여요. 응답 시간은 약속하지 못해요(1인 프로젝트).
+- 고칠 때는 파일을 수정하지 말고 **새 버전 폴더**로 새 PR을 올려요.
+- English: send one pack file as a PR (`?template=pack-submission.md`). The Pack check reads it without running it. The maintainer reads every command. Merging does not publish: a signed list does.
+
 - Contributing a pack: add it under `docs/plugins/examples/` via PR, with bilingual text, fake paths and honest `risk` values (when unsure use `change`).
 
 ## 3. 라이선스와 기여물의 권리

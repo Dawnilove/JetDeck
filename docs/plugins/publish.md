@@ -36,6 +36,26 @@ Rules that keep the list safe:
 
 A list is valid for **4 years** from the day you build it. After that the app still shows it but blocks new installs (packs already installed keep working). Run `gallery:build` again once every four years (no pack change is needed; `serial` goes up), then sign, verify and push. `gallery:verify` warns when fewer than 14 days are left. If you forget, new installs stop for every user until you re-sign. An old signed list stays valid until it expires or you publish a higher `serial`, so withdraw a pack by publishing a new list rather than by deleting files.
 
+## Community submissions (5.6.0)
+
+Anyone can send a pack as a **pull request** that adds exactly one file: `docs/packs/files/<id>/<version>/<id>.jdpack.json` (open the PR with `?template=pack-submission.md` for the template). The **Pack check** runs automatically (see [review.md](review.md)), and `CODEOWNERS` needs the maintainer's approval for `docs/packs/`. **Merging does not publish.** To publish:
+
+1. Read the pull request, the Job summary and every command ([review.md](review.md)). Merge it (**you confirm**).
+2. Add the `catalog.json` line (`submitter` = the GitHub account of the PR author, `reviewedAt` = today, `tags`).
+3. `npm run gallery:build`, read the summary, then sign on your own PC, `gallery:verify`, commit and push as above. A pack stays invisible to the app until the signed list contains it.
+4. An update to a published pack is a **new version folder** in a new pull request. Users see "Update available" and read the changed commands before they allow the new file.
+
+Publish the list by pushing to `main` yourself. The Pack check refuses pull requests that change published files, so do not use a pull request for the list.
+
+The repository setting **Branches → main → Require review from Code Owners** is what makes `CODEOWNERS` binding. Turn it on once in the GitHub settings.
+
+## Reports and withdrawal (5.6.0)
+
+* The **Report** button in the Gallery opens a GitHub issue form (`pack-report`) with the id, version and the first 8 characters of the fingerprint filled in. The issue is **public**, so the form says: no personal information. The app never turns a pack off because of a report.
+* A pack that **gets around the safety checks** goes to *Security → Report a vulnerability* (private, see `SECURITY.md`). The Gallery has a link for it.
+* A response time is **not promised** (one maintainer).
+* Handling: 1. confirm the problem. 2. remove the pack file with `git revert` (**you confirm** before merging). 3. add the `revoked` entry. 4. build, sign (you), verify. 5. push (**you confirm**). 6. answer and close the issue.
+
 ## Withdraw a pack
 
 Add an entry to `revoked` in `catalog.json`:
@@ -44,7 +64,7 @@ Add an entry to `revoked` in `catalog.json`:
 { "id": "some-pack", "version": "1.0.0", "reason": { "ko": "이유", "en": "reason" }, "at": "2026-11-01" }
 ```
 
-Leave out `version` to withdraw every version of the id (`sha256` can narrow it to one file). Then build, sign, verify and push. In 5.5.0 the app blocks a withdrawn pack from being installed and marks an installed one in red; turning it off automatically comes in 5.6.0.
+Leave out `version` to withdraw every version of the id (`sha256` can narrow it to one file). Then build, sign, verify and push. The app blocks a withdrawn pack from being installed. Since 5.6.0 it also **turns off** an installed one (only packs that came from the gallery and are still the same file) and shows the reason in red; turning it on again asks for one more confirmation. The app finds out when the user opens the Gallery tab, and once a day at startup: only for users who installed at least one gallery pack, only after they accepted the gallery notice, and they can turn the daily check off in the Gallery tab. Users with no gallery pack never contact the gallery at startup. So a withdrawal reaches people about a day later at most, not at once.
 
 ## Keys
 
@@ -63,5 +83,7 @@ Leave out `version` to withdraw every version of the id (`sha256` can narrow it 
 * `.gitattributes`의 `docs/packs/** -text`를 지우지 마세요. 줄 끝이 바뀌면 지문과 서명이 틀려져요.
 * 절차: ① 팩 파일을 넣고 ② `catalog.json`에 한 줄 추가 ③ 명령을 직접 읽기 ④ `npm run gallery:build`(요약 읽기) ⑤ **내 PC에서** `npm run gallery:sign -- --key <비밀 열쇠 파일>` ⑥ `npm run gallery:verify` ⑦ 커밋·push ⑧ 깨끗한 앱에서 설치 확인.
 * 목록은 만든 날부터 **4년** 뒤 만료돼요. 만료되면 목록은 보이지만 새 설치가 막혀요(이미 설치한 팩은 계속 동작). 4년에 한 번 build → 서명 → verify → push 하세요(`verify`가 14일 전부터 경고해요). 잊으면 재서명할 때까지 모든 사용자의 새 설치가 막혀요. 옛 서명 목록은 만료되거나 더 높은 `serial`이 나올 때까지 유효해요. 팩을 내릴 때는 파일을 지우지 말고 새 목록을 게시하세요.
-* 철회: `catalog.json`의 `revoked`에 `id`(필요하면 `version`)와 이유를 적고 build·서명·push 해요. 5.5.0 앱은 설치를 막고 설치된 것을 빨간 줄로 알려요. 자동으로 끄는 것은 5.6.0이에요.
+* 철회: `catalog.json`의 `revoked`에 `id`(필요하면 `version`)와 이유를 적고 build·서명·push 해요. 앱은 설치를 막고, 5.6.0부터는 모음에서 받은 팩(파일이 그대로일 때)이 켜져 있으면 **자동으로 꺼요**(빨간 줄로 이유 표시, 다시 켜려면 확인 한 번 더). 앱은 모음 탭을 열 때, 그리고 **모음에서 받은 팩이 있는 사용자만** 앱을 켤 때 하루 1번(동의했고 스위치를 끄지 않았을 때) 확인해요. 그래서 철회가 닿는 데 최대 하루쯤 걸려요.
+* 커뮤니티 제출(5.6.0): 누구나 PR로 팩 파일 하나를 올릴 수 있어요(`?template=pack-submission.md`). `Pack check`가 자동으로 검사하고([review.md](review.md)), `CODEOWNERS`로 관리자 승인이 필요해요. **합쳐도 모음에는 안 보여요.** `catalog.json` 한 줄 → build → 서명 → verify → push를 해야 보여요. 업데이트는 새 버전 폴더를 새 PR로 올려요. 목록은 PR이 아니라 직접 `main`에 push하세요. 저장소 설정 *Branches → main → Require review from Code Owners*를 한 번 켜야 `CODEOWNERS`가 효력이 있어요.
+* 신고(5.6.0): 모음의 **신고** 버튼이 GitHub 이슈 양식(`pack-report`)을 열어요(id·버전·지문 앞 8자리가 채워져요. 공개 이슈라 개인정보 금지). 안전 검사를 **우회**하는 팩은 *Security → Report a vulnerability*(비공개)로 받아요. 응답 시간은 약속하지 않아요. 앱은 신고만으로 팩을 끄지 않아요.
 * 열쇠: 비밀 열쇠는 오프라인에 보관하고 백업을 따로 둬요. 저장소·CI·노트·채팅에 두지 않아요. **잃으면** 새 열쇠 쌍을 만들고 공개 열쇠가 든 앱 업데이트를 낸 뒤 서명해요. **유출되면** 그 열쇠로 게시를 멈추고, 새 공개 열쇠를 넣은 앱 업데이트를 내요. 앱을 업데이트하기 전 사용자는 옛 열쇠로 서명된 목록을 믿을 수 있으니 릴리스 노트에 적어요. 공개 열쇠가 앱에 들어가기 전에는 앱이 모든 목록을 거부해요.
