@@ -6,6 +6,23 @@ export const releaseUrl = (version: string): string | null => (/^\d+\.\d+\.\d+$/
 
 export const RELEASES: Release[] = [
   {
+    version: '5.6.0',
+    ko: [
+      '철회된 팩은 자동으로 꺼져요 (하루 1번 확인, 끌 수 있음)',
+      '모음에 "업데이트 있음" 표시, 바뀐 명령 강조',
+      '모음에 신고 버튼 (GitHub 이슈 양식)',
+      '누구나 PR로 팩 제출 (자동 검사 + 관리자 심사)',
+      '제출 가이드·심사 기준 문서'
+    ],
+    en: [
+      'Revoked packs turn off automatically (checked once a day, can be turned off)',
+      'Gallery shows "Update available" and highlights changed commands',
+      'Report button in the Gallery (GitHub issue form)',
+      'Anyone can submit a pack by pull request (auto check + review)',
+      'Submission guide and review criteria docs'
+    ]
+  },
+  {
     version: '5.5.1',
     ko: [
       'MCP 오토파일럿: 승인 창 없이 명령 실행 (기본 꺼짐)',
