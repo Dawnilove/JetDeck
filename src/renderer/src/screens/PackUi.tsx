@@ -1,8 +1,9 @@
 import { getLang, tr } from '../../../main/i18n.mts'
 import type { CommandDiff, Inspect } from '../../../main/packstore.mts'
-import { summarizePack, type L10n, type Pack, type PackAction, type Risk } from '../../../main/packschema.mts'
+import { summarizePack, type L10n, type Pack, type PackAction, type PermKind, type Risk } from '../../../main/packschema.mts'
+import { fmtSize as fmtBytes } from './uifmt.mts'
 import type { Field } from '../../../main/packfields.mts'
-import { REASON_TEXT } from '../../../main/risk.mts'
+import { permRisk, REASON_TEXT } from '../../../main/risk.mts'
 import type { ReactNode } from 'react'
 
 // 플러그인 관리·허용 창·팩 화면이 같이 쓰는 조각들
@@ -50,6 +51,46 @@ const slotDir = (cmd: string) => cmd.split('{dir}').join(`{${tr('폴더')}}`)
 
 const fmtSize =(n: number) => (n < 1024 ? `${n}B` : `${(n / 1024).toFixed(1)}KB`)
 
+const PERM_NAME: Record<PermKind, string> = { 'sftp.read': tr('Device 파일 읽기'), 'sftp.write': tr('Device 파일 쓰기'), tunnel: tr('터널 (Device 포트를 이 PC에 연결)') }
+
+// 권한 구역 (6.0.0): 권한마다 종류·범위·한도·앱이 계산한 위험도·쓰는 항목. 앱 글자만 앱 문장이고 팩 설명(why)은 라벨 아래 따로.
+// 권한은 클릭이 있어야 실행되므로 "누르지 않아도 실행" 구역과 다름. 업데이트로 권한이 늘거나 범위가 바뀌면 빨간 줄
+function PermSection({ pack, changes }: { pack: Pack; changes?: CommandDiff }) {
+  const perms = pack.permissions ?? []
+  const count = (k: PermKind) => perms.filter((p) => p.kind === k).length
+  const grew = perms.some((p) => changes?.added.includes(`perm:${p.id}`) || changes?.changed.includes(`perm:${p.id}`))
+  return (
+    <div data-testid="pk-perms" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 10, borderRadius: 8, border: `1px solid ${grew ? 'var(--status-off)' : 'var(--warn)'}` }}>
+      <span className="caption">{tr('이 팩은 앱 기능을 써요 (누를 때마다 실행)')}</span>
+      <p style={{ fontSize: 13 }}>{tr('권한 {0}개: 읽기 {1} · 쓰기 {2} · 터널 {3}', perms.length, count('sftp.read'), count('sftp.write'), count('tunnel'))}</p>
+      {grew && <p className="msg-err" data-testid="pk-perm-grew" style={{ fontSize: 13 }}>⚠ {tr('권한이 늘었거나 범위가 바뀌었어요')}</p>}
+      {perms.map((p) => {
+        const an = permRisk(p.kind)
+        const m = changes?.added.includes(`perm:${p.id}`) ? tr('새로 추가됨') : changes?.changed.includes(`perm:${p.id}`) ? tr('범위가 바뀜') : ''
+        const used = pack.plugins.flatMap((pl) => pl.actions.filter((a) => a.perm === p.id).map((a) => lt(a.label)))
+        const range = p.kind === 'tunnel' ? tr('Device 포트 {0}', p.remotePort ?? '') : p.root ?? ''
+        const limit = p.kind === 'tunnel' ? tr('최대 {0}분', p.maxMinutes ?? 10) : [tr('파일 하나 {0}까지', fmtBytes(p.maxBytes ?? 5 * 1024 * 1024)), ...(p.kind === 'sftp.write' ? [p.overwrite === 'never' ? tr('덮어쓰기 안 함') : tr('같은 이름이 있으면 물어봄')] : [])].join(' · ')
+        return (
+          <div key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: 8, borderRadius: 8, background: 'var(--bg)', border: m ? '1px solid var(--warn)' : '1px solid transparent' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', fontSize: 13 }}>
+              <RiskTag risk={an.risk} />
+              <strong>{PERM_NAME[p.kind]}</strong>
+              {m && <span className="tag" style={{ color: 'var(--warn)', borderColor: 'var(--warn)' }}>{m}</span>}
+            </div>
+            <span className="mono" style={{ fontSize: 12, overflowWrap: 'anywhere' }}>{range} · {limit}</span>
+            <Reasons a={{ reasons: an.reasons, understated: false, declared: an.risk }} />
+            {used.length > 0 && <span className="dim" style={{ fontSize: 12 }}>{tr('쓰는 항목')}: {used.join(', ')}</span>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingTop: 4, borderTop: '1px dashed var(--border)' }}>
+              <span className="caption">{tr('팩 설명 (작성자의 글)')}</span>
+              <span style={{ fontSize: 12, overflowWrap: 'anywhere' }}>{lt(p.why)}</span>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // 허용 창·설치 확인·"내용 보기"가 같이 쓰는 본문: 머리말(작성자·버전·크기·지문·항목 수) + 모든 항목의 명령 전문
 // 숨김(이 앱이 모르는 방식)·젯슨 전용 항목도 숨기지 않고 표시만 달리 함: 실제로 켜진 뒤 다른 환경에서 실행될 수 있어서 명령은 다 보여 줌
 export function PackBody({ pack, hash, size, changes }: { pack: Pack; hash: string; size: number; changes?: CommandDiff }) {
@@ -67,6 +108,7 @@ export function PackBody({ pack, hash, size, changes }: { pack: Pack; hash: stri
         {(s.stream > 0 || s.form > 0 || s.chart > 0 || s.badge > 0) && ` / ${[...(s.stream > 0 || s.form > 0 ? [tr('실시간 {0} · 입력 {1}', s.stream, s.form)] : []), ...(s.chart > 0 ? [tr('그래프 {0}', s.chart)] : []), ...(s.badge > 0 ? [tr('배지 {0}', s.badge)] : [])].join(' · ')}`}
         {s.autoRun > 0 && ` / ${tr('자동으로 돌아가는 것 {0}', s.autoRun)}`}
       </p>
+      {pack.permissions && pack.permissions.length > 0 && <PermSection pack={pack} changes={changes} />}
       {s.autoRun > 0 && (
         <div data-testid="pk-auto" style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: 10, borderRadius: 8, border: '1px solid var(--warn)' }}>
           <span className="caption">{tr('이 팩은 아래 명령을 누르지 않아도 실행해요')}</span>
@@ -122,7 +164,7 @@ export function PackBody({ pack, hash, size, changes }: { pack: Pack; hash: stri
                   {a.hidden && <span className="tag">{tr('새 버전 앱이 필요해요')}</span>}
                   {mark(pl.id, a.id) && <span className="tag" style={{ color: 'var(--warn)', borderColor: 'var(--warn)' }}>{mark(pl.id, a.id)}</span>}
                 </div>
-                <code className="mono" style={{ fontSize: 12, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{withSlots(cmdOf(a))}</code>
+                {a.mode === 'app' ? <span className="tag">{tr('앱 기능 · 권한 {0}', a.perm ?? '')}</span> : <code className="mono" style={{ fontSize: 12, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{withSlots(cmdOf(a))}</code>}
                 {a.fields && <span className="dim mono" style={{ fontSize: 12, overflowWrap: 'anywhere' }}>{tr('입력 칸')}: {a.fields.map(fieldText).join(' · ')} — {tr('고른 값은 따옴표로 감싸 한 글자로만 들어가요')}</span>}
                 {a.mode === 'stream' && <span className="dim" style={{ fontSize: 12 }}>{tr('멈춤을 누르거나 화면을 나가면 끝나요. 최대 {0}분 실행돼요', Math.max(1, Math.round((a.timeout ?? 600) / 60)))}</span>}
                 {a.preview && <code className="mono dim" style={{ fontSize: 12, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{tr('미리보기')}: {a.preview}</code>}

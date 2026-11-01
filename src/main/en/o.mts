@@ -46,5 +46,20 @@ export const EN_O: Record<string, string> = {
   '이 PC의 다른 프로그램도 이 주소에 접속할 수 있어요.': 'Other programs on this PC can also connect to this address.',
   '{0}분 뒤 또는 정지·연결 끊김 때 닫혀요.': 'Closes after {0} minutes, or when stopped or disconnected.',
   '덮어쓰고 올리기': 'Overwrite and upload',
-  '올리기': 'Upload'
+  '올리기': 'Upload',
+  '앱 기능 · 권한 {0}': 'App feature · permission {0}',
+  'Device 파일 읽기': 'Read Device files',
+  'Device 파일 쓰기': 'Write Device files',
+  '터널 (Device 포트를 이 PC에 연결)': 'Tunnel (connect a Device port to this PC)',
+  '이 팩은 앱 기능을 써요 (누를 때마다 실행)': 'This pack uses app features (runs each time you click)',
+  '권한 {0}개: 읽기 {1} · 쓰기 {2} · 터널 {3}': '{0} permissions: read {1} · write {2} · tunnel {3}',
+  '권한이 늘었거나 범위가 바뀌었어요': 'Permissions were added or their scope changed',
+  '범위가 바뀜': 'Scope changed',
+  'Device 포트 {0}': 'Device port {0}',
+  '최대 {0}분': 'Up to {0} min',
+  '파일 하나 {0}까지': 'Up to {0} per file',
+  '덮어쓰기 안 함': 'No overwriting',
+  '같은 이름이 있으면 물어봄': 'Asks if the name exists',
+  '쓰는 항목': 'Used by',
+  '팩 설명 (작성자의 글)': 'Pack description (written by the author)'
 }

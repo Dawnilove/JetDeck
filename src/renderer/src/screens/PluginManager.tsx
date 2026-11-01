@@ -61,6 +61,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
     if (e.enabled) return act(() => window.api.packEnable(e.id, false))
     if (e.revoked) return setSub({ kind: 'revoked', e }) // 철회된 팩: 확인을 한 번 더 받음 (5.6.0)
     if (e.source === 'user' && e.approval !== 'approved') return setSub({ kind: 'allow', e }) // 처음·바뀐 뒤: 허용 창
+    if (e.source === 'official' && e.pack?.permissions?.length) return setSub({ kind: 'allow', e }) // 공식 팩도 앱 기능 권한이 있으면 켜기 전에 권한 목록을 보임 (6.0.0)
     return act(() => window.api.packEnable(e.id, true))
   }
   const pick = async () => {
@@ -180,7 +181,7 @@ export default function PluginManager({ onClose }: { onClose: () => void }) {
           foot={
             <>
               <Button onClick={() => setSub(null)}>{tr('취소')}</Button>
-              <Button variant="primary" disabled={busy} onClick={() => { const e = sub.e; setSub(null); act(() => window.api.packEnable(e.id, true, e.hash)) }}>{tr('허용하고 켜기')}</Button>
+              <Button variant="primary" disabled={busy} onClick={() => { const e = sub.e; setSub(null); act(() => window.api.packEnable(e.id, true, e.source === 'official' ? undefined : e.hash)) }}>{tr('허용하고 켜기')}</Button>
             </>
           }
         >
