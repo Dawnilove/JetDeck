@@ -6,6 +6,19 @@ export const releaseUrl = (version: string): string | null => (/^\d+\.\d+\.\d+$/
 
 export const RELEASES: Release[] = [
   {
+    version: '6.1.1',
+    ko: [
+      '시리얼 읽기: 같은 모델 보드를 바꿔 꽂아도 감지해요',
+      '포트 이름의 보이지 않는 글자를 지워서 보여요',
+      '팩 검사: 시리얼 권한의 금지 항목이 늘었어요'
+    ],
+    en: [
+      'Serial read: swapping a same-model board is detected',
+      'Invisible characters in port names are removed',
+      'Pack check: more fields refused in serial permissions'
+    ]
+  },
+  {
     version: '6.1.0',
     ko: [
       '팩이 이 PC의 시리얼 포트를 읽기 전용으로 읽어요',
