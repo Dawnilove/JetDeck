@@ -6,6 +6,19 @@ export const releaseUrl = (version: string): string | null => (/^\d+\.\d+\.\d+$/
 
 export const RELEASES: Release[] = [
   {
+    version: '6.1.2',
+    ko: [
+      '읽기 root에 ~/.config 같은 통째 폴더를 막아요',
+      '화면 속임 글자(줄 구분 등)를 더 걸러요',
+      '닫힌 소켓에 남던 터널 채널을 닫아요'
+    ],
+    en: [
+      'Whole ~/.config-style read roots are refused',
+      'More look-alike characters are filtered',
+      'Tunnel channels left on closed sockets are closed'
+    ]
+  },
+  {
     version: '6.1.1',
     ko: [
       '시리얼 읽기: 같은 모델 보드를 바꿔 꽂아도 감지해요',
