@@ -18,8 +18,11 @@
     "homepage": { "type": "string" },
     "minApp": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" },
     "plugins": { "type": "array", "minItems": 0, "maxItems": 20, "items": { "$ref": "#/definitions/plugin" }, "description": "Plugins. May be empty when the pack has badges (a pack needs at least one plugin or one badge)." },
-    "badges": { "type": "array", "maxItems": 2, "items": { "$ref": "#/definitions/badge" }, "description": "Explorer badges (5.3.0, needs minApp 5.3.0). Run automatically when you open a folder in the Explorer. Max 2 for packs you install yourself." }
+    "badges": { "type": "array", "maxItems": 2, "items": { "$ref": "#/definitions/badge" }, "description": "Explorer badges (5.3.0, needs minApp 5.3.0). Run automatically when you open a folder in the Explorer. Max 2 for packs you install yourself." },
+    "permissions": { "type": "array", "maxItems": 5, "items": { "$ref": "#/definitions/permission" }, "description": "App feature permissions (6.0.0, needs minApp 6.0.0). Actions with mode \"app\" use them by id. Packs you install yourself or publish to the gallery: max 3." }
   },
+  "if": { "required": ["permissions"] },
+  "then": { "required": ["minApp"], "properties": { "minApp": { "pattern": "^([6-9]|[1-9][0-9]+)\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$", "description": "At least 6.0.0 when the pack has permissions or mode \"app\" actions." } } },
   "definitions": {
     "badge": {
       "type": "object",
@@ -66,6 +69,23 @@
     "text300": { "$ref": "#/definitions/text", "description": "Plain text or { ko, en }. Max 300 characters." },
     "text500": { "$ref": "#/definitions/text", "description": "Plain text or { ko, en }. Max 500 characters." },
     "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,39}$" },
+    "permission": {
+      "type": "object",
+      "required": ["id", "kind", "why"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,29}$" },
+        "kind": { "enum": ["sftp.read", "sftp.write", "tunnel"], "description": "sftp.read: list, download and read text files under root. sftp.write: upload files under root. tunnel: connect one Device port to 127.0.0.1 on this PC (local forwarding only)." },
+        "why": { "$ref": "#/definitions/text300" },
+        "root": { "type": "string", "pattern": "^~/[^/]+(/[^/]+)*$", "maxLength": 200, "description": "sftp only. A folder under the home folder, for example ~/logs. Not ~ itself, no .., no sensitive folders (.ssh, .aws, ...)." },
+        "maxBytes": { "type": "integer", "minimum": 1, "maximum": 20971520, "default": 5242880, "description": "sftp only. Size limit of one file in bytes." },
+        "overwrite": { "enum": ["ask", "never"], "default": "ask", "description": "sftp.write only. ask: the confirm dialog says the file will be overwritten. never: refuse if the file exists." },
+        "remotePort": { "type": "integer", "minimum": 1024, "maximum": 65535, "description": "tunnel only. Device port. Ports of unauthenticated admin services are refused: 2375, 3389, 5900-5909, 6379, 9200, 11211, 27017." },
+        "maxMinutes": { "type": "integer", "minimum": 1, "maximum": 60, "default": 10, "description": "tunnel only. The tunnel closes after this many minutes." }
+      },
+      "if": { "properties": { "kind": { "const": "tunnel" } }, "required": ["kind"] },
+      "then": { "required": ["remotePort"], "not": { "anyOf": [{ "required": ["root"] }, { "required": ["maxBytes"] }, { "required": ["overwrite"] }] } },
+      "else": { "required": ["root"], "not": { "anyOf": [{ "required": ["remotePort"] }, { "required": ["maxMinutes"] }] } }
+    },
     "plugin": {
       "type": "object",
       "required": ["id", "title", "actions"],
@@ -79,7 +99,14 @@
     },
     "action": {
       "type": "object",
-      "required": ["id", "label", "cmd", "risk"],
+      "required": ["id", "label"],
+      "if": { "properties": { "mode": { "const": "app" } }, "required": ["mode"] },
+      "then": {
+        "description": "mode app (6.0.0): uses a permission. No cmd, auto, sudo, preview, display, confirm, params, timeout.",
+        "required": ["perm", "op"],
+        "not": { "anyOf": [{ "required": ["cmd"] }, { "required": ["auto"] }, { "required": ["sudo"] }, { "required": ["preview"] }, { "required": ["display"] }, { "required": ["confirm"] }, { "required": ["params"] }, { "required": ["timeout"] }] }
+      },
+      "else": { "required": ["cmd", "risk"] },
       "properties": {
         "$comment": { "type": "string" },
         "id": { "$ref": "#/definitions/id" },
@@ -87,7 +114,10 @@
         "desc": { "$ref": "#/definitions/text300" },
         "cmd": { "type": "string", "minLength": 1, "maxLength": 2000, "description": "Do not write sudo; use \"sudo\": true. {name} is replaced by a choice from params." },
         "risk": { "enum": ["read", "change", "danger"], "description": "What you claim. JetDeck computes the real risk and uses the higher one." },
-        "mode": { "enum": ["exec", "terminal", "stream"], "default": "exec", "description": "stream (5.1.0, needs minApp 5.1.0): output that keeps coming, shown live with display.type log." },
+        "mode": { "enum": ["exec", "terminal", "stream", "app"], "default": "exec", "description": "stream (5.1.0, needs minApp 5.1.0): output that keeps coming, shown live with display.type log. app (6.0.0, needs minApp 6.0.0): uses a permission from permissions." },
+        "perm": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,29}$", "description": "mode app only. The id of a permission in permissions." },
+        "op": { "enum": ["list", "get", "text", "put", "open"], "description": "mode app only. sftp.read: list, get, text. sftp.write: put. tunnel: open." },
+        "path": { "type": "string", "maxLength": 300, "description": "mode app only. Path under the permission root, relative, no .. and no leading /. {name} slots are filled from fields. Not for open." },
         "enter": { "type": "boolean", "default": true },
         "sudo": { "type": "boolean" },
         "confirm": { "$ref": "#/definitions/text500" },

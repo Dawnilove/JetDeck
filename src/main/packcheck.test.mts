@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
-import { checkSubmission, dangerNote, distance, renderSummary } from './packcheck.mts'
+import { checkSubmission, dangerNote, distance, permNote, renderSummary } from './packcheck.mts'
 
 const L = (s: string) => ({ ko: s, en: s })
 const act = (cmd: string, risk = 'read', extra: Record<string, unknown> = {}) => ({ id: 'a', label: L('a'), cmd, risk, ...extra })
@@ -90,4 +90,59 @@ test('글자 차이·Danger 절 읽기', () => {
   assert.equal(distance('abc', 'xyz'), 3)
   assert.equal(dangerNote('# Danger\nlong enough reason here, yes'), 'long enough reason here, yes'.length)
   assert.equal(dangerNote('no section'), 0)
+})
+
+// ── 6.0.0 권한 (T9) ──
+const perm = (id: string, extra: Record<string, unknown> = {}) => ({ id, kind: 'sftp.read', root: `~/${id}`, why: L('Reads the folder'), ...extra })
+const appAct = (id: string, p: string, extra: Record<string, unknown> = {}) => ({ id, label: L(id), mode: 'app', perm: p, op: 'list', ...extra })
+const permPack = (perms: unknown[], over: Record<string, unknown> = {}) => pack({ minApp: '6.0.0', permissions: perms, ...over }, (perms as { id: string; kind: string }[]).map((p) => appAct(`l-${p.id}`, p.id, p.kind === 'tunnel' ? { op: 'open' } : {})))
+const PERM_BODY = '## What\nx\n## Permissions\nReads only the log folder so the user can see their logs here.\n'
+
+test('권한 팩: 이유가 있으면 통과하고, 요약표에 권한과 app 항목이 나옴', () => {
+  const r = run(permPack([perm('logs'), perm('web', { kind: 'tunnel', remotePort: 8888, root: undefined })]), { body: PERM_BODY })
+  assert.equal(r.ok, true, r.problems.join(' | '))
+  assert.deepEqual(r.reports[0].perms.map((x) => x.kind), ['sftp.read', 'tunnel'])
+  const md = renderSummary(r)
+  assert.match(md, /\[permission sftp\.read\] logs: ~\/logs/)
+  assert.match(md, /\[permission tunnel\] web: Device 127\.0\.0\.1:8888/)
+  assert.match(md, /app logs list/) // cmd가 없는 항목도 나열
+  assert.match(md, /permissions 2/)
+})
+
+test('T9 권한이 있는데 PR 설명에 Permissions 절이 없거나 20자 미만이면 실패', () => {
+  const p = permPack([perm('logs')])
+  fails(run(p), /Permissions/)
+  fails(run(p, { body: '## Permissions\nshort\n' }), /Permissions/)
+  fails(run(p, { body: '## Permissions\n<!-- why -->\n' }), /Permissions/)
+  fails(run(p, { body: '## Danger items\nReads only the log folder so the user can see them.\n' }), /Permissions/) // 다른 절의 글은 안 셈
+})
+
+test('T9 권한 4개·minApp 낮음·거부 포트·root 위반·쓰지 않는 권한은 모두 실패', () => {
+  const four = ['a1', 'a2', 'a3', 'a4'].map((id) => perm(id))
+  const body = PERM_BODY
+  fails(run(permPack(four), { body }), /3개까지/)
+  fails(run(permPack([perm('logs')], { minApp: '5.9.0' }), { body }), /minApp/)
+  fails(run(permPack([perm('logs')], { minApp: undefined }), { body }), /minApp/)
+  fails(run(permPack([perm('web', { kind: 'tunnel', remotePort: 22, root: undefined })]), { body }), /web: /)
+  fails(run(permPack([perm('web', { kind: 'tunnel', remotePort: 2375, root: undefined })]), { body }), /web: /)
+  fails(run(permPack([perm('logs', { root: '~/.ssh' })]), { body }), /logs: /)
+  fails(run(permPack([perm('logs', { root: '~' })]), { body }), /logs: /)
+  fails(run(permPack([perm('logs', { why: undefined })]), { body }), /logs: /)
+  fails(run(pack({ minApp: '6.0.0', permissions: [perm('logs'), perm('spare')] }, [appAct('l', 'logs')]), { body }), /쓰는 항목이 없어요/)
+  fails(run(pack({ minApp: '6.0.0', permissions: [perm('logs')] }, [appAct('l', 'logs', { cmd: 'ls', auto: true })]), { body }), /app 항목은/)
+  fails(run(pack({ minApp: '6.0.0', permissions: [perm('logs', { kind: 'sftp.write' })] }, [appAct('l', 'logs', { op: 'put', path: 'x', risk: 'read' })]), { body }), /위험도/) // 낮게 적음
+})
+
+test('T9 위험 항목과 권한이 같이 있으면 두 절 모두 필요', () => {
+  const p = pack({ minApp: '6.0.0', permissions: [perm('logs')] }, [appAct('l', 'logs'), act('pkill -f train.py', 'danger', { id: 'k', confirm: L('Stop it?') })])
+  const danger = '## Danger items\nStops only the training job of this pack on purpose, after a prompt.\n'
+  fails(run(p, { body: PERM_BODY }), /Danger/)
+  fails(run(p, { body: danger }), /Permissions/)
+  assert.equal(run(p, { body: PERM_BODY + danger }).ok, true)
+})
+
+test('Permissions 절 읽기', () => {
+  assert.equal(permNote('# Permissions\nlong enough reason here, yes'), 'long enough reason here, yes'.length)
+  assert.equal(permNote('## Permission reasons\nabc def'), 7)
+  assert.equal(permNote('no section'), 0)
 })

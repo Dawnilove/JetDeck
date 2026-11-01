@@ -263,3 +263,64 @@ test('게시 목록 만료는 만든 날에서 4년', () => {
     cleanup(dir)
   }
 })
+
+// ── 6.0.0 권한 (T10) ──
+const permPack = (id: string, over: Record<string, unknown> = {}) => ({
+  id, format: 1, version: '1.0.0', minApp: '6.0.0', name: L(id), desc: L('d'), author: 'tester', license: 'MIT',
+  permissions: [{ id: 'logs', kind: 'sftp.read', root: '~/logs', why: L('x') }, { id: 'web', kind: 'tunnel', remotePort: 8888, why: L('x') }],
+  plugins: [{ id: 'p', title: L('p'), actions: [{ id: 'list', label: L('l'), mode: 'app', perm: 'logs', op: 'list' }, { id: 'open', label: L('o'), mode: 'app', perm: 'web', op: 'open' }] }], ...over
+})
+
+test('T10 build가 perms를 팩에서 계산해 색인에 넣고, 카탈로그에 적어도 무시한다', () => {
+  const dir = setup([{ id: 'file-check', pack: permPack('file-check'), entry: { perms: ['serial.read'] } }])
+  try {
+    const b = built(dir)
+    assert.deepEqual(b.ok && b.index.packs[0].caps.perms, ['sftp.read', 'tunnel:8888'])
+    assert.equal(b.ok && b.index.packs[0].minApp, '6.0.0')
+    assert.ok(b.ok && b.summary.some((l) => /권한 sftp\.read, tunnel:8888/.test(l)))
+  } finally {
+    cleanup(dir)
+  }
+})
+
+test('T10 verify: 색인의 perms를 일부러 틀리게 하면 실패 (더 적게·더 많게·다르게)', () => {
+  const dir = setup([{ id: 'file-check', pack: permPack('file-check') }])
+  try {
+    const k = newKeyPair()
+    built(dir)
+    signDir(dir, k.secretPem, { keys: [k.publicB64] })
+    assert.ok(verifyDir(dir, { keys: [k.publicB64], now: NOW }).ok)
+    const orig = readFileSync(join(dir, 'index.json'), 'utf8')
+    for (const perms of [[], ['sftp.read'], ['sftp.read', 'tunnel:8888', 'sftp.write'], ['sftp.read', 'tunnel:9999'], ['tunnel:8888', 'sftp.read']]) {
+      const j = JSON.parse(orig)
+      j.packs[0].caps.perms = perms
+      writeFileSync(join(dir, 'index.json'), JSON.stringify(j, null, 2) + '\n')
+      assert.ok(signDir(dir, k.secretPem, { keys: [k.publicB64] }).ok)
+      const v = verifyDir(dir, { keys: [k.publicB64], now: NOW })
+      assert.equal(v.ok, false, JSON.stringify(perms))
+      assert.ok(v.problems.some((p) => /caps\.perms/.test(p)), v.problems.join('; '))
+    }
+  } finally {
+    cleanup(dir)
+  }
+})
+
+test('build 실패: 권한 팩인데 minApp이 낮음 / 권한 4개 / 쓰지 않는 권한', () => {
+  const base = permPack('x').permissions
+  const cases: [Record<string, unknown>, RegExp][] = [
+    [{ minApp: '5.9.0' }, /minApp/],
+    [{ minApp: undefined }, /minApp/],
+    [{ permissions: [...base, { id: 'a', kind: 'sftp.read', root: '~/a', why: L('x') }, { id: 'b', kind: 'sftp.read', root: '~/b', why: L('x') }] }, /3개까지/],
+    [{ permissions: [...base, { id: 'spare', kind: 'sftp.read', root: '~/s', why: L('x') }] }, /쓰는 항목이 없어요/]
+  ]
+  for (const [over, re] of cases) {
+    const dir = setup([{ id: 'file-check', pack: permPack('file-check', over) }])
+    try {
+      const b = buildIndex(dir, { now: NOW })
+      assert.equal(b.ok, false, JSON.stringify(over).slice(0, 60))
+      assert.ok(!b.ok && b.problems.some((p) => re.test(p)), !b.ok ? b.problems.join('; ') : '')
+    } finally {
+      cleanup(dir)
+    }
+  }
+})

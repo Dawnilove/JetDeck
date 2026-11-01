@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { EXPIRES_DAYS, GALLERY_LIMITS, checkPackFile, checkPackIdentity, fileOf, parseIndex, readIndex, readPack, sha256Hex, type GalleryIndex, type GalleryPack, type Revoked } from './gallerycore.mts'
 import { renderIndexHtml } from './gallerypage.mts'
 import { signBytes } from './gallerykit.mts'
-import { summarizePack, validatePack } from './packschema.mts'
+import { permStrings, summarizePack, validatePack } from './packschema.mts'
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
 const readJson = (file: string): unknown => JSON.parse(readFileSync(file, 'utf8').replace(/^﻿/, ''))
@@ -90,7 +90,7 @@ export function buildIndex(dir: string, o: { now?: Date; serial?: number; expire
     const entry = readPack({
       id: c.id, version: c.version, name: v.pack.name, desc: v.pack.desc, author: v.pack.author, submitter: c.submitter, license: v.pack.license, tier: 'reviewed', minApp: v.pack.minApp,
       file: fileOf(c.id, c.version), sha256: sha, size: bytes.length,
-      caps: { read: sum.read, change: sum.change, danger: sum.danger, stream: sum.stream, form: sum.form, chart: sum.chart, badge: sum.badge, autoRun: sum.autoRun, perms: [] },
+      caps: { read: sum.read, change: sum.change, danger: sum.danger, stream: sum.stream, form: sum.form, chart: sum.chart, badge: sum.badge, autoRun: sum.autoRun, perms: permStrings(v.pack) }, // 권한은 팩 파일에서 앱이 계산 (카탈로그에 적지 않음)
       tags: c.tags ?? [], reviewedAt: c.reviewedAt
     })
     if (typeof entry === 'string') problems.push(`${tag}: 색인 항목이 올바르지 않아요 (${entry})`)
@@ -115,8 +115,8 @@ export function summarize(prev: GalleryIndex | null, next: GalleryIndex): string
   const before = new Map((prev?.packs ?? []).map((p) => [p.id, p]))
   for (const p of next.packs) {
     const b = before.get(p.id)
-    if (!b) out.push(`+ 새 팩 ${p.id} ${p.version} (읽기 ${p.caps.read} · 바꿈 ${p.caps.change} · 위험 ${p.caps.danger} · 자동 ${p.caps.autoRun}) 제출 @${p.submitter ?? '?'}`)
-    else if (b.version !== p.version || b.sha256 !== p.sha256) out.push(`~ 바뀐 팩 ${p.id} ${b.version} → ${p.version}`)
+    if (!b) out.push(`+ 새 팩 ${p.id} ${p.version} (읽기 ${p.caps.read} · 바꿈 ${p.caps.change} · 위험 ${p.caps.danger} · 자동 ${p.caps.autoRun}${p.caps.perms.length ? ` · 권한 ${p.caps.perms.join(', ')}` : ''}) 제출 @${p.submitter ?? '?'}`)
+    else if (b.version !== p.version || b.sha256 !== p.sha256) out.push(`~ 바뀐 팩 ${p.id} ${b.version} → ${p.version}${p.caps.perms.join() !== b.caps.perms.join() ? ` · 권한 ${b.caps.perms.join(', ') || '없음'} → ${p.caps.perms.join(', ') || '없음'}` : ''}`)
     before.delete(p.id)
   }
   for (const b of before.values()) out.push(`- 목록에서 뺀 팩 ${b.id} ${b.version}`)
@@ -211,6 +211,8 @@ export function verifyDir(dir: string, o: { keys: string[]; now?: Date; lastSeri
     const s = summarizePack(v.pack)
     if (s.understated || s.hidden) r.problems.push(`${e.id}: 위험도를 낮게 적었거나 모르는 항목이 있어요`)
     const caps = e.caps
+    const perms = permStrings(v.pack)
+    if (caps.perms.length !== perms.length || caps.perms.some((x, i) => x !== perms[i])) r.problems.push(`${e.id}: 색인의 권한(caps.perms)이 팩 파일에서 계산한 값과 달라요 (색인 [${caps.perms.join(', ')}], 팩 [${perms.join(', ')}])`)
     if (caps.read !== s.read || caps.change !== s.change || caps.danger !== s.danger || caps.stream !== s.stream || caps.form !== s.form || caps.chart !== s.chart || caps.badge !== s.badge || caps.autoRun !== s.autoRun) r.problems.push(`${e.id}: 색인의 능력 요약(caps)이 팩과 달라요`)
   }
   r.ok = r.problems.length === 0

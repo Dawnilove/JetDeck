@@ -1,6 +1,6 @@
 // 커뮤니티 팩 제출 검사 (5.6.0): Pull Request가 바꾼 파일을 보고 모음에 올려도 되는지 자동으로 가림.
 // 팩 내용을 실행하지 않고 JSON을 읽어 앱과 같은 검증기(validatePack)로 검사만 한다. 순수 로직 (파일 읽기·git은 scripts/packs-check.mjs). 설계안 §8-9
-import { RESERVED_IDS, summarizePack, validatePack, type Pack } from './packschema.mts'
+import { RESERVED_IDS, summarizePack, validatePack, type Pack, type Permission } from './packschema.mts'
 
 export type Changed = { status: 'A' | 'M' | 'D' | 'R' | 'C' | 'T' | 'U' | 'X'; path: string }
 export type CheckInput = {
@@ -9,7 +9,7 @@ export type CheckInput = {
   existingIds: string[] // 이미 모음에 있는 팩 id (비슷한 id 사칭 방지)
   prBody: string
 }
-export type PackReport = { path: string; id: string; version: string; total: number; read: number; change: number; danger: number; auto: number; commands: { id: string; risk: string; cmd: string }[] }
+export type PackReport = { path: string; id: string; version: string; total: number; read: number; change: number; danger: number; auto: number; perms: { id: string; kind: string; scope: string }[]; commands: { id: string; risk: string; cmd: string }[] }
 export type CheckResult = { ok: boolean; problems: string[]; notes: string[]; reports: PackReport[] }
 
 const DIR = 'docs/packs/files/'
@@ -17,7 +17,7 @@ const ID = /^[a-z][a-z0-9-]{2,39}$/
 const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/
 const MAX_BYTES = 128 * 1024
 const BAD_CHAR = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f​-‏‪-‮⁦-⁩﻿]/ // 제어 문자·BiDi·보이지 않는 글자 (줄바꿈·탭은 허용)
-const DANGER_NOTE_MIN = 20
+const NOTE_MIN = 20
 
 // 글자 차이 (바꾸기·넣기·빼기 한 번 = 1)
 export function distance(a: string, b: string): number {
@@ -27,12 +27,14 @@ export function distance(a: string, b: string): number {
   return d[a.length][b.length]
 }
 
-// PR 설명의 "Danger" 절 글자 수 (HTML 주석 제외). 절이 없으면 0
-export function dangerNote(body: string): number {
+// PR 설명의 한 절(제목에 name이 들어간 절)의 글자 수 (HTML 주석 제외). 절이 없으면 0
+function sectionNote(body: string, name: string): number {
   const text = body.replace(/<!--[\s\S]*?-->/g, '')
-  const m = /^#{1,6}[ \t]*[^\n]*danger[^\n]*\n([\s\S]*?)(?=^#{1,6}[ \t]|$(?![\s\S]))/im.exec(text)
+  const m = new RegExp(`^#{1,6}[ \\t]*[^\\n]*${name}[^\\n]*\\n([\\s\\S]*?)(?=^#{1,6}[ \\t]|$(?![\\s\\S]))`, 'im').exec(text)
   return m ? m[1].replace(/\s+/g, ' ').trim().length : 0
 }
+export const dangerNote = (body: string): number => sectionNote(body, 'danger') // "Danger" 절: 위험 항목의 이유
+export const permNote = (body: string): number => sectionNote(body, 'permission') // "Permissions" 절 (6.0.0): 앱 기능 권한을 쓰는 이유
 
 function badStrings(v: unknown, at: string, out: string[], depth = 0): void {
   if (depth > 20 || out.length >= 5) return
@@ -44,6 +46,9 @@ function badStrings(v: unknown, at: string, out: string[], depth = 0): void {
     badStrings(x, `${at}.${k}`, out, depth + 1)
   }
 }
+
+// 권한 범위를 사람이 읽는 한 줄로 (요약표용)
+const scopeOf = (x: Permission): string => (x.kind === 'tunnel' ? `Device 127.0.0.1:${x.remotePort} → this PC 127.0.0.1 · ${x.maxMinutes} min` : `${x.root} · max ${Math.round(x.maxBytes! / 1024)} KB per file${x.kind === 'sftp.write' ? ` · overwrite ${x.overwrite}` : ''}`)
 
 export function checkSubmission(inp: CheckInput): CheckResult {
   const problems: string[] = []
@@ -63,6 +68,7 @@ export function checkSubmission(inp: CheckInput): CheckResult {
   const official = new Set<string>(RESERVED_IDS)
   const others2 = new Set(inp.existingIds)
   let needDanger = false
+  let needPerm = false
   for (const c of added) {
     const tag = c.path
     const m = /^docs\/packs\/files\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(c.path)
@@ -109,9 +115,11 @@ export function checkSubmission(inp: CheckInput): CheckResult {
     if (s.understated) problems.push(`${tag}: 앱이 계산한 위험도보다 낮게 적은 항목이 ${s.understated}개 있어요`)
     if (s.hidden) problems.push(`${tag}: 이 앱이 모르는 방식의 항목이 ${s.hidden}개 있어요`)
     if (s.danger > 0) needDanger = true
-    reports.push({ path: tag, id: pack.id, version: pack.version, total: s.total, read: s.read, change: s.change, danger: s.danger, auto: s.autoRun, commands: pack.plugins.flatMap((pl) => pl.actions.map((a) => ({ id: `${pl.id}/${a.id}`, risk: a.risk, cmd: a.cmd }))).concat((pack.badges ?? []).map((b) => ({ id: `badge/${b.id}`, risk: 'read', cmd: b.cmd }))) })
+    if (s.perm > 0 || s.app > 0) needPerm = true
+    reports.push({ path: tag, id: pack.id, version: pack.version, total: s.total, read: s.read, change: s.change, danger: s.danger, auto: s.autoRun, perms: (pack.permissions ?? []).map((x) => ({ id: x.id, kind: x.kind, scope: scopeOf(x) })), commands: pack.plugins.flatMap((pl) => pl.actions.map((a) => ({ id: `${pl.id}/${a.id}`, risk: a.risk, cmd: a.mode === 'app' ? `app ${a.perm} ${a.op}${a.path ? ' ' + a.path : ''}` : a.cmd }))).concat((pack.badges ?? []).map((b) => ({ id: `badge/${b.id}`, risk: 'read', cmd: b.cmd }))) })
   }
-  if (needDanger && dangerNote(inp.prBody) < DANGER_NOTE_MIN) problems.push(`위험 항목이 있어요. PR 설명의 "Danger" 절에 이유를 ${DANGER_NOTE_MIN}자 이상 적어 주세요`)
+  if (needDanger && dangerNote(inp.prBody) < NOTE_MIN) problems.push(`위험 항목이 있어요. PR 설명의 "Danger" 절에 이유를 ${NOTE_MIN}자 이상 적어 주세요`)
+  if (needPerm && permNote(inp.prBody) < NOTE_MIN) problems.push(`앱 기능 권한을 쓰는 팩이에요. PR 설명의 "Permissions" 절에 이유를 ${NOTE_MIN}자 이상 적어 주세요`)
   return { ok: problems.length === 0, problems, notes, reports }
 }
 
@@ -121,7 +129,8 @@ export function renderSummary(r: CheckResult): string {
   for (const p of r.problems) L.push(`- ❌ ${p.replace(/[`<>]/g, "'")}`)
   for (const n of r.notes) L.push(`- ℹ️ ${n.replace(/[`<>]/g, "'")}`)
   for (const p of r.reports) {
-    L.push('', `### ${p.id} v${p.version}`.replace(/[`<>]/g, "'"), `items ${p.total}: read ${p.read} · change ${p.change} · danger ${p.danger} · runs on its own ${p.auto}`, '', '~~~~text')
+    L.push('', `### ${p.id} v${p.version}`.replace(/[`<>]/g, "'"), `items ${p.total}: read ${p.read} · change ${p.change} · danger ${p.danger} · runs on its own ${p.auto} · permissions ${p.perms.length}`, '', '~~~~text')
+    for (const x of p.perms) L.push(`[permission ${x.kind}] ${x.id}: ${x.scope.replace(/~{4,}/g, '~~~')}`)
     for (const c of p.commands) L.push(`[${c.risk}] ${c.id}: ${c.cmd.replace(/~{4,}/g, '~~~')}`)
     L.push('~~~~')
   }

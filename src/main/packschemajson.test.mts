@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
-import { BADGE_TONES, LIMITS, RESERVED_IDS, validatePack } from './packschema.mts'
+import { BADGE_TONES, LIMITS, PERM_KINDS, PERM_MIN_APP, PERM_OPS, RESERVED_IDS, validatePack } from './packschema.mts'
 import { FIELD_LIMITS } from './packfields.mts'
 
 // docs/plugins/jdpack.schema.json (편집기용)과 검사기(packschema.mts)의 규칙이 어긋나지 않는지 대조
@@ -86,4 +86,60 @@ test('schema: 예제·공식 팩이 스키마를 통과함 (ajv가 있을 때; �
   assert.ok(!validate(pack({ type: 'chart', split: 'ws' })), 'perLine/series 없음')
   assert.ok(!validate(pack({ ...ok, perLine: { label: 'a', value: 1 } })), 'perLine+series')
   assert.ok(!validate(pack({ ...ok, points: 5 })), 'points 한도')
+})
+
+test('schema: 권한 상수가 검사기(LIMITS)와 같음', () => {
+  const P = D.permission.properties
+  assert.equal(schema.properties.permissions.maxItems, LIMITS.permsOfficial) // 외부 팩의 3개 상한은 설명 글로만 표현
+  assert.deepEqual(P.kind.enum, PERM_KINDS)
+  assert.equal(P.root.maxLength, LIMITS.permRoot)
+  assert.equal(P.maxBytes.maximum, LIMITS.permBytesMax)
+  assert.equal(P.maxBytes.default, LIMITS.permBytesDefault)
+  assert.equal(P.maxMinutes.maximum, LIMITS.tunnelMinutesMax)
+  assert.equal(P.maxMinutes.default, LIMITS.tunnelMinutesDefault)
+  assert.equal(P.remotePort.minimum, 1024)
+  assert.equal(D.action.properties.path.maxLength, LIMITS.permPath)
+  assert.deepEqual(D.action.properties.op.enum.sort(), [...new Set(Object.values(PERM_OPS).flat())].sort())
+  assert.ok(D.action.properties.mode.enum.includes('app'))
+  assert.match(schema.then.properties.minApp.pattern, /\[6-9\]/)
+  assert.equal(new RegExp(schema.then.properties.minApp.pattern).test(PERM_MIN_APP), true)
+  assert.equal(new RegExp(schema.then.properties.minApp.pattern).test('5.9.9'), false)
+  assert.equal(new RegExp(P.id.pattern).test('ab'), true)
+  assert.equal(new RegExp(P.root.pattern).test('~/logs/a'), true)
+  for (const r of ['~', '~/', '/x', '~/a//b']) assert.equal(new RegExp(P.root.pattern).test(r), false, r)
+})
+
+test('schema: 권한 팩이 스키마와 검사기에서 같은 결과 (ajv가 있을 때)', async () => {
+  let Ajv: any
+  try {
+    Ajv = (await import('ajv')).default
+  } catch {
+    return
+  }
+  const validate = new Ajv({ strict: false }).compile(schema)
+  const L = (s: string) => ({ ko: s, en: s })
+  const base = (over: Record<string, unknown> = {}, perm: Record<string, unknown> = {}, action: Record<string, unknown> = {}) => ({
+    id: 'copy', format: 1, version: '1.0.0', minApp: '6.0.0', name: 'x',
+    permissions: [{ id: 'logs', kind: 'sftp.read', root: '~/logs', why: 'x', ...perm }],
+    plugins: [{ id: 'p', title: 't', actions: [{ id: 'a', label: 'l', mode: 'app', perm: 'logs', op: 'list', ...action }] }], ...over
+  })
+  assert.ok(validate(base()), JSON.stringify(validate.errors))
+  assert.ok(validate({ ...base(), permissions: [{ id: 'web', kind: 'tunnel', remotePort: 8888, why: L('x') }], plugins: [{ id: 'p', title: 't', actions: [{ id: 'a', label: 'l', mode: 'app', perm: 'web', op: 'open' }] }] }), JSON.stringify(validate.errors))
+  const agree = (o: unknown, want: boolean, why: string) => {
+    assert.equal(!!validate(o), want, `schema: ${why} ${JSON.stringify(validate.errors)}`)
+    assert.equal(validatePack(o).errors.length === 0 && validatePack(o).pack !== null, want, `app: ${why}`)
+  }
+  agree(base(), true, 'ok')
+  agree(base({ minApp: '5.9.0' }), false, 'minApp 낮음')
+  agree(base({ minApp: undefined }), false, 'minApp 없음')
+  agree(base({}, { root: '~' }), false, 'root ~')
+  agree(base({}, { root: '/etc' }), false, 'root 절대')
+  agree(base({}, { kind: 'serial.read' }), false, '모르는 kind')
+  agree(base({}, { why: undefined }), false, 'why 없음')
+  agree(base({}, { remotePort: 8888 }), false, 'sftp에 remotePort')
+  agree(base({}, { maxBytes: 21 * 1024 * 1024 }), false, 'maxBytes 초과')
+  agree(base({}, {}, { cmd: 'ls' }), false, 'app 항목에 cmd')
+  agree(base({}, {}, { auto: true }), false, 'app 항목에 auto')
+  agree(base({}, {}, { op: undefined }), false, 'op 없음')
+  agree(base({}, {}, { perm: undefined }), false, 'perm 없음')
 })
