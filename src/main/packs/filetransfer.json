@@ -1,0 +1,70 @@
+{
+  "id": "file-transfer",
+  "format": 1,
+  "version": "6.0.0",
+  "minApp": "6.0.0",
+  "name": { "ko": "파일 전송 (베타)", "en": "File transfer (beta)" },
+  "desc": { "ko": "Device의 ~/jetdeck-files 폴더에서만 파일을 보고, 받고, 올려요.", "en": "List, download and upload files only in the ~/jetdeck-files folder on the Device." },
+  "author": "JetDeck",
+  "license": "Apache-2.0",
+  "permissions": [
+    {
+      "id": "files-read",
+      "kind": "sftp.read",
+      "root": "~/jetdeck-files",
+      "maxBytes": 10485760,
+      "why": { "ko": "~/jetdeck-files 폴더의 파일을 보고 PC로 받아요", "en": "List files in ~/jetdeck-files and download them to this PC" }
+    },
+    {
+      "id": "files-write",
+      "kind": "sftp.write",
+      "root": "~/jetdeck-files",
+      "maxBytes": 10485760,
+      "overwrite": "ask",
+      "why": { "ko": "PC에서 고른 파일을 ~/jetdeck-files 폴더에 올려요", "en": "Upload a file you pick on this PC to ~/jetdeck-files" }
+    }
+  ],
+  "plugins": [
+    {
+      "id": "files",
+      "title": { "ko": "파일 전송", "en": "File transfer" },
+      "desc": { "ko": "폴더는 Device의 ~/jetdeck-files 하나뿐이에요. 없으면 먼저 만드세요.", "en": "Only ~/jetdeck-files on the Device. Create it first if it is missing." },
+      "actions": [
+        {
+          "id": "list",
+          "label": { "ko": "목록 보기", "en": "List files" },
+          "mode": "app",
+          "perm": "files-read",
+          "op": "list"
+        },
+        {
+          "id": "text",
+          "label": { "ko": "글 파일 읽기", "en": "Read a text file" },
+          "mode": "app",
+          "perm": "files-read",
+          "op": "text",
+          "path": "{file}",
+          "fields": [{ "name": "file", "label": { "ko": "파일 이름", "en": "File name" }, "type": "text", "charset": "free", "maxLen": 120 }]
+        },
+        {
+          "id": "get",
+          "label": { "ko": "PC로 받기", "en": "Download to this PC" },
+          "mode": "app",
+          "perm": "files-read",
+          "op": "get",
+          "path": "{file}",
+          "fields": [{ "name": "file", "label": { "ko": "파일 이름", "en": "File name" }, "type": "text", "charset": "free", "maxLen": 120 }]
+        },
+        {
+          "id": "put",
+          "label": { "ko": "PC에서 올리기", "en": "Upload from this PC" },
+          "mode": "app",
+          "perm": "files-write",
+          "op": "put",
+          "path": "{name}",
+          "fields": [{ "name": "name", "label": { "ko": "Device에 저장할 이름", "en": "Name on the Device" }, "type": "text", "charset": "free", "maxLen": 120 }]
+        }
+      ]
+    }
+  ]
+}

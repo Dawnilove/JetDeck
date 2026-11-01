@@ -156,3 +156,18 @@ test('devtools.json: Git 배지 1개, 검증 통과, 한·영, 기본 꺼짐, �
   assert.ok(OFFICIAL_DEFAULT_OFF.has('devtools'))
   assert.match(validatePack({ ...raw, version: '1.0.0' }).errors.join('|'), /공식 팩 전용/)
 })
+
+// 6.0.0 권한 팩: 검증 통과, 한·영, 기본 꺼짐, 쓰지 않는 권한 없음
+for (const [id, file] of [['file-transfer', 'filetransfer'], ['web-tunnel', 'webtunnel']]) {
+  test(`${id}: 권한 팩 검증 통과·한영·기본 꺼짐`, () => {
+    const raw = JSON.parse(readFileSync(new URL(`./${file}.json`, import.meta.url), 'utf8'))
+    const r = validatePack(raw, { official: true, appVersion: '6.0.0' })
+    assert.deepEqual(r.errors, [])
+    assert.deepEqual(r.warnings, [])
+    assert.equal(r.pack?.id, id)
+    walk(raw, id)
+    assert.ok(OFFICIAL_DEFAULT_OFF.has(id))
+    assert.ok((r.pack?.permissions?.length ?? 0) > 0)
+    for (const a of r.pack!.plugins.flatMap((p) => p.actions)) assert.equal(a.mode, 'app')
+  })
+}

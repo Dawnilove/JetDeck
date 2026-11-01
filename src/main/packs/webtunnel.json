@@ -1,0 +1,37 @@
+{
+  "id": "web-tunnel",
+  "format": 1,
+  "version": "6.0.0",
+  "minApp": "6.0.0",
+  "name": { "ko": "웹 터널 (베타)", "en": "Web tunnel (beta)" },
+  "desc": { "ko": "Device의 웹 포트를 이 PC의 127.0.0.1에 잠시 연결해요.", "en": "Connect a web port on the Device to 127.0.0.1 on this PC for a while." },
+  "author": "JetDeck",
+  "license": "Apache-2.0",
+  "permissions": [
+    {
+      "id": "jupyter",
+      "kind": "tunnel",
+      "remotePort": 8888,
+      "maxMinutes": 30,
+      "why": { "ko": "Device의 Jupyter(포트 8888)를 이 PC 브라우저로 봐요", "en": "Open Jupyter (port 8888) on the Device from this PC's browser" }
+    },
+    {
+      "id": "web8000",
+      "kind": "tunnel",
+      "remotePort": 8000,
+      "maxMinutes": 30,
+      "why": { "ko": "Device의 웹 앱(포트 8000)을 이 PC 브라우저로 봐요", "en": "Open a web app (port 8000) on the Device from this PC's browser" }
+    }
+  ],
+  "plugins": [
+    {
+      "id": "tunnel",
+      "title": { "ko": "웹 터널", "en": "Web tunnel" },
+      "desc": { "ko": "열린 동안 이 PC의 다른 프로그램도 접속할 수 있어요. 브라우저는 직접 여세요.", "en": "While open, other programs on this PC can connect too. Open the browser yourself." },
+      "actions": [
+        { "id": "jupyter", "label": { "ko": "Jupyter 열기 (8888)", "en": "Open Jupyter (8888)" }, "mode": "app", "perm": "jupyter", "op": "open" },
+        { "id": "web8000", "label": { "ko": "웹 앱 열기 (8000)", "en": "Open web app (8000)" }, "mode": "app", "perm": "web8000", "op": "open" }
+      ]
+    }
+  ]
+}
