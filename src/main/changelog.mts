@@ -6,6 +6,23 @@ export const releaseUrl = (version: string): string | null => (/^\d+\.\d+\.\d+$/
 
 export const RELEASES: Release[] = [
   {
+    version: '6.1.0',
+    ko: [
+      '팩이 이 PC의 시리얼 포트를 읽기 전용으로 읽어요',
+      '포트는 실행할 때마다 직접 고르고 확인 창이 떠요',
+      '장치로 보내지 않아요. 글자는 화면에만 보여요',
+      '공식 베타 팩: UART 로그 (기본 꺼짐)',
+      '시리얼 권한 문서, 모음 심사 기준 추가'
+    ],
+    en: [
+      'Packs can read a serial port on this PC (read-only)',
+      'You pick the port each time and confirm before it opens',
+      'Nothing is sent to the device. Text only shows on screen',
+      'Official beta pack: UART log (off by default)',
+      'Serial permission docs and gallery review rules'
+    ]
+  },
+  {
     version: '6.0.0',
     ko: [
       '팩이 파일 받기·올리기·터널을 권한으로 선언',
