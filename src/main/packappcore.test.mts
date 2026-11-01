@@ -57,6 +57,7 @@ test('list: 폴더 먼저·이름순, 이름 정리, FIFO는 other로, 2000개 �
   for (let i = 0; i < LIMITS.listEntries + 5; i++) s.dev.file(`${HOME}/logs/many/f${i}`, 1)
   const big = await s.engine.run('c1', { ...s.t('list'), action: { ...s.t('list').action, path: 'many' } }, {}, '')
   assert.deepEqual([(big as { entries: unknown[] }).entries.length, (big as { truncated: boolean }).truncated], [LIMITS.listEntries, true])
+  assert.equal(s.dev.lastMax, LIMITS.listEntries + 1) // Device에는 상한 + 1개까지만 읽어 달라고 함 (6.1.3)
   s.done()
 })
 

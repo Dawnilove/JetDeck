@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import { app, BrowserWindow, dialog, ipcMain, type WebContents } from 'electron'
-import type { Stats } from 'ssh2'
+import type { SFTPWrapper, Stats } from 'ssh2'
 import { tr } from './i18n.mts'
 import { forwardOut, pipe } from './forward'
 import { createAppEngine, type AppEvent, type DeviceFs } from './packappcore.mts'
@@ -19,6 +19,31 @@ const toStat = (st: Stats): FsStat => ({ kind: kindOf(st), size: st.size })
 const maybe = <T>(fn: (cb: (err: (Error & { code?: number }) | null | undefined, v?: T) => void) => void) =>
   new Promise<T | null>((resolve, reject) => fn((err, v) => (err ? (err.code === 2 ? resolve(null) : reject(err)) : resolve(v as T))))
 
+// 폴더 읽기: opendir로 열어 max개를 넘으면 멈춤 (s.readdir(경로)는 끝까지 모아서 악성 Device가 메모리를 키울 수 있음). 전체 10초 상한
+const READDIR_MS = 10_000
+async function readDirLimited(s: SFTPWrapper, p: string, max: number): Promise<{ name: string; kind: FsKind; size: number }[]> {
+  const handle = await call<Buffer>((cb) => s.opendir(p, cb))
+  const out: { name: string; kind: FsKind; size: number }[] = []
+  let timer: NodeJS.Timeout | undefined
+  const timeout = new Promise<never>((_, reject) => (timer = setTimeout(() => reject(new Error('readdir timeout')), READDIR_MS)))
+  try {
+    await Promise.race([
+      (async () => {
+        while (out.length < max) {
+          const list = await call<{ filename: string; attrs: Stats }[] | false>((cb) => s.readdir(handle, cb))
+          if (!list || !list.length) break
+          for (const { filename, attrs } of list) if (filename !== '.' && filename !== '..') out.push({ name: filename, kind: kindOf(attrs), size: attrs.size })
+        }
+      })(),
+      timeout
+    ])
+  } finally {
+    clearTimeout(timer)
+    s.close(handle, () => {})
+  }
+  return out.slice(0, max)
+}
+
 async function deviceFs(connId: string): Promise<DeviceFs> {
   const s = await sftpOf(connId)
   return {
@@ -31,7 +56,7 @@ async function deviceFs(connId: string): Promise<DeviceFs> {
       const st = await maybe<Stats>((cb) => s.lstat(p, cb))
       return st && toStat(st)
     },
-    readdir: async (p) => (await call<{ filename: string; attrs: Stats }[]>((cb) => s.readdir(p, cb))).map(({ filename, attrs }) => ({ name: filename, kind: kindOf(attrs), size: attrs.size })),
+    readdir: (p, max) => readDirLimited(s, p, max),
     readStream: (p) => s.createReadStream(p),
     writeStream: (p, mode) => s.createWriteStream(p, { flags: 'wx', mode }), // wx: 누가 미리 만들어 둔 링크를 따라가 덮어쓰지 않게
     rename: (from, to, overwrite) =>

@@ -74,12 +74,14 @@ export class FakeDevice implements DeviceFs {
   stall = false
   extra = 0 // stat이 알려 준 크기보다 더 많이 흐르게 함 (실행 중 커지는 파일)
   modes = new Map<string, number>()
-  async readdir(p: string): Promise<{ name: string; kind: FsKind; size: number }[]> {
+  lastMax = 0 // readdir가 마지막으로 받은 상한 (시험용)
+  async readdir(p: string, max = Infinity): Promise<{ name: string; kind: FsKind; size: number }[]> {
+    this.lastMax = max
     const w = this.walk(p, true)
     if (w?.node?.kind !== 'dir') throw new Error('Not a directory')
     const out: { name: string; kind: FsKind; size: number }[] = []
     for (const [k, n] of this.nodes) if (k !== w.path && k.startsWith((w.path === '/' ? '' : w.path) + '/') && !k.slice(w.path.length + 1).includes('/')) out.push({ name: k.slice(k.lastIndexOf('/') + 1), kind: n.kind, size: n.size })
-    return out
+    return out.slice(0, max)
   }
   readStream(p: string): Readable {
     const n = this.walk(p, true)?.node

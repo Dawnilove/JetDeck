@@ -20,7 +20,7 @@ import { permRisk, type Reason, type Risk } from './risk.mts'
 import type { SerialSource } from './serialread.mts'
 
 export interface DeviceFs extends PathFs {
-  readdir(p: string): Promise<{ name: string; kind: FsKind; size: number }[]>
+  readdir(p: string, max: number): Promise<{ name: string; kind: FsKind; size: number }[]>
   readStream(p: string): Readable
   writeStream(p: string, mode: number): NodeJS.WritableStream & { destroy(e?: Error): unknown } // 이미 있으면 실패해야 함 (flags wx)
   rename(from: string, to: string, overwrite: boolean): Promise<void> // overwrite=false면 대상이 있을 때 실패해야 함
@@ -293,7 +293,7 @@ export function createAppEngine(deps: AppDeps) {
 
     if (op === 'list') {
       const w = await resolveTarget(fs, home, perm, rel, 'dir')
-      const all = (await fs.readdir(w.path)).map((e) => ({ name: safeName(e.name), kind: e.kind, size: e.size })).sort((x, y) => Number(y.kind === 'dir') - Number(x.kind === 'dir') || x.name.localeCompare(y.name))
+      const all = (await fs.readdir(w.path, LIMITS.listEntries + 1)).map((e) => ({ name: safeName(e.name), kind: e.kind, size: e.size })).sort((x, y) => Number(y.kind === 'dir') - Number(x.kind === 'dir') || x.name.localeCompare(y.name))
       return { op, entries: all.slice(0, LIMITS.listEntries), truncated: all.length > LIMITS.listEntries }
     }
 
