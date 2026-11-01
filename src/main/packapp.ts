@@ -93,9 +93,27 @@ export function registerPackAppIpc(find: FindAction): void {
   ipcMain.handle('pack:app-prepare', (e, connId: string, packId: string, pluginId: string, actionId: string, given?: Record<string, string>) =>
     engine.prepare(String(connId), target(String(connId), packId, pluginId, actionId), values(given), e.sender)
   )
-  ipcMain.handle('pack:app-run', (e, connId: string, packId: string, pluginId: string, actionId: string, given?: Record<string, string>, token?: string, opId?: string) =>
-    engine.run(String(connId), target(String(connId), packId, pluginId, actionId), values(given), token, opId === undefined ? undefined : String(opId), e.sender)
-  )
+  // 화면(렌더러)이 죽거나 다시 불러지거나 창이 닫히면 그 화면이 시작한 전송·터널을 멈춤 (멈춤 신호를 보낼 화면이 없으므로)
+  const owned = new Map<WebContents, Set<string>>()
+  const own = (wc: WebContents, id: string) => {
+    let ids = owned.get(wc)
+    if (!ids) {
+      const set = (ids = new Set<string>())
+      owned.set(wc, set)
+      const drop = () => (set.forEach((x) => engine.stop(x)), set.clear())
+      wc.once('destroyed', () => (drop(), owned.delete(wc)))
+      wc.on('render-process-gone', drop)
+      wc.on('did-start-navigation', (d) => d.isMainFrame && !d.isSameDocument && drop())
+    }
+    ids.add(id)
+  }
+  ipcMain.handle('pack:app-run', async (e, connId: string, packId: string, pluginId: string, actionId: string, given?: Record<string, string>, token?: string, opId?: string) => {
+    const id = opId === undefined ? undefined : String(opId)
+    if (id) own(e.sender, id) // 전송은 시작 전에 올려 둠: 도중에 화면이 사라져도 멈출 수 있게
+    const r = await engine.run(String(connId), target(String(connId), packId, pluginId, actionId), values(given), token, id, e.sender)
+    if (r.op === 'open') own(e.sender, r.id)
+    return r
+  })
   ipcMain.handle('pack:app-stop', (_e, opId: string): boolean => engine.stop(String(opId)))
   app.on('before-quit', () => engine.stopAll())
 }
