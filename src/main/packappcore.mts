@@ -255,7 +255,9 @@ export function createAppEngine(deps: AppDeps) {
       const openRead = deps.openRead
       if (!openRead || !deps.listPorts || !perm.baud || !SERIAL_BAUDS.includes(perm.baud) || !perm.maxMinutes || perm.maxMinutes > LIMITS.tunnelMinutesMax || !perm.maxBytes) throw new Error(tr('아직 지원하지 않는 동작이에요'))
       const key = serialKey(connId, t)
-      const id = `sr-${rand()}`
+      // 화면 쪽(packapp.ts)이 id를 먼저 정해 own()에 올려 둠: 열기를 기다리는 동안 화면이 사라져도 멈출 수 있게
+      if (opId !== undefined && (!/^[\w-]{1,64}$/.test(opId) || ops.has(opId) || tunnels.has(opId) || serials.has(opId))) throw new Error(tr('올바르지 않은 요청이에요'))
+      const id = opId ?? `sr-${rand()}`
       const label = safeName(p.choice.path)
       const baud = perm.baud
       let read: SerialRead | undefined
@@ -265,6 +267,7 @@ export function createAppEngine(deps: AppDeps) {
       try {
         const cur = (await deps.listPorts()).find((x) => x.path === p.choice.path)
         if (!cur || identOf(cur) !== identOf(p.choice)) throw new Error(tr('고른 포트가 바뀌었어요. 다시 골라 주세요'))
+        if (stopped) throw new Error(tr('전송을 멈췄어요')) // 포트 목록을 기다리는 동안 정지가 왔으면 열지 않음 (열기만 해도 장치가 다시 시작할 수 있음)
         const source = await openRead(p.choice.path, baud)
         read = startSerialRead({
           source,

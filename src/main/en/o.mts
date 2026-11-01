@@ -72,5 +72,6 @@ export const EN_O: Record<string, string> = {
   '연결된 시리얼 포트가 없어요': 'No serial port is connected',
   '고른 포트가 바뀌었어요. 다시 골라 주세요': 'The chosen port changed. Pick it again',
   '{0}을(를) 여는 데 너무 오래 걸려요. 장치를 확인하세요': 'Opening {0} takes too long. Check the device',
+  '{0}의 제어선을 낮추지 못해서 열지 않았어요': 'Could not lower the control lines of {0}, so it was not opened',
   '이 PC의 시리얼 포트 읽기': 'Read a serial port of this PC',
 }

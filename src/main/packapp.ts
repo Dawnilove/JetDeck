@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto'
 import { app, BrowserWindow, dialog, ipcMain, type WebContents } from 'electron'
 import type { Stats } from 'ssh2'
 import { tr } from './i18n.mts'
@@ -119,9 +120,11 @@ export function registerPackAppIpc(find: FindAction): void {
     ids.add(id)
   }
   ipcMain.handle('pack:app-run', async (e, connId: string, packId: string, pluginId: string, actionId: string, given?: Record<string, string>, token?: string, opId?: string) => {
-    const id = opId === undefined ? undefined : String(opId)
+    const t = target(String(connId), packId, pluginId, actionId)
+    // 시리얼 읽기는 포트가 열리기까지 오래 걸릴 수 있어 id를 여기서 먼저 정함
+    const id = opId === undefined ? (t.action.op === 'read' ? `sr-${randomBytes(6).toString('hex')}` : undefined) : String(opId)
     if (id) own(e.sender, id) // 전송은 시작 전에 올려 둠: 도중에 화면이 사라져도 멈출 수 있게
-    const r = await engine.run(String(connId), target(String(connId), packId, pluginId, actionId), values(given), token, id, e.sender)
+    const r = await engine.run(String(connId), t, values(given), token, id, e.sender)
     if (r.op === 'open' || r.op === 'read') own(e.sender, r.id)
     return r
   })

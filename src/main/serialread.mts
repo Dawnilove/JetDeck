@@ -40,17 +40,22 @@ export function openRead(make: (o: Record<string, unknown>) => PortLike, path: s
         if (!settled) (settled = true), reject(new Error(serialError(err.message, path)))
         return
       }
-      if (settled) return void port.close() // 시간이 지난 뒤 열렸다: 쓰지 않고 바로 닫음
+      if (settled) return void port.close(() => {}) // 시간이 지난 뒤 열렸다: 쓰지 않고 바로 닫음 (콜백이 있어야 닫기 실패가 error 이벤트로 던져지지 않음)
       settled = true
-      // Linux는 열고 나서야 제어선을 낮출 수 있다 (여는 순간의 변화는 막지 못함 → 확인 창이 경고). 실패해도 읽기는 계속
-      if (platform === 'linux') port.set({ dtr: false, rts: false }, () => {})
-      resolve({
+      const source: SerialSource = {
         onData: (cb) => void port.on('data', cb),
         onEnd: (cb) => {
           port.on('error', () => cb('error'))
           port.on('close', () => cb('closed'))
         },
         close: () => void (port.isOpen && port.close())
+      }
+      if (platform !== 'linux') return resolve(source)
+      // Linux는 열고 나서야 제어선을 낮출 수 있다 (여는 순간의 변화는 막지 못함 → 확인 창이 경고). 낮추지 못하면 RTS가 높은 채일 수 있어 읽지 않고 닫음
+      port.set({ dtr: false, rts: false }, (e) => {
+        if (!e) return resolve(source)
+        port.close(() => {})
+        reject(new Error(tr('{0}의 제어선을 낮추지 못해서 열지 않았어요', path)))
       })
     })
   })

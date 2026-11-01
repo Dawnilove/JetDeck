@@ -20,7 +20,7 @@ export const DETAIL_MAX = 20_000
 const MASK = '••••'
 const RULES: [RegExp, string | ((...m: string[]) => string)][] = [
   [/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(-----END [A-Z ]*PRIVATE KEY-----|$)/g, () => tr('(개인 키는 가렸어요)')],
-  [/\b(\w*(?:password|passwd|pwd|passphrase|secret|token|api[_-]?key|access[_-]?key)\w*\s*[=:]\s*)(?:"[^"]*"|'[^']*'|\S+)/gi, `$1${MASK}`],
+  [/\b(\w*(?:password|passwd|pwd|passphrase|secret|token|api[_-]?key|access[_-]?key|psk|pass)\w*\s*[=:]\s*)(?:"[^"]*"|'[^']*'|\S+)/gi, `$1${MASK}`],
   [/(--(?:password|passwd|token|secret|api-key)[= ]\s*)(?:"[^"]*"|'[^']*'|\S+)/gi, `$1${MASK}`],
   [/(\bsshpass\s+-p\s*)(?:"[^"]*"|'[^']*'|\S+)/g, `$1${MASK}`],
   [/(\becho\s+)(?:"[^"]*"|'[^']*'|\S+)(\s*\|\s*sudo\s+-S\b)/g, `$1${MASK}$2`],

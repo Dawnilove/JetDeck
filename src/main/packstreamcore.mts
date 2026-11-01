@@ -18,20 +18,49 @@ export const STREAM_LIMITS = {
 const cleanLine = (l: string): string => sanitizeOutput(l.length > STREAM_LIMITS.line ? l.slice(0, STREAM_LIMITS.line) + '…' : l)
 
 // 받은 글자를 줄로 나눔. \r\n·\r·\n 모두 줄바꿈 (진행 막대의 \r 도 줄). 줄마다 제어 문자·ANSI 제거 + 비밀 가림 + 길이 자르기
+const KEY_BEGIN = /-----BEGIN [A-Z ]*PRIVATE KEY-----/
+const KEY_END = /-----END [A-Z ]*PRIVATE KEY-----/
+const KEY_MAX_LINES = 200 // END가 안 오면 이만큼만 숨기고 다시 보임 (모든 출력이 영영 가려지지 않게)
+// 비밀 이름 뒤 = 또는 : 로 끝나거나 값 중간에서 끊긴 조각 (다음 조각의 첫 낱말이 값의 나머지)
+const SECRET_TAIL = /(?:password|passwd|pwd|passphrase|secret|token|api[_-]?key|access[_-]?key|psk|pass)\w*\s*[=:]\s*\S*$/i
+
 export class LineAssembler {
   private rest = ''
   private lastCr = false // 지난 조각이 \r 로 끝남 (\r\n 이 조각 사이에 갈린 경우 빈 줄이 생기지 않게)
   private lastAt = 0
+  private keyLines = 0 // 개인 키 본문을 숨기는 중이면 지금까지 숨긴 줄 수 (0 = 아님)
+  private cont = false // 비밀 값 중간에서 끊어 내보냈음: 다음 조각의 첫 낱말을 가림
+  // 줄 하나를 정리. 개인 키는 BEGIN~END 사이 모든 줄을 숨김 (BEGIN 줄은 가림 문구가 됨)
+  private line(raw: string): string | null {
+    if (this.keyLines) {
+      if (KEY_END.test(raw) || ++this.keyLines > KEY_MAX_LINES) this.keyLines = 0
+      return null
+    }
+    if (KEY_BEGIN.test(raw) && !KEY_END.test(raw)) this.keyLines = 1
+    return cleanLine(raw)
+  }
+  private lines(parts: string[]): string[] {
+    const out: string[] = []
+    for (const p of parts) {
+      const l = this.line(p)
+      if (l !== null) out.push(l)
+    }
+    return out
+  }
   push(text: string, now = Date.now()): string[] {
     let t = text
     if (this.lastCr && t.startsWith('\n')) t = t.slice(1)
     if (t.length) this.lastCr = t.endsWith('\r')
     this.lastAt = now
     const parts = (this.rest + t).split(/\r\n|\r|\n/)
+    if (this.cont && t.length && !this.rest) {
+      if (parts[0]) parts[0] = parts[0].replace(/^\S+/, '••••') // flush가 값 중간에서 끊은 뒤 이어진 조각
+      this.cont = false
+    }
     this.rest = parts.pop() ?? ''
-    const out = parts.map(cleanLine)
+    const out = this.lines(parts)
     if (this.rest.length >= STREAM_LIMITS.partialBytes) {
-      out.push(cleanLine(this.rest))
+      out.push(...this.lines([this.rest]))
       this.rest = ''
     }
     return out
@@ -39,9 +68,10 @@ export class LineAssembler {
   // 줄바꿈 없이 조용한 조각을 내보냄 (타이머가 부름). force면 지금 남은 것을 모두
   flush(now = Date.now(), force = false): string[] {
     if (!this.rest || (!force && now - this.lastAt < STREAM_LIMITS.partialIdleMs)) return []
-    const l = cleanLine(this.rest)
+    this.cont = !force && SECRET_TAIL.test(this.rest)
+    const l = this.lines([this.rest])
     this.rest = ''
-    return [l]
+    return l
   }
 }
 
@@ -70,9 +100,12 @@ export class Batcher {
       this.lines.push(l)
       this.bytes += l.length + 1
     }
-    while (this.bytes > STREAM_LIMITS.batchBytes && this.lines.length > 1) {
-      this.bytes -= this.lines.shift()!.length + 1
-      this.skipped++
+    // 버릴 줄을 먼저 세고 한 번에 자른다 (줄마다 shift하면 빈 줄 폭주에서 메인 스레드가 오래 멈춤)
+    let k = 0
+    while (this.bytes > STREAM_LIMITS.batchBytes && k < this.lines.length - 1) this.bytes -= this.lines[k++].length + 1
+    if (k) {
+      this.lines.splice(0, k)
+      this.skipped += k
     }
   }
   take(): { lines: string[]; skipped: number } | null {
