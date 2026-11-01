@@ -47,10 +47,12 @@ export type Badge = {
   timeout: number // 초
 }
 // 6.0.0 앱 기능 권한: 팩이 선언하고 앱이 범위를 지킴. 항목(mode:'app')이 perm으로 가리킴
-export type PermKind = 'sftp.read' | 'sftp.write' | 'tunnel'
-export type AppOp = 'list' | 'get' | 'text' | 'put' | 'open'
-export const PERM_KINDS: PermKind[] = ['sftp.read', 'sftp.write', 'tunnel']
-export const PERM_OPS: Record<PermKind, AppOp[]> = { 'sftp.read': ['list', 'get', 'text'], 'sftp.write': ['put'], tunnel: ['open'] }
+export type PermKind = 'sftp.read' | 'sftp.write' | 'tunnel' | 'serial.read'
+export type AppOp = 'list' | 'get' | 'text' | 'put' | 'open' | 'read'
+export const PERM_KINDS: PermKind[] = ['sftp.read', 'sftp.write', 'tunnel', 'serial.read']
+export const PERM_OPS: Record<PermKind, AppOp[]> = { 'sftp.read': ['list', 'get', 'text'], 'sftp.write': ['put'], tunnel: ['open'], 'serial.read': ['read'] }
+// 6.1.0 시리얼: 팩이 고르는 보율은 이 목록뿐 (1200 같은 낮은 보율은 일부 보드에서 부트로더 진입 신호)
+export const SERIAL_BAUDS = [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
 export type Permission = {
   id: string
   kind: PermKind
@@ -59,7 +61,8 @@ export type Permission = {
   maxBytes?: number // sftp.*: 파일 하나의 크기 상한
   overwrite?: 'ask' | 'never' // sftp.write
   remotePort?: number // tunnel: Device 쪽 포트 (127.0.0.1 고정)
-  maxMinutes?: number // tunnel
+  maxMinutes?: number // tunnel · serial.read
+  baud?: number // serial.read: SERIAL_BAUDS 중 하나. 포트는 팩이 정하지 못하고 사용자가 실행 때 고름
 }
 export type Choice = { value: string; label: L10n }
 export type Param = { name: string; label: L10n; choices: Choice[] }
@@ -121,12 +124,15 @@ export const LIMITS = { fileBytes: 512 * 1024, plugins: 20, actionsPerPlugin: 50
   stopGraceMin: 3, stopGraceExternal: 10, stopGraceOfficial: 30,
   // 6.0.0 앱 기능 권한: 팩당 개수, 글자 수, 전송 크기·목록·미리보기 한도, 터널 시간·개수, 전송 시간(초)
   permsExternal: 3, permsOfficial: 5, permWhy: 300, permRoot: 200, permBytesMax: 20 * 1024 * 1024, permBytesDefault: 5 * 1024 * 1024, permPath: 300, textPreview: 256 * 1024, listEntries: 2000,
-  tunnelMinutesMax: 60, tunnelMinutesDefault: 10, tunnelsPerPack: 2, tunnelsPerApp: 4, transferSeconds: 600 }
+  tunnelMinutesMax: 60, tunnelMinutesDefault: 10, tunnelsPerPack: 2, tunnelsPerApp: 4, transferSeconds: 600,
+  // 6.1.0 시리얼 읽기: 팩당·앱 전체 동시 개수, 포트 여는 시간 상한(초), 데이터가 없을 때 안내까지(초)
+  serialPerPack: 1, serialPerApp: 2, serialOpenSeconds: 10, serialIdleSeconds: 10 }
 export const CHART_MIN_APP = '5.2.0'
 export const BADGE_MIN_APP = '5.3.0'
 export const STOP_GRACE_MIN_APP = '5.4.0'
 export const PERM_MIN_APP = '6.0.0'
-export const RESERVED_IDS = ['device', 'ros2', 'monitor', 'perf', 'devtools', 'examples', 'ros2-live', 'jetdeck', 'official', 'app', 'core', 'snippets', 'file-transfer', 'web-tunnel']
+export const SERIAL_MIN_APP = '6.1.0'
+export const RESERVED_IDS = ['uart-log','device', 'ros2', 'monitor', 'perf', 'devtools', 'examples', 'ros2-live', 'jetdeck', 'official', 'app', 'core', 'snippets', 'file-transfer', 'web-tunnel']
 // 공식 팩에서 읽기로 증명되지 않아도 읽기로 인정하는 항목 (팩id/항목id → 고정된 명령). 새 공식 항목을 추가하면 여기와 시험을 고쳐야 함 = 리뷰 강제
 export const OFFICIAL_UNPROVEN_READS = new Map<string, string>([
   ['device/pwr-status', 'echo "target=$(systemctl get-default 2>/dev/null)"; echo "up=$(uptime -p)"; echo "since=$(uptime -s)"; if [ -f /var/run/reboot-required ]; then echo reboot=yes; else echo reboot=no; fi; if [ -f /run/systemd/shutdown/scheduled ]; then s=$(grep -m1 \'^USEC=\' /run/systemd/shutdown/scheduled | cut -d= -f2); echo "scheduled=$(date -d @$((s/1000000)) \'+%F %T\') $(grep -m1 \'^MODE=\' /run/systemd/shutdown/scheduled | cut -d= -f2)"; else echo scheduled=none; fi']
@@ -408,13 +414,29 @@ function checkPermission(p: unknown, S: boolean, seen: Set<string>): { perm?: Pe
   if (typeof id !== 'string' || !PERM_ID.test(id)) return { error: `권한 id가 올바르지 않아요: ${String(id).slice(0, 40)}` }
   const bad = (m: string) => ({ error: `${id}: ${m}` })
   if (seen.has(id)) return bad('id가 겹쳐요')
-  if (!PERM_KINDS.includes(p.kind as PermKind)) return bad('kind는 sftp.read · sftp.write · tunnel 중 하나예요')
+  if (!PERM_KINDS.includes(p.kind as PermKind)) return bad('kind는 sftp.read · sftp.write · tunnel · serial.read 중 하나예요')
   const kind = p.kind as PermKind
   const why = loc(p.why, S, LIMITS.permWhy)
   if (!why) return bad(`why는 글자(또는 {ko, en})이고 ${LIMITS.permWhy}자 이내여야 해요`)
   const out: Permission = { id, kind, why }
   const only = (keys: string[]) => keys.find((k) => p[k] !== undefined)
-  if (kind === 'tunnel') {
+  if (kind !== 'serial.read') {
+    const extra = only(['baud'])
+    if (extra) return bad(`${kind} 권한은 ${extra}를 쓸 수 없어요`)
+  }
+  if (kind === 'serial.read') {
+    // 포트는 팩이 정하지 못한다 (사용자가 실행할 때 고름). 쓰기·제어선도 없다
+    const extra = only(['root', 'overwrite', 'remotePort', 'port', 'path', 'device', 'write', 'dtr', 'rts'])
+    if (extra) return bad(`serial.read 권한은 ${extra}를 쓸 수 없어요 (포트는 실행할 때 사용자가 골라요)`)
+    if (typeof p.baud !== 'number' || !SERIAL_BAUDS.includes(p.baud)) return bad(`baud는 ${SERIAL_BAUDS.join(' · ')} 중 하나여야 해요`)
+    out.baud = p.baud
+    const mm = p.maxMinutes ?? LIMITS.tunnelMinutesDefault
+    if (!(typeof mm === 'number' && Number.isInteger(mm) && mm >= 1 && mm <= LIMITS.tunnelMinutesMax)) return bad(`maxMinutes는 1~${LIMITS.tunnelMinutesMax} 사이 정수예요`)
+    out.maxMinutes = mm
+    const mb = p.maxBytes ?? LIMITS.permBytesDefault
+    if (!(typeof mb === 'number' && Number.isInteger(mb) && mb >= 1 && mb <= LIMITS.permBytesMax)) return bad(`maxBytes는 1~${LIMITS.permBytesMax} 사이 정수예요`)
+    out.maxBytes = mb
+  } else if (kind === 'tunnel') {
     const extra = only(['root', 'maxBytes', 'overwrite'])
     if (extra) return bad(`tunnel 권한은 ${extra}를 쓸 수 없어요`)
     const pp = portProblem(p.remotePort)
@@ -470,8 +492,8 @@ function checkAppAction(a: Record<string, unknown>, id: string, label: L10n, ctx
     }
   }
   let path: string | undefined
-  if (op === 'open') {
-    if (a.path !== undefined) return bad('open 항목은 path를 쓸 수 없어요')
+  if (op === 'open' || op === 'read') {
+    if (a.path !== undefined) return bad(`${op} 항목은 path를 쓸 수 없어요`)
   } else {
     path = a.path === undefined && op === 'list' ? '' : (a.path as string)
     if (typeof path !== 'string' || path.length > LIMITS.permPath || (op !== 'list' && !path)) return bad(`path는 root 기준 상대 경로 글자(${LIMITS.permPath}자 이내)예요`)
@@ -756,6 +778,9 @@ export function validatePack(raw: unknown, opts: ValidateOptions = {}): Validate
   // 권한·앱 기능 항목이 있는 팩은 옛 앱이 팩 전체를 거부하도록 minApp이 필수 (옛 앱은 이 항목을 오류로 버리고 나머지만 열어 버림)
   const usesApp = raw.permissions !== undefined || raw.plugins.some((pl) => isObj(pl) && Array.isArray(pl.actions) && pl.actions.some((a) => isObj(a) && a.mode === 'app'))
   if (usesApp && !(typeof raw.minApp === 'string' && compareSemver(raw.minApp, PERM_MIN_APP) >= 0)) return fail(`permissions나 mode "app" 항목이 있어요: minApp을 "${PERM_MIN_APP}" 이상으로 적어야 해요`)
+  // 6.1.0 시리얼: 6.0.0 앱은 모르는 kind를 오류로만 보고 팩의 나머지를 열 수 있으므로 팩 전체를 거부하게 minApp을 요구
+  const usesSerial = Array.isArray(raw.permissions) && raw.permissions.some((x) => isObj(x) && x.kind === 'serial.read')
+  if (usesSerial && !(typeof raw.minApp === 'string' && compareSemver(raw.minApp, SERIAL_MIN_APP) >= 0)) return fail(`serial.read 권한이 있어요: minApp을 "${SERIAL_MIN_APP}" 이상으로 적어야 해요`)
   const perms: Permission[] = []
   if (raw.permissions !== undefined) {
     const maxPerms = S ? LIMITS.permsOfficial : LIMITS.permsExternal
@@ -856,4 +881,4 @@ export function summarizePack(p: Pack): { total: number; read: number; change: n
 }
 
 // 모음 색인 caps.perms에 넣는 글자 (사람이 읽는 요약 + 비교용): "sftp.read", "sftp.write", "tunnel:8888". 팩 파일에서 앱이 계산한다
-export const permStrings = (p: Pack): string[] => [...new Set((p.permissions ?? []).map((x) => (x.kind === 'tunnel' ? `tunnel:${x.remotePort}` : x.kind)))]
+export const permStrings = (p: Pack): string[] => [...new Set((p.permissions ?? []).map((x) => (x.kind === 'tunnel' ? `tunnel:${x.remotePort}` : x.kind === 'serial.read' ? `serial.read:${x.baud}` : x.kind)))]

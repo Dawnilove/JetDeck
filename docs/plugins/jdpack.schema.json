@@ -8,7 +8,7 @@
   "properties": {
     "$schema": { "type": "string" },
     "$comment": { "type": "string" },
-    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,39}$", "not": { "enum": ["device", "ros2", "monitor", "perf", "devtools", "examples", "ros2-live", "jetdeck", "official", "app", "core", "snippets", "file-transfer", "web-tunnel"] }, "description": "Lower-case letters, digits and '-'. Reserved names and names starting with 'jetdeck-' are refused." },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,39}$", "not": { "enum": ["uart-log", "device", "ros2", "monitor", "perf", "devtools", "examples", "ros2-live", "jetdeck", "official", "app", "core", "snippets", "file-transfer", "web-tunnel"] }, "description": "Lower-case letters, digits and '-'. Reserved names and names starting with 'jetdeck-' are refused." },
     "format": { "const": 1 },
     "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$" },
     "name": { "$ref": "#/definitions/text60" },
@@ -21,6 +21,9 @@
     "badges": { "type": "array", "maxItems": 2, "items": { "$ref": "#/definitions/badge" }, "description": "Explorer badges (5.3.0, needs minApp 5.3.0). Run automatically when you open a folder in the Explorer. Max 2 for packs you install yourself." },
     "permissions": { "type": "array", "maxItems": 5, "items": { "$ref": "#/definitions/permission" }, "description": "App feature permissions (6.0.0, needs minApp 6.0.0). Actions with mode \"app\" use them by id. Packs you install yourself or publish to the gallery: max 3." }
   },
+  "allOf": [
+    { "if": { "required": ["permissions"], "properties": { "permissions": { "contains": { "properties": { "kind": { "const": "serial.read" } }, "required": ["kind"] } } } }, "then": { "required": ["minApp"], "properties": { "minApp": { "pattern": "^(([7-9]|[1-9][0-9]+)\\.\\d+\\.\\d+|6\\.([1-9]|[1-9][0-9]+)\\.\\d+)(-[0-9A-Za-z.-]+)?$", "description": "At least 6.1.0 when a permission has kind serial.read." } } } }
+  ],
   "if": { "required": ["permissions"] },
   "then": { "required": ["minApp"], "properties": { "minApp": { "pattern": "^([6-9]|[1-9][0-9]+)\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$", "description": "At least 6.0.0 when the pack has permissions or mode \"app\" actions." } } },
   "definitions": {
@@ -74,17 +77,20 @@
       "required": ["id", "kind", "why"],
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,29}$" },
-        "kind": { "enum": ["sftp.read", "sftp.write", "tunnel"], "description": "sftp.read: list, download and read text files under root. sftp.write: upload files under root. tunnel: connect one Device port to 127.0.0.1 on this PC (local forwarding only)." },
+        "kind": { "enum": ["sftp.read", "sftp.write", "tunnel", "serial.read"], "description": "sftp.read: list, download and read text files under root. sftp.write: upload files under root. tunnel: connect one Device port to 127.0.0.1 on this PC (local forwarding only). serial.read (6.1.0, needs minApp 6.1.0): read a serial port of this PC and show the text. Read-only: the pack cannot send anything. You pick the port every time." },
         "why": { "$ref": "#/definitions/text300" },
         "root": { "type": "string", "pattern": "^~/[^/]+(/[^/]+)*$", "maxLength": 200, "description": "sftp only. A folder under the home folder, for example ~/logs. Not ~ itself, no .., no sensitive folders (.ssh, .aws, ...)." },
-        "maxBytes": { "type": "integer", "minimum": 1, "maximum": 20971520, "default": 5242880, "description": "sftp only. Size limit of one file in bytes." },
+        "maxBytes": { "type": "integer", "minimum": 1, "maximum": 20971520, "default": 5242880, "description": "sftp and serial.read. Size limit of one file (sftp) or of all received bytes (serial.read), in bytes." },
         "overwrite": { "enum": ["ask", "never"], "default": "ask", "description": "sftp.write only. ask: the confirm dialog says the file will be overwritten. never: refuse if the file exists." },
         "remotePort": { "type": "integer", "minimum": 1024, "maximum": 65535, "description": "tunnel only. Device port. Ports of unauthenticated admin services are refused: 2375, 3389, 5900-5909, 6379, 9200, 11211, 27017." },
-        "maxMinutes": { "type": "integer", "minimum": 1, "maximum": 60, "default": 10, "description": "tunnel only. The tunnel closes after this many minutes." }
+        "maxMinutes": { "type": "integer", "minimum": 1, "maximum": 60, "default": 10, "description": "tunnel and serial.read. The tunnel or the serial read ends after this many minutes." },
+        "baud": { "enum": [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600], "description": "serial.read only. Required. Only these baud rates are allowed. The port itself is never named in a pack." }
       },
-      "if": { "properties": { "kind": { "const": "tunnel" } }, "required": ["kind"] },
-      "then": { "required": ["remotePort"], "not": { "anyOf": [{ "required": ["root"] }, { "required": ["maxBytes"] }, { "required": ["overwrite"] }] } },
-      "else": { "required": ["root"], "not": { "anyOf": [{ "required": ["remotePort"] }, { "required": ["maxMinutes"] }] } }
+      "allOf": [
+        { "if": { "properties": { "kind": { "const": "tunnel" } }, "required": ["kind"] }, "then": { "required": ["remotePort"], "not": { "anyOf": [{ "required": ["root"] }, { "required": ["maxBytes"] }, { "required": ["overwrite"] }, { "required": ["baud"] }] } } },
+        { "if": { "properties": { "kind": { "const": "serial.read" } }, "required": ["kind"] }, "then": { "required": ["baud"], "not": { "anyOf": [{ "required": ["root"] }, { "required": ["overwrite"] }, { "required": ["remotePort"] }] } } },
+        { "if": { "properties": { "kind": { "enum": ["sftp.read", "sftp.write"] } }, "required": ["kind"] }, "then": { "required": ["root"], "not": { "anyOf": [{ "required": ["remotePort"] }, { "required": ["maxMinutes"] }, { "required": ["baud"] }] } } }
+      ]
     },
     "plugin": {
       "type": "object",
@@ -116,7 +122,7 @@
         "risk": { "enum": ["read", "change", "danger"], "description": "What you claim. JetDeck computes the real risk and uses the higher one." },
         "mode": { "enum": ["exec", "terminal", "stream", "app"], "default": "exec", "description": "stream (5.1.0, needs minApp 5.1.0): output that keeps coming, shown live with display.type log. app (6.0.0, needs minApp 6.0.0): uses a permission from permissions." },
         "perm": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,29}$", "description": "mode app only. The id of a permission in permissions." },
-        "op": { "enum": ["list", "get", "text", "put", "open"], "description": "mode app only. sftp.read: list, get, text. sftp.write: put. tunnel: open." },
+        "op": { "enum": ["list", "get", "text", "put", "open", "read"], "description": "mode app only. sftp.read: list, get, text. sftp.write: put. tunnel: open. serial.read: read." },
         "path": { "type": "string", "maxLength": 300, "description": "mode app only. Path under the permission root, relative, no .. and no leading /. {name} slots are filled from fields. Not for open." },
         "enter": { "type": "boolean", "default": true },
         "sudo": { "type": "boolean" },

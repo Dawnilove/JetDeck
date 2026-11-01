@@ -5,7 +5,7 @@ export type Reason =
   | 'delete' | 'disk' | 'power' | 'privilege' | 'shell' | 'network' | 'package' | 'users' | 'system' // danger 계열
   | 'sensitive' | 'overwrite' | 'write' | 'unknown' | 'unsafe' | 'dynamic' | 'syntax' | 'redirect' | 'newline' | 'background' | 'assign'
   | 'input' // 5.1.0: 사용자가 입력한 값 때문에 위험도가 올라감
-  | 'sftp-write' | 'tunnel' // 6.0.0: 앱 기능 권한 (permRisk)
+  | 'sftp-write' | 'tunnel' | 'serial-read' // 6.0.0·6.1.0: 앱 기능 권한 (permRisk)
 export type Analysis = { risk: Risk; reasons: Reason[] }
 export type AnalyzeOpts = { stream?: boolean } // stream: 끝나지 않는 읽기 명령(journalctl -f 등)도 읽기로 인정 (mode:'stream' 항목 전용)
 
@@ -33,7 +33,8 @@ export const REASON_TEXT: Record<Reason, string> = {
   assign: '변수를 설정하고 실행해요',
   input: '입력한 값 때문에 위험도가 올라갔어요',
   'sftp-write': '이 PC의 파일을 Device에 올려요',
-  tunnel: 'Device 포트를 이 PC에 연결해요'
+  tunnel: 'Device 포트를 이 PC에 연결해요',
+  'serial-read': '이 PC의 시리얼 포트를 읽어요. 일부 장치는 포트를 열 때 다시 시작해요'
 }
 const RANK: Record<Risk, number> = { read: 0, change: 1, danger: 2 }
 export const maxRisk = (a: Risk, b: Risk): Risk => (RANK[a] >= RANK[b] ? a : b)
@@ -694,7 +695,7 @@ const DANGER_CMDS: Record<Reason, string[]> = {
   network: ['curl', 'wget', 'nc', 'ncat', 'netcat', 'socat', 'telnet', 'ssh', 'scp', 'sftp', 'rsync', 'ftp', 'tftp', 'lftp', 'aria2c', 'openssl', 'nmap', 'ping', 'ping6', 'traceroute', 'tracepath', 'dig', 'nslookup', 'host', 'mtr', 'ssh-keyscan', 'ssh-copy-id', 'sshpass', 'mosh', 'rclone', 'aws', 'gcloud', 'az', 'gh', 'mosquitto_pub', 'mosquitto_sub', 'mail', 'mailx', 'sendmail', 'msmtp', 'ssmtp', 'mutt'],
   users: ['passwd', 'chpasswd', 'useradd', 'userdel', 'usermod', 'groupadd', 'groupdel', 'groupmod', 'adduser', 'deluser', 'visudo', 'chage'],
   system: ['crontab', 'at', 'batch', 'iptables', 'ip6tables', 'nft', 'ufw', 'firewall-cmd', 'modprobe', 'insmod', 'rmmod', 'depmod', 'update-grub', 'grub-install', 'update-initramfs', 'dpkg-reconfigure', 'systemd-run'],
-  package: [], sensitive: [], overwrite: [], write: [], unknown: [], unsafe: [], dynamic: [], syntax: [], redirect: [], newline: [], background: [], assign: [], input: [], 'sftp-write': [], tunnel: []
+  package: [], sensitive: [], overwrite: [], write: [], unknown: [], unsafe: [], dynamic: [], syntax: [], redirect: [], newline: [], background: [], assign: [], input: [], 'sftp-write': [], tunnel: [], 'serial-read': []
 }
 const DANGER_BY_NAME = new Map<string, Reason>()
 for (const [reason, names] of Object.entries(DANGER_CMDS) as [Reason, string[]][]) for (const n of names) DANGER_BY_NAME.set(n, reason)
@@ -844,6 +845,7 @@ export function analyze(cmd: string, opts: AnalyzeOpts = {}): Analysis {
 export function permRisk(kind: string): Analysis {
   if (kind === 'sftp.write') return { risk: 'change', reasons: ['sftp-write'] }
   if (kind === 'tunnel') return { risk: 'change', reasons: ['tunnel'] }
+  if (kind === 'serial.read') return { risk: 'change', reasons: ['serial-read'] } // 읽기만 해도 포트를 열 때 DTR이 바뀌어 장치가 다시 시작할 수 있어 read가 아니다
   return { risk: 'read', reasons: [] } // sftp.read
 }
 

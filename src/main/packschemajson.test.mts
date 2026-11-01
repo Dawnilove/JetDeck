@@ -134,7 +134,7 @@ test('schema: 권한 팩이 스키마와 검사기에서 같은 결과 (ajv가 �
   agree(base({ minApp: undefined }), false, 'minApp 없음')
   agree(base({}, { root: '~' }), false, 'root ~')
   agree(base({}, { root: '/etc' }), false, 'root 절대')
-  agree(base({}, { kind: 'serial.read' }), false, '모르는 kind')
+  agree(base({}, { kind: 'serial.write' }), false, '모르는 kind')
   agree(base({}, { why: undefined }), false, 'why 없음')
   agree(base({}, { remotePort: 8888 }), false, 'sftp에 remotePort')
   agree(base({}, { maxBytes: 21 * 1024 * 1024 }), false, 'maxBytes 초과')

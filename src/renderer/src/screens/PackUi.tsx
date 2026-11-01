@@ -51,7 +51,7 @@ const slotDir = (cmd: string) => cmd.split('{dir}').join(`{${tr('폴더')}}`)
 
 const fmtSize =(n: number) => (n < 1024 ? `${n}B` : `${(n / 1024).toFixed(1)}KB`)
 
-const PERM_NAME: Record<PermKind, string> = { 'sftp.read': tr('Device 파일 읽기'), 'sftp.write': tr('Device 파일 쓰기'), tunnel: tr('터널 (Device 포트를 이 PC에 연결)') }
+const PERM_NAME: Record<PermKind, string> = { 'sftp.read': tr('Device 파일 읽기'), 'sftp.write': tr('Device 파일 쓰기'), tunnel: tr('터널 (Device 포트를 이 PC에 연결)'), 'serial.read': tr('이 PC의 시리얼 포트 읽기') }
 
 // 권한 구역 (6.0.0): 권한마다 종류·범위·한도·앱이 계산한 위험도·쓰는 항목. 앱 글자만 앱 문장이고 팩 설명(why)은 라벨 아래 따로.
 // 권한은 클릭이 있어야 실행되므로 "누르지 않아도 실행" 구역과 다름. 업데이트로 권한이 늘거나 범위가 바뀌면 빨간 줄

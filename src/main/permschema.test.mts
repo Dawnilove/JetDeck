@@ -52,7 +52,7 @@ test('범위 한도: maxBytes·maxMinutes·overwrite·종류별 금지 필드', 
 
 test('T5 권한 id 중복·모르는 kind·없는 perm·kind와 op 불일치', () => {
   assert.match(errs(run([perm(), perm()], [app()])), /logs: id가 겹쳐요/)
-  assert.match(errs(run([perm({ kind: 'serial.read' })], [app()])), /kind는/)
+  assert.match(errs(run([perm({ kind: 'serial.write' })], [app()])), /kind는/)
   assert.match(errs(run([perm({ why: undefined })], [app()])), /why/)
   assert.match(errs(run([perm({ id: 'X' })], [app()])), /권한 id/)
   const noPerm = run([perm()], [app({ perm: 'nope' })])
