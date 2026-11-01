@@ -1,0 +1,63 @@
+{
+  "$schema": "https://dawnilove.github.io/JetDeck/plugins/jdpack.schema.json",
+  "$comment": "Example permission pack: copy this file, change the id, the folder (~/my-files) and the port, and install the copy. 권한 예제 팩: 복사해서 id, 폴더(~/my-files), 포트를 바꿔 쓰세요.",
+  "id": "my-transfer",
+  "format": 1,
+  "version": "1.0.0",
+  "minApp": "6.0.0",
+  "name": { "ko": "내 파일 전송", "en": "My file transfer" },
+  "desc": { "ko": "~/my-files 폴더에서 목록 보기·받기·올리기, 포트 8888 터널 예제예요.", "en": "Example: list, download and upload in ~/my-files, and a tunnel to port 8888." },
+  "author": "Your name",
+  "license": "Apache-2.0",
+  "permissions": [
+    {
+      "id": "read-files",
+      "kind": "sftp.read",
+      "root": "~/my-files",
+      "maxBytes": 5242880,
+      "why": { "ko": "~/my-files 폴더의 파일을 보고 받아요", "en": "List and download files in ~/my-files" }
+    },
+    {
+      "id": "write-files",
+      "kind": "sftp.write",
+      "root": "~/my-files",
+      "overwrite": "ask",
+      "why": { "ko": "PC에서 고른 파일을 ~/my-files에 올려요", "en": "Upload a file you pick on this PC to ~/my-files" }
+    },
+    {
+      "id": "notebook",
+      "kind": "tunnel",
+      "remotePort": 8888,
+      "maxMinutes": 20,
+      "why": { "ko": "Device의 Jupyter(8888)를 PC 브라우저로 봐요", "en": "Open Jupyter (8888) on the Device from this PC" }
+    }
+  ],
+  "plugins": [
+    {
+      "id": "files",
+      "title": { "ko": "내 파일", "en": "My files" },
+      "actions": [
+        { "id": "list", "label": { "ko": "목록 보기", "en": "List files" }, "mode": "app", "perm": "read-files", "op": "list" },
+        {
+          "id": "get",
+          "label": { "ko": "PC로 받기", "en": "Download" },
+          "mode": "app",
+          "perm": "read-files",
+          "op": "get",
+          "path": "{file}",
+          "fields": [{ "name": "file", "label": { "ko": "파일 이름", "en": "File name" }, "type": "text", "charset": "free", "maxLen": 120 }]
+        },
+        {
+          "id": "put",
+          "label": { "ko": "PC에서 올리기", "en": "Upload" },
+          "mode": "app",
+          "perm": "write-files",
+          "op": "put",
+          "path": "{name}",
+          "fields": [{ "name": "name", "label": { "ko": "저장할 이름", "en": "Name on the Device" }, "type": "text", "charset": "free", "maxLen": 120 }]
+        },
+        { "id": "jupyter", "label": { "ko": "Jupyter 터널 열기", "en": "Open Jupyter tunnel" }, "mode": "app", "perm": "notebook", "op": "open" }
+      ]
+    }
+  ]
+}

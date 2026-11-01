@@ -288,6 +288,10 @@ A pack listed in the [gallery](publish.md) is a normal pack with a few extra rul
 * `author` is shown with the label "self-declared". The gallery adds a separate `submitter` (the GitHub account that sent the pack).
 * The app downloads the file, checks its fingerprint, and shows the allow dialog as usual. Installing from the gallery changes nothing about risk: **Install only** adds the pack turned off, **Allow and turn on** counts as having read the commands that were shown.
 
+## Permissions (6.0.0)
+
+`permissions[]` and `mode: "app"` items let a pack use SFTP and tunnels inside a declared range. They need `minApp` 6.0.0. Full description: [permissions.md](permissions.md).
+
 ## Risk
 
 JetDeck does **not** trust the `risk` you write. It analyzes every command (all choice combinations) and uses the **higher** of the two:
@@ -321,3 +325,5 @@ If you write `read` but the app computes more, the action stays, the app uses th
 `format: 1` is fixed for 5.x. New 5.x versions only **add** fields. Use `minApp` when you need one of them.
 
 A 5.0.0 app that opens a 5.1 pack hides actions that use `stream`, `log` or `fields` ("needs a newer app"), or refuses the whole pack when `minApp` is higher. The same holds for a 5.1 app and a 5.2 pack with `chart`. It never runs them in a riskier way. 5.0 and 5.1 packs run unchanged in 5.2. Likewise a 5.2 app refuses a pack that sets `minApp` 5.3.0, and ignores `badges` in a pack without `minApp` (no marks, no risk). 5.0–5.2 packs run unchanged in 5.3. A 5.3 app refuses a pack that sets `minApp` 5.4.0 and ignores `stopGrace` in a pack without `minApp` (the stream stops after 3 seconds as before). 5.0–5.3 packs run unchanged in 5.4.
+
+A 5.6 app refuses a pack that sets `minApp` 6.0.0. Packs with `permissions` or `mode: "app"` must set `minApp` 6.0.0 (without it the 6.0 app refuses the whole pack). 5.0–5.6 packs run unchanged in 6.0.

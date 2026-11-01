@@ -171,3 +171,11 @@ for (const [id, file] of [['file-transfer', 'filetransfer'], ['web-tunnel', 'web
     for (const a of r.pack!.plugins.flatMap((p) => p.actions)) assert.equal(a.mode, 'app')
   })
 }
+
+test('docs 권한 예제 팩: 외부 팩으로 검증 통과', () => {
+  const raw = JSON.parse(readFileSync(new URL('../../../docs/plugins/examples/permissions.jdpack.json', import.meta.url), 'utf8'))
+  const r = validatePack(raw, { appVersion: '6.0.0' })
+  assert.deepEqual(r.errors, [])
+  assert.deepEqual(r.warnings, [])
+  assert.equal(r.pack?.permissions?.length, 3)
+})

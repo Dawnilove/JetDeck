@@ -58,6 +58,18 @@ The gallery downloads a list of packs from the network, so it has its own defenc
 
 How the maintainer publishes and handles keys: [publish.md](publish.md).
 
+## Permissions: app features for packs (6.0.0)
+
+**This is the first time a pack can affect your PC.** A pack may now declare permissions to list and download files (`sftp.read`), upload files (`sftp.write`) and open one Device port on `127.0.0.1` of your PC (`tunnel`). Details and limits: [permissions.md](permissions.md).
+
+* **Declared range, enforced by the app.** The pack names a folder (`root`) or a port. The app rebuilds and checks the Device path on every use (no `..`, links resolved and kept inside `root`, regular files only, size limit, denied list for system folders, keys and secret-looking files). The screen never sends a path.
+* **Your PC path is yours.** The pack cannot choose where a download is saved or which PC file is uploaded. You choose in the system dialog. Executable and script file types are refused as save names, and the app never opens a downloaded file.
+* **You confirm.** The allow dialog lists every permission (kind, folder or port, limits). Uploads and tunnels also show a confirm window written by the app, with the file name, size, target and whether it overwrites. Permissions never run by themselves: not from auto-run, charts, badges or choice lists.
+* **Tunnels are small on purpose.** Local forward only, to `127.0.0.1` on the Device, a port chosen by the app, a time limit, closed when you leave the screen, lose the connection, turn the pack off or quit. While one is open, **other programs on your PC can connect to it.**
+* **Changes ask again.** A changed pack file turns off. If permissions grew or a range changed, the dialog says so in red.
+* **Official packs ask too.** `file-transfer` and `web-tunnel` ship turned off and show the permission list before they turn on.
+* **What stays open.** The denied list is name-based, an overwrite sets mode `0644`, a Device user who controls a folder can race a check, and browser attacks on a local port were not tested. See the limits in [permissions.md](permissions.md).
+
 ## Reading the allow dialog
 
 1. **Header counts** — how many items are read / change / danger. A pack with many danger items needs a reason.
@@ -93,4 +105,5 @@ If you find a way for a pack to bypass the allow list or the risk analysis, repo
 * **탐색기 배지와 폴더를 열 때 저절로 실행되는 것 (5.3.0).** 배지는 클릭 없이 폴더를 여는 것만으로 팩 명령이 실행되는 유일한 곳이에요(4.1.0부터 있던 내장 Git 표시도 같아요). 배지 명령은 앱이 읽기 전용임을 **팩을 읽을 때와 실행 직전(실제 폴더 이름을 채운 뒤) 두 번** 증명해야 하고, 못 하면 말없이 건너뛰어요. 허용 창의 "자동으로 돌아가는 것" 구역에 명령 전문이 "폴더를 열 때"로 보여요. 폴더 이름은 따옴표 처리한 낱말 하나로만 들어가요. **믿을 수 없는 저장소**(받은 압축 파일, 남의 clone)는 저장소 안의 설정으로 Git이 프로그램을 실행하게 만들 수 있어요. 그래서 JetDeck은 `git`을 실행하기 전에 저장소 자신의 설정을 검사하고 **프로그램을 실행할 수 있는 설정이면 Git을 실행하지 않아요**(폴더에 ⚠와 이유가 떠요). 훅·서명 확인 프로그램·페이저·인덱스 쓰기도 꺼요. 이 가드는 `git`을 쓰는 **모든** 팩 항목(버튼·미리보기·실시간 보기·그래프·`from` 목록)과 탐색기의 내장 Git 표시에도 적용돼요. 한계: 저장소마다 설치한 Git LFS처럼 저장소 로컬 필터 설정이 있으면 그것도 거부돼요(안전한 쪽). `env`·`xargs`·`find -exec`로 `git`을 실행하는 명령은 가드를 지나지 않아서 읽기로 인정되지 않고 먼저 물어요. 내 셸과 전역 Git 설정은 믿어요. 간격 3초 이상·연결당 한 번에 하나·15초 제한·연속 3번 시간 초과 시 정지·레코드 5000개·출력 1MB. 끄는 방법: 관리 창의 **탐색기 배지** 스위치, 팩 끄기, `--safe-mode`.
 * **모음 (5.5.0).** 목록은 관리자의 ed25519 열쇠로 **서명**돼요(비밀 열쇠는 관리자 PC 밖으로 안 나가요). 앱은 목록을 읽기 **전에** 서명을 확인하고, 틀리면 목록을 보여 주지 않아요(저장해 둔 마지막 정상 목록만 오프라인으로 보여요). 앱이 본 가장 높은 `serial`보다 낮은 목록은 거부하고, 90일이 지나면 새 설치를 막아요. 팩 파일은 **내용 보기**를 누를 때만 받고, 크기·SHA-256이 서명된 목록과 같아야 하며 앱이 다시 검사해요. 주소 2개는 앱에 박혀 있고(HTTPS만, 리다이렉트 거부, 크기·15초 제한), 고정 `User-Agent`와 캐시 확인만 보내요(쿠키·기기 정보·설치한 팩 목록·검색어 없음). 앱을 켤 때는 아무것도 받지 않고, 모음 탭 안내에 동의한 뒤에만 받아요. 배포 앱은 주소를 바꾸는 설정을 무시해요. 철회된 팩은 설치할 수 없고, 설치된 것은 이유와 함께 빨간 줄로 알려요(자동 끄기는 5.6.0). **검토됨은 안전 보증이 아니에요.** 허용 창을 읽는 일은 그대로예요. 관리자 절차: [publish.md](publish.md).
 * **모음 업데이트·신고·철회 (5.6.0).** 모음은 "업데이트 있음"만 표시하고 스스로 갱신하지 않아요. 새 파일은 지문이 달라 다시 허용해야 켜지고 바뀐 명령이 강조돼요. **신고**는 공개 GitHub 이슈 양식을 열고, 안전 검사를 우회하는 팩은 비공개 취약점 제보로 받아요. 앱은 신고만으로 팩을 끄지 않아요. 철회된 팩(모음에서 받은 것, 파일이 그대로일 때)은 **자동으로 꺼지고** 다시 켜려면 확인이 한 번 더 필요해요. 철회 확인은 모음 탭을 열 때와, 모음에서 받은 팩이 있고 안내에 동의한 사람만 앱을 켤 때 하루 1번이에요(모음 탭에서 끌 수 있어요). 커뮤니티 팩은 PR로 오고, 자동 검사는 파일을 읽기만 해요. 관리자가 모든 명령을 읽은 뒤에야 서명된 목록에 들어가요([review.md](review.md)).
+* **권한 (6.0.0).** 팩이 처음으로 내 PC에 영향을 줄 수 있어요: 파일 받기·올리기, PC 포트(`127.0.0.1`) 열기. 팩이 정한 폴더·포트 안에서만 쓰이고, 앱이 쓸 때마다 경로를 다시 검사해요. PC 쪽 경로는 시스템 대화상자에서 내가 골라요. 허용 창에 권한이 모두 보이고, 올리기·터널은 앱이 만든 확인 창을 거쳐요. 터널이 열린 동안 이 PC의 다른 프로그램도 접속할 수 있어요. 자세한 한계: [permissions.md](permissions.md).
 * 우회 방법을 찾으면 공개 이슈 대신 GitHub의 "Report a vulnerability"로 알려 주세요.
