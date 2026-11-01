@@ -74,4 +74,7 @@ export const EN_O: Record<string, string> = {
   '{0}을(를) 여는 데 너무 오래 걸려요. 장치를 확인하세요': 'Opening {0} takes too long. Check the device',
   '{0}의 제어선을 낮추지 못해서 열지 않았어요': 'Could not lower the control lines of {0}, so it was not opened',
   '이 PC의 시리얼 포트 읽기': 'Read a serial port of this PC',
+  '시리얼 {0}': 'Serial {0}',
+  '시리얼 포트를 읽어요. 장치로 보내지 않아요. 일부 장치는 포트를 열 때 다시 시작할 수 있어요.': 'Reads a serial port. Sends nothing to the device. Some devices may restart when the port is opened.',
+  '이 PC의 포트 · 포트는 실행할 때 직접 골라요': 'A port on this PC · you pick the port when it runs',
 }

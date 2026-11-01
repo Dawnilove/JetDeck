@@ -62,14 +62,16 @@ function PermSection({ pack, changes }: { pack: Pack; changes?: CommandDiff }) {
   return (
     <div data-testid="pk-perms" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 10, borderRadius: 8, border: `1px solid ${grew ? 'var(--status-off)' : 'var(--warn)'}` }}>
       <span className="caption">{tr('이 팩은 앱 기능을 써요 (누를 때마다 실행)')}</span>
-      <p style={{ fontSize: 13 }}>{tr('권한 {0}개: 읽기 {1} · 쓰기 {2} · 터널 {3}', perms.length, count('sftp.read'), count('sftp.write'), count('tunnel'))}</p>
+      <p style={{ fontSize: 13 }}>{tr('권한 {0}개: 읽기 {1} · 쓰기 {2} · 터널 {3}', perms.length, count('sftp.read'), count('sftp.write'), count('tunnel'))}{count('serial.read') > 0 && ` · ${tr('시리얼 {0}', count('serial.read'))}`}</p>
+      {count('serial.read') > 0 && <p className="dim" style={{ fontSize: 12 }}>{tr('시리얼 포트를 읽어요. 장치로 보내지 않아요. 일부 장치는 포트를 열 때 다시 시작할 수 있어요.')}</p>}
       {grew && <p className="msg-err" data-testid="pk-perm-grew" style={{ fontSize: 13 }}>⚠ {tr('권한이 늘었거나 범위가 바뀌었어요')}</p>}
       {perms.map((p) => {
         const an = permRisk(p.kind)
         const m = changes?.added.includes(`perm:${p.id}`) ? tr('새로 추가됨') : changes?.changed.includes(`perm:${p.id}`) ? tr('범위가 바뀜') : ''
         const used = pack.plugins.flatMap((pl) => pl.actions.filter((a) => a.perm === p.id).map((a) => lt(a.label)))
-        const range = p.kind === 'tunnel' ? tr('Device 포트 {0}', p.remotePort ?? '') : p.root ?? ''
-        const limit = p.kind === 'tunnel' ? tr('최대 {0}분', p.maxMinutes ?? 10) : [tr('파일 하나 {0}까지', fmtBytes(p.maxBytes ?? 5 * 1024 * 1024)), ...(p.kind === 'sftp.write' ? [p.overwrite === 'never' ? tr('덮어쓰기 안 함') : tr('같은 이름이 있으면 물어봄')] : [])].join(' · ')
+        const serial = p.kind === 'serial.read'
+        const range = serial ? tr('이 PC의 포트 · 포트는 실행할 때 직접 골라요') : p.kind === 'tunnel' ? tr('Device 포트 {0}', p.remotePort ?? '') : p.root ?? ''
+        const limit = serial ? [p.baud, tr('최대 {0}분', p.maxMinutes ?? 10), fmtBytes(p.maxBytes ?? 5 * 1024 * 1024)].join(' · ') : p.kind === 'tunnel' ? tr('최대 {0}분', p.maxMinutes ?? 10) : [tr('파일 하나 {0}까지', fmtBytes(p.maxBytes ?? 5 * 1024 * 1024)), ...(p.kind === 'sftp.write' ? [p.overwrite === 'never' ? tr('덮어쓰기 안 함') : tr('같은 이름이 있으면 물어봄')] : [])].join(' · ')
         return (
           <div key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: 8, borderRadius: 8, background: 'var(--bg)', border: m ? '1px solid var(--warn)' : '1px solid transparent' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', fontSize: 13 }}>
