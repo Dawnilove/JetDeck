@@ -23,5 +23,7 @@ export const EN_O: Record<string, string> = {
   'UTF-8 파일이 아니라 글자로 볼 수 없어요': 'This is not a UTF-8 file and cannot be shown as text',
   '실행 파일 형식(.exe 등)으로는 저장할 수 없어요': 'Files cannot be saved in an executable format (such as .exe)',
   '올린 파일 크기가 달라요': 'The uploaded file size does not match',
-  '아직 지원하지 않는 동작이에요': 'This action is not supported yet'
+  '아직 지원하지 않는 동작이에요': 'This action is not supported yet',
+  '이 터널은 이미 열려 있어요': 'This tunnel is already open',
+  '열 수 있는 터널 수를 넘었어요': 'Too many tunnels are open'
 }

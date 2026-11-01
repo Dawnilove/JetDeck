@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, type WebContents } from 'electron'
 import type { Stats } from 'ssh2'
 import { tr } from './i18n.mts'
+import { forwardOut, pipe } from './forward'
 import { createAppEngine, type AppEvent, type DeviceFs } from './packappcore.mts'
 import type { PackEntry } from './packstore.mts'
 import type { Pack, PackAction } from './packschema.mts'
@@ -62,6 +63,7 @@ const engine = createAppEngine({
       return r.canceled || !r.filePaths[0] ? null : r.filePaths[0]
     }
   },
+  connectTo: (connId, sock, remotePort) => forwardOut(requireClient(connId), sock, '127.0.0.1', remotePort, (stream) => pipe(sock, stream)), // Device 쪽은 127.0.0.1 고정 (다른 호스트로 못 감)
   emit: (e: AppEvent) => BrowserWindow.getAllWindows().forEach((w) => w.webContents.isDestroyed() || w.webContents.send('pack:app-event', e))
 })
 

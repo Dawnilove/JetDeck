@@ -4,6 +4,7 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { createReadStream, createWriteStream } from 'node:fs'
 import { rename as fsRename, stat as fsStat, unlink as fsUnlink } from 'node:fs/promises'
+import type { Socket } from 'node:net'
 import { basename } from 'node:path'
 import { Transform, Writable, type Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
@@ -12,7 +13,8 @@ import { checkValue, type Field } from './packfields.mts'
 import { fill } from './packrun.mts'
 import { sanitizeOutput } from './packsafe.mts'
 import { LIMITS, PERM_OPS, type AppOp, type Pack, type PackAction, type PermKind, type Permission } from './packschema.mts'
-import { badSaveName, resolveTarget, safeName, toTilde, type FsKind, type PathFs } from './permpath.mts'
+import { listenTunnel, pickFreePort, TUNNEL_HOST, type TunnelHandle } from './packtunnel.mts'
+import { badSaveName, portProblem, resolveTarget, safeName, toTilde, type FsKind, type PathFs } from './permpath.mts'
 import { permRisk, type Reason, type Risk } from './risk.mts'
 
 export interface DeviceFs extends PathFs {
@@ -26,11 +28,16 @@ export type AppUi = {
   pickSave(defaultName: string, ctx?: unknown): Promise<string | null> // OS 저장 대화상자 (덮어쓰기 확인은 대화상자가 함)
   pickOpen(ctx?: unknown): Promise<string | null> // OS 열기 대화상자
 }
-export type AppEvent = { type: 'progress'; opId: string; done: number; total: number }
+export type AppEvent =
+  | { type: 'progress'; opId: string; done: number; total: number }
+  | { type: 'tunnel'; state: 'open' | 'closed'; id: string; packId: string; connId: string; port?: number; remotePort?: number; endsAt?: number; reason?: string } // 상태 줄·정지 버튼용
 export type AppDeps = {
   fsOf(connId: string): Promise<DeviceFs>
   ui: AppUi
   emit?: (e: AppEvent) => void
+  connectTo?: (connId: string, sock: Socket, remotePort: number) => void // 터널: 들어온 연결을 Device 127.0.0.1:remotePort에 이음 (packapp.ts가 forwardOut·pipe로 연결)
+  freePort?: () => Promise<number> // 시험용
+  tunnelMs?: (minutes: number) => number // 시험용
 }
 export type AppTarget = { pack: Pack; hash: string; pluginId: string; action: PackAction } // 켜진 팩에서 찾은 항목 (찾는 일은 호출 쪽)
 export type AppPrepared = {
@@ -43,12 +50,14 @@ export type AppPrepared = {
   remotePath?: string // 확인 창에 보일 Device 경로 (~/upload/a.bin)
   exists?: boolean // put: 같은 이름이 이미 있음 (overwrite가 ask면 확인 창에 덮어쓴다고 보임)
   local?: { name: string; size: number } // put: 사용자가 고른 PC 파일
+  tunnel?: { port: number; remotePort: number; minutes: number } // open: 이 PC 127.0.0.1:port를 Device remotePort에 이음. 이 PC의 다른 프로그램도 접속할 수 있음
 }
 export type AppResult =
   | { op: 'list'; entries: { name: string; kind: FsKind; size: number }[]; truncated: boolean }
   | { op: 'text'; text: string }
   | { op: 'get'; saved: string | null; size: number } // saved: 저장한 파일 이름 (취소하면 null)
   | { op: 'put'; name: string; size: number; path: string }
+  | { op: 'open'; id: string; host: string; port: number; remotePort: number; endsAt: number } // id로 pack:app-stop
 
 const PENDING_TTL = 10 * 60_000
 const PENDING_MAX = 8
@@ -88,12 +97,15 @@ function counter(max: number, onBytes: (n: number) => void): Transform {
   })
 }
 
-type Op = { connId: string; packId: string; hash: string; stop: () => void }
+type Op = { connId: string; packId: string; hash: string; stop: (why?: string) => void }
+type Tunnel = Op & { key: string }
 type Pending = { connId: string; local: string; size: number; mtimeMs: number; at: number }
 
 export function createAppEngine(deps: AppDeps) {
   const ops = new Map<string, Op>()
   const pending = new Map<string, Pending>()
+  const tunnels = new Map<string, Tunnel>()
+  const pendingOpen = new Map<string, { connId: string; port: number; at: number }>()
 
   function contextOf(t: AppTarget): { perm: Permission; op: AppOp; a: PackAction } {
     const a = t.action
@@ -108,7 +120,7 @@ export function createAppEngine(deps: AppDeps) {
   // 전송 시작: 연결마다 하나, 시간 상한, 멈춤 신호. opId는 화면이 정하면(취소용) 그대로, 아니면 새로 만듦
   function begin(connId: string, t: AppTarget, wanted?: string) {
     const opId = wanted ?? rand()
-    if (!/^[\w-]{1,64}$/.test(opId) || ops.has(opId)) throw new Error(tr('올바르지 않은 요청이에요'))
+    if (!/^[\w-]{1,64}$/.test(opId) || ops.has(opId) || tunnels.has(opId)) throw new Error(tr('올바르지 않은 요청이에요'))
     if ([...ops.values()].some((o) => o.connId === connId)) throw new Error(tr('이 연결은 전송을 하나씩만 할 수 있어요'))
     const ac = new AbortController()
     const timer = setTimeout(() => ac.abort(new Error(tr('전송 시간이 너무 길어서 멈췄어요'))), LIMITS.transferSeconds * 1000)
@@ -120,10 +132,28 @@ export function createAppEngine(deps: AppDeps) {
   const transfer = (signal: AbortSignal, ...streams: unknown[]) =>
     (pipeline as (...a: unknown[]) => Promise<void>)(...streams, { signal }).catch((e) => Promise.reject(signal.aborted ? signal.reason : e))
 
+  // 터널 개수: 같은 항목 중복 금지, 팩당 2, 앱 전체 4. 같은 key는 연결·팩·플러그인·항목
+  function tunnelKey(connId: string, t: AppTarget): string {
+    const key = `${connId}/${t.pack.id}/${t.pluginId}/${t.action.id}`
+    const open = [...tunnels.values()]
+    if (open.some((x) => x.key === key)) throw new Error(tr('이 터널은 이미 열려 있어요'))
+    if (open.filter((x) => x.packId === t.pack.id).length >= LIMITS.tunnelsPerPack || open.length >= LIMITS.tunnelsPerApp) throw new Error(tr('열 수 있는 터널 수를 넘었어요'))
+    return key
+  }
+
   async function prepare(connId: string, t: AppTarget, given: Record<string, string> | undefined, ctx?: unknown): Promise<AppPrepared | null> {
     const { perm, op, a } = contextOf(t)
     const r = permRisk(perm.kind)
     const base: AppPrepared = { op, kind: perm.kind, risk: r.risk, reasons: r.reasons, needConfirm: false, token: '' }
+    if (op === 'open') {
+      tunnelKey(connId, t)
+      if (portProblem(perm.remotePort)) throw new Error(tr('경로가 올바르지 않아요'))
+      const port = await (deps.freePort ?? pickFreePort)() // 번호만 정함. 확인하기 전에는 아무것도 열지 않음
+      const token = sha(t.pack.id, t.pluginId, a.id, 'open', perm.remotePort!, port, perm.maxMinutes!)
+      if (pendingOpen.size >= PENDING_MAX) pendingOpen.delete(pendingOpen.keys().next().value!)
+      pendingOpen.set(token, { connId, port, at: Date.now() })
+      return { ...base, needConfirm: true, token, tunnel: { port, remotePort: perm.remotePort!, minutes: perm.maxMinutes! } }
+    }
     if (op !== 'put') return base // 읽기 동작은 확인 창이 없음 (받기는 OS 저장 창이 확인 역할)
     const fs = await deps.fsOf(connId)
     const home = await homeOf(fs)
@@ -142,6 +172,37 @@ export function createAppEngine(deps: AppDeps) {
 
   async function run(connId: string, t: AppTarget, given: Record<string, string> | undefined, token: unknown, opId?: string, ctx?: unknown): Promise<AppResult> {
     const { perm, op, a } = contextOf(t)
+
+    if (op === 'open') {
+      const p = typeof token === 'string' ? pendingOpen.get(token) : undefined
+      // 확인한 것과 같아야 실행: 포트·시간은 팩이 정한 값이고, 이 PC 포트 번호는 확인 창에서 보여 준 값
+      if (!p || p.connId !== connId || Date.now() - p.at > PENDING_TTL || token !== sha(t.pack.id, t.pluginId, a.id, 'open', perm.remotePort!, p.port, perm.maxMinutes!)) throw new Error(tr('확인한 내용과 달라요. 다시 확인해 주세요'))
+      pendingOpen.delete(token as string)
+      const connect = deps.connectTo
+      if (!connect || portProblem(perm.remotePort) || !perm.maxMinutes || perm.maxMinutes > LIMITS.tunnelMinutesMax) throw new Error(tr('아직 지원하지 않는 동작이에요'))
+      const key = tunnelKey(connId, t)
+      const id = `tn-${rand()}`
+      const remotePort = perm.remotePort!
+      let handle: TunnelHandle | undefined
+      let stopped: string | undefined
+      // 서버가 열리기를 기다리는 동안에도 목록에 올려 두어 개수 제한을 지키고, 그 사이 정지 요청이 와도 놓치지 않음
+      tunnels.set(id, { connId, packId: t.pack.id, hash: t.hash, key, stop: (why) => ((stopped = why ?? 'stop'), handle?.stop(why)) })
+      try {
+        handle = await listenTunnel({
+          port: p.port,
+          ms: (deps.tunnelMs ?? ((m) => m * 60_000))(perm.maxMinutes),
+          connect: (sock) => connect(connId, sock, remotePort),
+          onEnd: (reason) => (tunnels.delete(id), deps.emit?.({ type: 'tunnel', state: 'closed', id, packId: t.pack.id, connId, reason }))
+        })
+      } catch (e) {
+        tunnels.delete(id)
+        throw e
+      }
+      deps.emit?.({ type: 'tunnel', state: 'open', id, packId: t.pack.id, connId, port: handle.port, remotePort, endsAt: handle.endsAt })
+      if (stopped) handle.stop(stopped)
+      return { op, id, host: TUNNEL_HOST, port: handle.port, remotePort, endsAt: handle.endsAt }
+    }
+
     const fs = await deps.fsOf(connId)
     const home = await homeOf(fs)
     const rel = relOf(a, given)
@@ -224,20 +285,21 @@ export function createAppEngine(deps: AppDeps) {
     throw new Error(tr('아직 지원하지 않는 동작이에요'))
   }
 
-  const stopWhere = (f: (o: Op) => boolean) => [...ops].filter(([, o]) => f(o)).forEach(([, o]) => o.stop())
+  const stopWhere = (f: (o: Op) => boolean, why?: string) => [...ops.values(), ...tunnels.values()].filter(f).forEach((o) => o.stop(why))
   return {
     prepare,
     run,
     stop: (opId: string): boolean => {
-      const o = ops.get(opId)
+      const o = ops.get(opId) ?? tunnels.get(opId)
       o?.stop()
       return !!o
     },
-    stopConn: (connId: string) => stopWhere((o) => o.connId === connId),
+    stopConn: (connId: string) => stopWhere((o) => o.connId === connId, 'conn'),
     // 팩이 꺼졌거나 파일이 바뀌었으면 그 팩이 시작한 것을 모두 멈춤
-    reconcile: (isActive: (packId: string, hash: string) => boolean) => stopWhere((o) => !isActive(o.packId, o.hash)),
-    stopAll: () => stopWhere(() => true),
-    size: () => ops.size
+    reconcile: (isActive: (packId: string, hash: string) => boolean) => stopWhere((o) => !isActive(o.packId, o.hash), 'pack'),
+    stopAll: () => stopWhere(() => true, 'quit'),
+    size: () => ops.size,
+    tunnelCount: () => tunnels.size
   }
 }
 export type AppEngine = ReturnType<typeof createAppEngine>
